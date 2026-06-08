@@ -1,0 +1,305 @@
+/* --- STYLES FOR REPORT LOST FORM (TUPV RETRIEVE UI) --- */
+
+:root {
+    --bg-body: #f8fafc;
+    --bg-surface: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-light: #e2e8f0;
+    --primary-blue: #1E3A8A; 
+    --primary-blue-hover: #1E40AF;
+    --accent-amber: #F59E0B;
+}
+
+.report-form-container {
+    padding: 40px 24px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-grow: 1;
+}
+
+.report-form {
+    background-color: var(--bg-surface);
+    border-radius: 20px;
+    padding: 40px;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.1);
+    border: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.report-form h2 {
+    text-align: left;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+    display: block; 
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+/* Common Input Styles */
+#category-select, #item-name, #item-description, #lost-date, #lost-time, #location {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    font-size: 0.95rem;
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+#category-select:focus, #item-name:focus, #item-description:focus, #lost-date:focus, #lost-time:focus, #location:focus {
+    border-color: var(--primary-blue);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    background-color: var(--bg-surface);
+}
+
+.select-wrapper { position: relative; }
+.select-wrapper::after {
+    content: '\f078'; /* FontAwesome angle-down */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+#category-select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+/* Photo Uploader */
+.photo-uploader {
+    width: 100%;
+    aspect-ratio: 16 / 9; 
+    border: 2px dashed var(--border-light);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-body);
+    cursor: pointer;
+    color: var(--text-secondary);
+    gap: 12px;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.photo-uploader:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background-color: rgba(30, 58, 138, 0.02);
+}
+
+.photo-uploader svg {
+    width: 40px;
+    height: 40px;
+    opacity: 0.6;
+}
+
+.photo-uploader span {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.photo-uploader img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: var(--bg-surface);
+}
+
+.date-time-inputs {
+    display: flex;
+    gap: 16px;
+    flex-direction: column;
+}
+
+.submit-btn {
+    width: 100%;
+    background-color: var(--primary-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
+}
+
+.submit-btn:hover {
+    background-color: var(--primary-blue-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(30, 58, 138, 0.3);
+}
+
+/* Grid Layout for Desktop */
+@media (min-width: 768px) {
+    .report-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: 
+            "title title"
+            "category item-name"
+            "photo details"
+            "description description"
+            "submit submit";
+        gap: 24px 32px;
+        align-items: start;
+    }
+
+    .report-form h2 { grid-area: title; }
+    .category-group { grid-area: category; }
+    .item-name-group { grid-area: item-name; }
+    .photo-group { grid-area: photo; }
+    .description-group { grid-area: description; }
+    
+    .details-grid { 
+        grid-area: details; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 24px; 
+    }
+    
+    .submit-btn { 
+        grid-area: submit; 
+        max-width: 320px; 
+        justify-self: center; 
+    }
+
+    .date-time-inputs {
+        flex-direction: row;
+    }
+}
+
+/* Modal Enhancements */
+.confirmation-modal-content, .success-modal-content {
+    max-width: 650px;
+}
+
+.summary-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.summary-image-container {
+    width: 100%;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--border-light);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.summary-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.summary-details p {
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.summary-details p strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+@media (min-width: 768px) {
+    .summary-grid {
+        flex-direction: row;
+    }
+    .summary-image-container {
+        width: 250px;
+        height: 250px;
+        flex-shrink: 0;
+    }
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 32px;
+}
+
+.modal-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-btn.cancel-btn {
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+}
+
+.modal-btn.confirm-btn, .modal-btn.notify-btn {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
+}
+
+.success-modal-content {
+    text-align: center;
+    padding: 48px;
+}
+
+.success-icon {
+    color: #10b981; 
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.success-icon svg {
+    width: 64px;
+    height: 64px;
+}

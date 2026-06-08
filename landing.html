@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost & Found Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="footer.css">
+    <link rel="stylesheet" href="landing.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="logoContainer">
+                <a href="landing.html" class="logoLink"> 
+                    <img src="images/logo.png" alt="Portal Logo" class="logoImg">
+                    <div class="headerText">
+                        <span class="universityName">Lost & Found Portal</span>
+                        <span class="universityMotto">Reuniting you with your belongings</span>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="navigationItems">
+                <div class="navItem"><a href="landing.html">Home</a></div>
+                <div class="navItem"><a href="#" id="about-link">About</a></div>
+                <div class="navItem"><a href="#" id="contact-link">Contact</a></div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="hero-section">
+        <div class="floating-bg"></div> 
+        
+        <div class="hero-content">
+            <div class="logo-container">
+                <img src="images/logo.png" alt="Portal Logo">
+            </div>
+            
+            <h1 class="hero-title">Find What's Lost,<br>Return What's Found</h1>
+            <p class="hero-subtitle">Your centralized campus portal for reporting lost items and turning in found belongings securely.</p>
+            
+            <div class="button-group">
+                <a href="login.html" class="btn btn-primary">Sign In</a>
+                <a href="register.html" class="btn btn-outline">Create Account</a>
+                <a href="guestprofile.html" class="btn btn-outline" id="guest-btn">Browse as Guest</a>
+            </div>
+        </div>
+    </main>
+
+    <section class="features-section">
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+            <h3>Report Lost Items</h3>
+            <p>Quickly list items you've misplaced on campus to notify the community.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fa-solid fa-hand-holding-heart"></i></div>
+            <h3>Turn in Found Items</h3>
+            <p>Securely log items you've found to help them find their way home.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3>Admin Verification</h3>
+            <p>All matches are verified through our secure campus administration.</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-row">
+            <div class="footer-col">
+                <h3 class="foot_logo_text">Retrieve | TUP Visayas</h3>
+                <p>Your trusted campus partner in finding what's lost. We create a community of trust and support for all TUPV students and faculty.</p>
+            </div>
+            
+            <div class="footer-col">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a id="footer-about-link">About Us</a></li>
+                    <li><a id="footer-how-it-works-link">How It Works</a></li>
+                    <li><a id="footer-faq-link">FAQ</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-col">
+                <h3>Contact & Legal</h3>
+                <ul>
+                    <li><a id="footer-contact-link">Contact Us</a></li>
+                    <li><a id="footer-privacy-link">Privacy Policy</a></li>
+                    <li><a id="footer-terms-link">Terms of Service</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3>Stay Connected</h3>
+                <p>Follow us on social media for system updates and important TUPV announcements.</p>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://x.com/" target="_blank"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <p class="copyright">&copy; 2025 Retrieve. All rights reserved.</p>
+    </footer>
+
+    <div id="about-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>About Retrieve</h2>
+            <p>Retrieve is a modern solution connecting people who have lost items with those who have found them, fostering a community of trust.</p>
+        </div>
+    </div>
+    <div id="how-it-works-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>How It Works</h2>
+            <p>Post details about your lost or found item securely. Our system catalogues the entry, and you can wait for administrative approval to finalize the match safely and transparently.</p>
+        </div>
+    </div>
+    <div id="faq-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <h4>How do I report an item on campus?</h4>
+                <p>Click on the "Report Lost Item" or "Report Found Item" button on your dashboard to securely fill out the necessary details.</p>
+            </div>
+            <div class="faq-item">
+                <h4>What happens after I submit a report?</h4>
+                <p>Your report is sent to an administrator for review. Once verified, it will be visible on the public feed to help facilitate a match.</p>
+            </div>
+        </div>
+    </div>
+    <div id="footer-contact-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Contact Admin</h2>
+            <p><strong>Email:</strong> support@retrieve.edu.ph</p>
+            <p><strong>Phone:</strong> +63 994 300 8493</p>
+        </div>
+    </div>
+    <div id="privacy-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Privacy Policy</h2>
+            <p>Your privacy is important to us. We only collect personal information when we truly need it to provide a service to you, collecting it by fair and lawful means.</p>
+        </div>
+    </div>
+    <div id="terms-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Terms of Service</h2>
+            <p>By accessing this website, you are agreeing to be bound by these terms of service and agree that you are responsible for compliance with rules and local laws.</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <script src="landing.js"></script> 
+</body>
+</html>

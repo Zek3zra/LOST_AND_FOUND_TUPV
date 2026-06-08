@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETRIEVE | TUPV Log In</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="landing.css">
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="footer.css">
+    
+    <style>
+        /* --- LOGIN PAGE SPECIFIC UI OVERRIDES --- */
+        :root {
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-light: #e2e8f0;
+            --primary-blue: #1E3A8A; 
+            --primary-blue-hover: #1E40AF;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .login-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 24px;
+        }
+
+        .form-card {
+            background-color: var(--bg-surface);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.1);
+            border: 1px solid var(--border-light);
+            transition: transform 0.3s ease;
+        }
+
+        .form-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin-bottom: 24px;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: var(--primary-blue);
+        }
+
+        .form-card h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+            background-color: var(--bg-surface);
+        }
+
+        .login-btn {
+            width: 100%;
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-btn:hover:not(:disabled) {
+            background-color: var(--primary-blue-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30, 58, 138, 0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Hide the old standalone mobile footer */
+        .footer { display: none; }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <nav class="main-nav">
+            <div class="logoContainer">
+                <a href="landing.html" class="logoLink"> 
+                    <img src="images/logo.png" alt="TUPV Retrieve Logo" class="logoImg">
+                    <div class="headerText">
+                        <span class="universityName">Retrieve TUPV</span>
+                        <span class="universityMotto" id="current-date-time">Loading date...</span>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="navigationItems">
+                <div class="navItem"><a href="landing.html">Home</a></div>
+                <div class="navItem"><a href="#" id="about-link">About</a></div>
+                <div class="navItem"><a href="#" id="contact-link">Contact</a></div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="login-container">
+        <div class="form-card">
+            <a href="landing.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Go Back</a>
+            <h2>Sign in to Retrieve</h2>
+            
+            <form id="loginForm" action="login.php" method="POST">
+                <div class="form-group">
+                    <label for="email">TUPV Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="student@tupv.edu.ph" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="login-btn" id="login-btn">Log In</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-row">
+            <div class="footer-col">
+                <h3 class="foot_logo_text">Retrieve | TUP Visayas</h3>
+                <p>Your trusted campus partner in finding what's lost. We create a community of trust and support for all TUPV students and faculty.</p>
+            </div>
+            
+            <div class="footer-col">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a id="footer-about-link">About Us</a></li>
+                    <li><a id="footer-how-it-works-link">How It Works</a></li>
+                    <li><a id="footer-faq-link">FAQ</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-col">
+                <h3>Contact & Legal</h3>
+                <ul>
+                    <li><a id="footer-contact-link">Contact Us</a></li>
+                    <li><a id="footer-privacy-link">Privacy Policy</a></li>
+                    <li><a id="footer-terms-link">Terms of Service</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3>Stay Connected</h3>
+                <p>Follow us on social media for system updates and important TUPV announcements.</p>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://x.com/" target="_blank"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <p class="copyright">&copy; 2025 Retrieve. All rights reserved. | Technological University of the Philippines Visayas</p>
+    </footer>
+
+    <div id="about-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>About Retrieve TUPV</h2>
+            <p>Retrieve is a modern solution specifically built for the Technological University of the Philippines Visayas campus. Our platform connects people who have lost items with those who have found them, fostering a community of trust.</p>
+        </div>
+    </div>
+
+    <div id="how-it-works-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>How It Works</h2>
+            <p>Post details about your lost or found item securely. Our system catalogues the entry, and you can wait for TUPV administrative approval to finalize the match safely and transparently.</p>
+        </div>
+    </div>
+
+    <div id="faq-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <h4>How do I report an item on campus?</h4>
+                <p>Click on the "Report Lost Item" or "Report Found Item" button on your dashboard to securely fill out the necessary details.</p>
+            </div>
+            <div class="faq-item">
+                <h4>What happens after I submit a report?</h4>
+                <p>Your report is sent to a TUPV administrator for review. Once verified, it will be visible on the public feed to help facilitate a match.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-contact-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Contact TUPV Admin</h2>
+            <p><strong>Email:</strong> support@retrieve.tupv.edu.ph</p>
+            <p><strong>Phone:</strong> +63 994 300 8493</p>
+        </div>
+    </div>
+
+    <div id="privacy-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Privacy Policy</h2>
+            <p>Your privacy is important to us. We only collect personal information when we truly need it to provide a service to you, collecting it by fair and lawful means.</p>
+            <p>We do not share any personally identifying information publicly or with third-parties, except when required to by law or to facilitate a secure item return on campus.</p>
+        </div>
+    </div>
+
+    <div id="terms-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2>Terms of Service</h2>
+            <p>By accessing this website, you are agreeing to be bound by these terms of service and agree that you are responsible for compliance with TUPV rules and local laws.</p>
+            <p>You may not use the materials for any commercial purpose, or attempt to reverse engineer any software contained on the platform.</p>
+        </div>
+    </div>
+
+    <div id="message-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal">&times;</button>
+            <h2 id="modal-title">Login Failed</h2>
+            <p id="modal-message">Invalid email or password.</p>
+        </div>
+    </div>
+
+    <script>
+        // Date/Time Script
+        function updateDateTime() {
+            const dateTimeElement = document.getElementById('current-date-time');
+            if(dateTimeElement) {
+                const now = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                dateTimeElement.textContent = now.toLocaleDateString('en-US', options);
+            }
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Modal Script (Header & Footer)
+        const modals = {
+            'about-link': 'about-modal',
+            'footer-about-link': 'about-modal',
+            'footer-how-it-works-link': 'how-it-works-modal',
+            'footer-faq-link': 'faq-modal',
+            'contact-link': 'footer-contact-modal',
+            'footer-contact-link': 'footer-contact-modal',
+            'footer-privacy-link': 'privacy-modal',
+            'footer-terms-link': 'terms-modal'
+        };
+
+        Object.keys(modals).forEach(linkId => {
+            const linkElement = document.getElementById(linkId);
+            if(linkElement) {
+                linkElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.getElementById(modals[linkId]).classList.add('show');
+                });
+            }
+        });
+
+        document.querySelectorAll('.close-modal').forEach(button => {
+            button.addEventListener('click', function() {
+                this.closest('.modal-overlay').classList.remove('show');
+            });
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('show');
+            }
+        });
+
+        // Login AJAX Handling
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = document.getElementById('login-btn');
+            const originalText = submitBtn.innerHTML;
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" style="margin-right:8px; animation: spin 1s linear infinite;">
+                    <circle cx="12" cy="12" r="10" stroke="#fff" stroke-width="2" fill="none" stroke-opacity="0.3" />
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" />
+                </svg>
+                Logging in...
+                <style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+            `;
+
+            fetch('login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+
+                const modal = document.getElementById('message-modal');
+                const modalMessage = document.getElementById('modal-message');
+                const modalTitle = document.getElementById('modal-title');
+
+                if (data.success) {
+                    modalTitle.textContent = 'Success!';
+                    modalTitle.style.color = 'var(--primary-blue)';
+                    modalMessage.textContent = data.message;
+                    modal.classList.add('show');
+
+                    sessionStorage.removeItem('userType'); 
+                    setTimeout(() => {
+                        window.location.href = data.redirect; 
+                    }, 1500);
+
+                } else {
+                    modalTitle.textContent = 'Login Failed';
+                    modalTitle.style.color = '#dc2626'; // Red for error
+                    modalMessage.textContent = data.message;
+                    modal.classList.add('show');
+                }
+            })
+            .catch(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                
+                const modal = document.getElementById('message-modal');
+                const modalMessage = document.getElementById('modal-message');
+                const modalTitle = document.getElementById('modal-title');
+                
+                modalTitle.textContent = 'Error';
+                modalTitle.style.color = '#dc2626';
+                modalMessage.textContent = 'An unexpected error occurred. Please try again.';
+                modal.classList.add('show');
+            });
+        });
+    </script>
+</body>
+</html>

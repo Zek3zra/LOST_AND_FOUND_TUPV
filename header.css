@@ -1,0 +1,98 @@
+/* --- STYLES FOR DESKTOP & MOBILE HEADER --- */
+
+:root {
+    --primary-blue: #1E3A8A; 
+    --accent-amber: #F59E0B; 
+    --header-bg: var(--primary-blue); 
+    --text-primary: #ffffff; 
+    --hover-bg: rgba(255, 255, 255, 0.1); 
+    --shadow-subtle: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.main-header {
+    background-color: var(--header-bg);
+    box-shadow: var(--shadow-subtle);
+    
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+}
+
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 15px 1px; 
+}
+
+.logoContainer .logoLink {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    gap: 12px;
+}
+
+/* THE FIX IS HERE: Filter completely removed! */
+.logoContainer .logoImg {
+    height: 48px; 
+    width: 48px;
+    object-fit: contain;
+}
+
+.headerText {
+    display: flex;
+    flex-direction: column;
+}
+
+.universityName {
+    font-size: 1rem; 
+    font-weight: 700;
+    color: #ffffff; 
+    letter-spacing: -0.01em;
+}
+
+.universityMotto {
+    font-size: 0.75rem; 
+    color: #ffffff; 
+    opacity: 0.8; 
+    font-weight: 400;
+    margin-top: 1px;
+}
+
+.navigationItems {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.navItem a {
+    text-decoration: none;
+    color: #ffffff; 
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navItem a:hover {
+    background-color: var(--hover-bg);
+    color: var(--accent-amber); 
+}
+
+@media (max-width: 768px) {
+    .navigationItems {
+        display: none; 
+    }
+}

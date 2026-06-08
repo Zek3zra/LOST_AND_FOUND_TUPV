@@ -1,0 +1,457 @@
+/* --- STYLES FOR PROFILE PAGE (TUPV RETRIEVE UI) --- */
+
+:root {
+    --bg-body: #f8fafc;
+    --bg-surface: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --border-light: #e2e8f0;
+    --primary-blue: #1E3A8A; 
+    --primary-blue-hover: #1E40AF;
+    --accent-amber: #F59E0B; 
+    --danger-red: #ef4444;
+    --danger-red-hover: #dc2626;
+}
+
+.profile-container {
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    flex-grow: 1;
+}
+
+.profile-header-card {
+    background-color: var(--bg-surface);
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.05);
+    text-align: center;
+}
+
+.profile-picture {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: #f1f5f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border: 3px solid var(--bg-surface);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.profile-picture img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-picture::after {
+    content: '\f030'; /* FontAwesome Camera icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.profile-picture:hover::after {
+    opacity: 1;
+}
+
+.profile-picture svg {
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
+}
+
+.username {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.user-email-card {
+    background-color: var(--bg-body);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    padding: 12px 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.action-btn {
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.action-btn:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background-color: rgba(30, 58, 138, 0.02);
+    transform: translateY(-2px);
+}
+
+#delete-account-btn {
+    color: var(--danger-red);
+}
+
+#delete-account-btn:hover {
+    border-color: var(--danger-red);
+    background-color: rgba(239, 68, 68, 0.05);
+}
+
+/* Hide legacy mobile footer */
+.footer {
+    display: none;
+}
+
+
+/* --- PROFILE TAB STYLES --- */
+.profile-tabs {
+    display: flex;
+    width: 100%;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 24px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 14px 15px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    color: var(--text-secondary);
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(30, 58, 138, 0.02);
+}
+
+.tab-btn.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+}
+
+.notif-badge {
+    background-color: var(--accent-amber);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 50px;
+    position: absolute;
+    top: 8px;
+    right: 15%;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+.tab-content {
+    display: none; 
+    flex-direction: column;
+    gap: 20px; 
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tab-content.active {
+    display: flex; 
+}
+
+
+/* --- NOTIFICATIONS LIST STYLES --- */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+}
+
+.no-notifs {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 60px 0;
+    font-weight: 500;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background-color: var(--bg-surface);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.notification-item.unread {
+    background-color: rgba(30, 58, 138, 0.03); 
+    border-left: 4px solid var(--primary-blue);
+    cursor: pointer;
+}
+
+.notification-item.unread:hover {
+    background-color: rgba(30, 58, 138, 0.06);
+}
+
+.notification-item.read {
+    opacity: 0.8;
+}
+
+.notif-icon {
+    color: var(--primary-blue);
+    flex-shrink: 0;
+    background: var(--bg-body);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notif-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.notification-item.read .notif-icon {
+    color: #10b981; /* Emerald Green */
+}
+
+.notif-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-content p {
+    margin: 0 0 6px 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.notif-content .notif-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* --- Desktop Layout Enhancements --- */
+@media (min-width: 768px) {
+    .profile-header-card {
+        flex-direction: row;
+        text-align: left;
+        padding: 40px;
+    }
+    
+    .profile-header-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .user-email-card {
+        text-align: left;
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin-top: 4px;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 24px;
+    }
+    
+    .action-btn {
+        flex: 1;
+        min-width: 180px;
+    }
+}
+
+/* --- MODAL BUTTON STYLES --- */
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end; 
+    margin-top: 24px;
+    width: 100%;
+}
+
+.modal-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-btn.cancel-btn {
+    background-color: var(--bg-body); 
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+}
+
+.modal-btn.cancel-btn:hover {
+    background-color: var(--border-light);
+}
+
+.modal-btn.delete-btn {
+    background-color: var(--danger-red); 
+    color: white;
+}
+
+.modal-btn.delete-btn:hover {
+    background-color: var(--danger-red-hover); 
+}
+
+.modal-btn.delete-btn:disabled {
+    background-color: #fca5a5; 
+    cursor: not-allowed;
+}
+
+/* --- NEW: User Details Card --- */
+.user-details-card {
+    background-color: var(--bg-body);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    padding: 16px;
+    width: 100%;
+    margin-top: 12px;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.user-details-card p {
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+.user-details-card strong {
+    color: var(--text-primary);
+}
+
+/* --- NEW: Modal Forms Styles --- */
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-input {
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+.modal-btn.save-btn {
+    background-color: var(--primary-blue);
+    color: white;
+}
+
+.modal-btn.save-btn:hover {
+    background-color: var(--primary-blue-hover);
+}
+
+/* Add this to your existing @media (min-width: 768px) block to format details cleanly on desktop */
+@media (min-width: 768px) {
+    .user-details-card {
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin-top: 8px;
+    }
+}

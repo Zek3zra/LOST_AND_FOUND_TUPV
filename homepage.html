@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETRIEVE | TUPV Lost and Found</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="header.css">
+    <link rel="stylesheet" href="footer.css">
+    <link rel="stylesheet" href="homepage.css">
+</head>
+<body>
+    <div class="page-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/logo.png" alt="Logo">
+                    <h2>Retrieve</h2>
+                </div>
+            </div>
+            
+            <div class="user-profile-widget">
+                <img src="images/user.png" alt="User" class="profile-pic" id="sidebar-pfp">
+                <div class="user-info">
+                    <p class="user-name" id="sidebar-user-name">Loading...</p>
+                    <p class="user-email" id="sidebar-user-email">Loading...</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="homepage.html" class="nav-item active"><i class="fa-solid fa-house"></i> <span>Home Feed</span></a>
+                <a href="reportlost.html" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i> <span>Report Lost Item</span></a>
+                <a href="reportfound.html" class="nav-item"><i class="fa-solid fa-hand-holding-heart"></i> <span>Report Found Item</span></a>
+                <a href="profile.html" class="nav-item"><i class="fa-solid fa-user"></i> <span>My Profile</span></a>
+                
+                <a href="admin_side/overview.html" class="nav-item hidden" id="admin-dashboard-link">
+                    <i class="fa-solid fa-shield-halved"></i> <span>Admin Dashboard</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="nav-item logout-btn">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <h1>Campus Feed</h1>
+                    <p>Recent lost and found items at TUP Visayas</p>
+                </div>
+            </header>
+
+            <div class="feed-container">
+                <div class="filter-controls">
+                    <div class="type-tabs">
+                        <button class="tab-btn active" id="tab-lost">Lost Items</button>
+                        <button class="tab-btn" id="tab-found">Found Items</button>
+                    </div>
+
+                    <div class="category-filter-container">
+                        <select id="category-filter" class="category-select">
+                            <option value="">All Categories</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Wallets & IDs">Wallets & IDs</option>
+                            <option value="Bags & Backpacks">Bags & Backpacks</option>
+                            <option value="Keys">Keys</option>
+                            <option value="Clothing & Accessories">Clothing & Accessories</option>
+                            <option value="Books & Notebooks">Books & Notebooks</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="items-container">
+                    <div id="loading-indicator" class="loading-indicator">
+                        <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
+                        <p>Loading items...</p>
+                    </div>
+
+                    <div id="lost-items-list" class="items-grid"></div>
+                    <div id="found-items-list" class="items-grid hidden"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabaseClient.js"></script>
+    <script src="homepage.js"></script>
+</body>
+</html>
