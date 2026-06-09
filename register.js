@@ -29,10 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('password').value;
 
         try {
-            // 3. Register with Supabase Auth (This automatically sends the verification email!)
+            // 3. Register with Supabase Auth (Force the redirect URL)
             const { data: authData, error: authError } = await window.supabase.auth.signUp({
                 email: email,
                 password: password,
+                options: {
+                    // Force Supabase to redirect exactly here after clicking the email link
+                    emailRedirectTo: 'http://127.0.0.1:5500/login.html'
+                }
             });
 
             if (authError) throw authError;

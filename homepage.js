@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- 1. AUTHENTICATION CHECK ---
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // --- 1. AUTHENTICATION & UI SETUP ---
+    const { data: { session } } = await supabase.auth.getSession();
     const guestMode = sessionStorage.getItem('userType') === 'guest';
     
     if (!session && !guestMode) {
@@ -9,137 +9,138 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // --- 2. POPULATE USER PROFILE UI ---
-    if (guestMode) {
-        document.getElementById('sidebar-user-name').textContent = 'Guest User';
-        document.getElementById('sidebar-user-email').textContent = 'Read-only mode';
-        document.getElementById('logout-btn').innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Log In</span>';
-    } else {
-        document.getElementById('sidebar-user-name').textContent = sessionStorage.getItem('user_name') || 'User';
-        document.getElementById('sidebar-user-email').textContent = sessionStorage.getItem('user_email') || '';
-        
-        // Show Admin link if role is admin cleanly via classes
-        if (sessionStorage.getItem('role') === 'admin') {
-            document.getElementById('admin-dashboard-link').classList.remove('hidden');
-        }
+    if (sessionStorage.getItem('role') === 'admin') {
+        document.getElementById('admin-dashboard-link').classList.remove('hidden');
     }
 
+    // Sidebar Toggle Logic
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('desktop-sidebar');
+    if(sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+    }
+
+    // Date/Time UI
+    function updateDateTime() {
+        const dt = document.getElementById('current-date-time');
+        if(dt) dt.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
     // Handle Logout
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-        if (!guestMode) {
-            await supabase.auth.signOut();
-        }
+    document.getElementById('logout-btn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!guestMode) await supabase.auth.signOut();
         sessionStorage.clear();
         window.location.href = 'login.html';
     });
 
-    // --- 3. FETCH DATA FROM SUPABASE ---
+    // Handle Modals
+    const modals = {
+        'about-link': 'about-modal',
+        'footer-about-link': 'about-modal',
+        'footer-how-it-works-link': 'how-it-works-modal',
+        'footer-faq-link': 'faq-modal',
+        'contact-link': 'footer-contact-modal',
+        'footer-contact-link': 'footer-contact-modal'
+    };
+    Object.keys(modals).forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById(modals[id]).classList.add('show');
+        });
+    });
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', function() { this.closest('.modal-overlay').classList.remove('show'); });
+    });
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
+    });
+
+    // --- 2. DATA FETCHING ---
     const { data: allItems, error: fetchError } = await window.supabase
         .from('item_reports')
         .select('*')
         .eq('report_status', 'approved')
         .order('item_datetime', { ascending: false });
 
-    // Hide loading indicator cleanly
     document.getElementById('loading-indicator').classList.add('hidden');
 
     if (fetchError) {
-        console.error("Error fetching items:", fetchError);
-        document.getElementById('lost-items-list').innerHTML = `<div class="empty-state">Failed to load items. Please refresh your browser.</div>`;
+        document.getElementById('lost-items-list').innerHTML = `<div class="empty-state">Failed to load items.</div>`;
         return;
     }
 
-    // Separate items
     const lostItems = allItems.filter(item => item.report_type === 'lost');
     const foundItems = allItems.filter(item => item.report_type === 'found');
 
-    // --- 4. RENDER ITEMS ---
-    const lostList = document.getElementById('lost-items-list');
-    const foundList = document.getElementById('found-items-list');
-
+    // --- 3. HTML GENERATION (Matching original CSS structure) ---
     function createCardHTML(item) {
         const dateObj = new Date(item.item_datetime);
-        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        const imgPath = item.image_path ? item.image_path : 'images/category.png'; 
+        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) + ' at ' + dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        
+        const statusType = item.report_type === 'lost' ? 'LOST ITEM' : 'FOUND ITEM';
+        const labelTwo = item.report_type === 'lost' ? 'LAST SEEN:' : 'FOUND AT:';
+        const labelThree = item.report_type === 'lost' ? 'DATE REPORTED:' : 'DATE FOUND:';
 
+        // Replicating the exact HTML structure your homepage.css expects
         return `
-            <div class="item-card" data-category="${item.item_category}">
-                <div class="card-image">
-                    <img src="${imgPath}" alt="${item.item_name_specific}" onerror="this.src='images/category.png'">
-                    <span class="status-badge ${item.report_status}">${item.report_status.toUpperCase()}</span>
+            <div class="item-card" data-category="${item.item_category}" data-status="${statusType}">
+                <div class="item-details">
+                    <h3>${statusType}</h3>
+                    <p><strong>ITEM:</strong> ${item.item_name_specific || item.item_category}</p>
+                    <p><strong>DESCRIPTION:</strong> ${item.item_description}</p>
+                    <p><strong>${labelTwo}</strong> ${item.item_location || 'Not specified'}</p>
+                    <p><strong>${labelThree}</strong> ${formattedDate}</p>
                 </div>
-                <div class="card-content">
-                    <div class="card-header">
-                        <span class="category-tag"><i class="fa-solid fa-tag"></i> ${item.item_category}</span>
-                        <span class="date-tag"><i class="fa-regular fa-clock"></i> ${formattedDate}</span>
-                    </div>
-                    <h3 class="item-title">${item.item_name_specific || item.item_category}</h3>
-                    <p class="item-description">${item.item_description}</p>
-                    <div class="location-tag">
-                        <i class="fa-solid fa-location-dot"></i> ${item.item_location || 'Location not specified'}
-                    </div>
+                <div class="item-image ${!item.image_path ? 'no-image' : ''}">
+                    ${item.image_path ? `<img src="${item.image_path}" alt="Item">` : `<span>NO IMAGE</span>`}
                 </div>
             </div>
         `;
     }
 
-    // Inject HTML
-    lostList.innerHTML = lostItems.length > 0 
-        ? lostItems.map(createCardHTML).join('') 
-        : '<div class="empty-state">No lost items reported yet.</div>';
-        
-    foundList.innerHTML = foundItems.length > 0 
-        ? foundItems.map(createCardHTML).join('') 
-        : '<div class="empty-state">No found items reported yet.</div>';
+    const lostList = document.getElementById('lost-items-list');
+    const foundList = document.getElementById('found-items-list');
 
-    // --- 5. TAB & FILTER LOGIC ---
-    const tabLost = document.getElementById('tab-lost');
-    const tabFound = document.getElementById('tab-found');
-    const categoryFilter = document.getElementById('category-filter');
+    lostList.innerHTML = lostItems.length > 0 ? lostItems.map(createCardHTML).join('') : '<div class="empty-state">No lost items reported yet.</div>';
+    foundList.innerHTML = foundItems.length > 0 ? foundItems.map(createCardHTML).join('') : '<div class="empty-state">No found items reported yet.</div>';
+
+    // --- 4. FILTERING & TABS ---
+    const lostBtn = document.getElementById('lost-btn');
+    const foundBtn = document.getElementById('found-btn');
+    const categorySelect = document.getElementById('category-filter-select');
 
     function applyFilters() {
-        const activeTab = tabLost.classList.contains('active') ? lostList : foundList;
-        const selectedCategory = categoryFilter.value;
-        const cards = activeTab.querySelectorAll('.item-card');
-
-        cards.forEach(card => {
-            const matchesCategory = selectedCategory === "" || card.dataset.category === selectedCategory;
-            
-            // Cleanly toggle visibility via classes
-            if (matchesCategory) {
-                card.classList.remove('hidden');
-            } else {
-                card.classList.add('hidden');
-            }
+        const activeContainer = lostBtn.classList.contains('active') ? lostList : foundList;
+        const selectedCat = categorySelect.value;
+        
+        activeContainer.querySelectorAll('.item-card').forEach(card => {
+            const matches = !selectedCat || card.dataset.category === selectedCat;
+            if (matches) card.classList.remove('hidden');
+            else card.classList.add('hidden');
         });
     }
 
-    tabLost.addEventListener('click', () => {
-        tabLost.classList.add('active');
-        tabFound.classList.remove('active');
-        
+    lostBtn.addEventListener('click', () => {
+        lostBtn.classList.add('active');
+        foundBtn.classList.remove('active');
         lostList.classList.remove('hidden');
         foundList.classList.add('hidden');
-        
         applyFilters();
     });
 
-    tabFound.addEventListener('click', () => {
-        tabFound.classList.add('active');
-        tabLost.classList.remove('active');
-        
+    foundBtn.addEventListener('click', () => {
+        foundBtn.classList.add('active');
+        lostBtn.classList.remove('active');
         foundList.classList.remove('hidden');
         lostList.classList.add('hidden');
-        
         applyFilters();
     });
 
-    categoryFilter.addEventListener('change', applyFilters);
-
-    // Initial check for URL parameters (if navigating from a specific category link)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('category')) {
-        categoryFilter.value = urlParams.get('category');
-        applyFilters();
-    }
+    categorySelect.addEventListener('change', applyFilters);
 });

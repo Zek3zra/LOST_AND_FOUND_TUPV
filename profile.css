@@ -60,6 +60,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: opacity 0.2s ease;
 }
 
 .profile-picture::after {
@@ -83,12 +84,6 @@
 
 .profile-picture:hover::after {
     opacity: 1;
-}
-
-.profile-picture svg {
-    width: 48px;
-    height: 48px;
-    opacity: 0.5;
 }
 
 .username {
@@ -151,234 +146,7 @@
     background-color: rgba(239, 68, 68, 0.05);
 }
 
-/* Hide legacy mobile footer */
-.footer {
-    display: none;
-}
-
-
-/* --- PROFILE TAB STYLES --- */
-.profile-tabs {
-    display: flex;
-    width: 100%;
-    border-bottom: 1px solid var(--border-light);
-    margin-bottom: 24px;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 14px 15px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-align: center;
-    background-color: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    color: var(--text-secondary);
-    position: relative;
-    transition: all 0.2s ease;
-}
-
-.tab-btn:hover {
-    color: var(--text-primary);
-    background-color: rgba(30, 58, 138, 0.02);
-}
-
-.tab-btn.active {
-    color: var(--primary-blue);
-    border-bottom-color: var(--primary-blue);
-}
-
-.notif-badge {
-    background-color: var(--accent-amber);
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 50px;
-    position: absolute;
-    top: 8px;
-    right: 15%;
-    font-weight: 700;
-    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
-}
-
-.tab-content {
-    display: none; 
-    flex-direction: column;
-    gap: 20px; 
-    width: 100%;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.tab-content.active {
-    display: flex; 
-}
-
-
-/* --- NOTIFICATIONS LIST STYLES --- */
-.notifications-list {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    gap: 12px;
-}
-
-.no-notifs {
-    text-align: center;
-    color: var(--text-secondary);
-    padding: 60px 0;
-    font-weight: 500;
-}
-
-.notification-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    background-color: var(--bg-surface);
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--border-light);
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.notification-item.unread {
-    background-color: rgba(30, 58, 138, 0.03); 
-    border-left: 4px solid var(--primary-blue);
-    cursor: pointer;
-}
-
-.notification-item.unread:hover {
-    background-color: rgba(30, 58, 138, 0.06);
-}
-
-.notification-item.read {
-    opacity: 0.8;
-}
-
-.notif-icon {
-    color: var(--primary-blue);
-    flex-shrink: 0;
-    background: var(--bg-body);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.notif-icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-.notification-item.read .notif-icon {
-    color: #10b981; /* Emerald Green */
-}
-
-.notif-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.notif-content p {
-    margin: 0 0 6px 0;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    line-height: 1.5;
-}
-
-.notif-content .notif-date {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-}
-
-/* --- Desktop Layout Enhancements --- */
-@media (min-width: 768px) {
-    .profile-header-card {
-        flex-direction: row;
-        text-align: left;
-        padding: 40px;
-    }
-    
-    .profile-header-info {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-    }
-
-    .user-email-card {
-        text-align: left;
-        background: transparent;
-        border: none;
-        padding: 0;
-        margin-top: 4px;
-    }
-
-    .action-buttons {
-        flex-direction: row;
-        flex-wrap: wrap;
-        margin-top: 24px;
-    }
-    
-    .action-btn {
-        flex: 1;
-        min-width: 180px;
-    }
-}
-
-/* --- MODAL BUTTON STYLES --- */
-.modal-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end; 
-    margin-top: 24px;
-    width: 100%;
-}
-
-.modal-btn {
-    border: none;
-    border-radius: 10px;
-    padding: 12px 20px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.modal-btn.cancel-btn {
-    background-color: var(--bg-body); 
-    color: var(--text-primary);
-    border: 1px solid var(--border-light);
-}
-
-.modal-btn.cancel-btn:hover {
-    background-color: var(--border-light);
-}
-
-.modal-btn.delete-btn {
-    background-color: var(--danger-red); 
-    color: white;
-}
-
-.modal-btn.delete-btn:hover {
-    background-color: var(--danger-red-hover); 
-}
-
-.modal-btn.delete-btn:disabled {
-    background-color: #fca5a5; 
-    cursor: not-allowed;
-}
-
-/* --- NEW: User Details Card --- */
+/* --- User Details Card --- */
 .user-details-card {
     background-color: var(--bg-body);
     border-radius: 12px;
@@ -391,6 +159,12 @@
     color: var(--text-secondary);
 }
 
+.user-details-card h3 {
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
 .user-details-card p {
     margin: 6px 0;
     line-height: 1.5;
@@ -400,7 +174,80 @@
     color: var(--text-primary);
 }
 
-/* --- NEW: Modal Forms Styles --- */
+/* --- Notifications Styling --- */
+.card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 12px;
+}
+
+.badge {
+    background-color: var(--accent-amber);
+    color: #ffffff;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.notif-item {
+    padding: 12px 16px;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    border-left: 4px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.notif-item.unread {
+    background-color: #eff6ff; 
+    border-left-color: var(--primary-blue);
+}
+
+.notif-content p {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+}
+
+.notif-content small {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.mark-read-btn {
+    background: none;
+    border: none;
+    color: var(--primary-blue);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.mark-read-btn:hover {
+    background-color: rgba(30, 58, 138, 0.1);
+}
+
+.danger-card {
+    border-color: #fca5a5 !important;
+}
+
+/* --- Modal Forms Styles --- */
 .modal-form {
     display: flex;
     flex-direction: column;
@@ -437,6 +284,16 @@
     box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
 }
 
+.modal-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
 .modal-btn.save-btn {
     background-color: var(--primary-blue);
     color: white;
@@ -446,8 +303,48 @@
     background-color: var(--primary-blue-hover);
 }
 
-/* Add this to your existing @media (min-width: 768px) block to format details cleanly on desktop */
+.modal-btn.delete-btn {
+    background-color: var(--danger-red); 
+    color: white;
+}
+
+.modal-btn.delete-btn:hover {
+    background-color: var(--danger-red-hover); 
+}
+
+/* --- Desktop Layout Enhancements --- */
 @media (min-width: 768px) {
+    .profile-header-card {
+        flex-direction: row;
+        text-align: left;
+        padding: 40px;
+    }
+    
+    .profile-header-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .user-email-card {
+        text-align: left;
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin-top: 4px;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 24px;
+    }
+    
+    .action-btn {
+        flex: 1;
+        min-width: 180px;
+    }
+
     .user-details-card {
         background: transparent;
         border: none;
