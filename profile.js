@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // --- 4. RESTORED: Notifications Fetcher ---
+    // --- 4. Notifications Fetcher ---
     async function loadNotifications() {
         if (guestMode) return;
 
@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let unreadCount = 0;
         list.innerHTML = data.map(n => {
-            // Treat 0 as unread, 1 as read (standard boolean handling)
             const isRead = n.is_read == 1 || n.is_read === true;
             if (!isRead) unreadCount++;
             
@@ -118,28 +117,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         badge.textContent = `${unreadCount} Unread`;
 
-        // Attach listeners to checkmarks
         document.querySelectorAll('.mark-read-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const item = e.target.closest('.notif-item');
                 const notifId = item.dataset.id;
                 
-                // Visual feedback immediately
                 item.style.opacity = '0.5';
                 
-                // Update Supabase
                 await window.supabase
                     .from('notifications')
                     .update({ is_read: 1 })
                     .eq('notification_id', notifId);
                 
-                // Refresh list
                 loadNotifications();
             });
         });
     }
 
-    // Initialize both Data and Notifications
     loadUserProfile();
     loadNotifications();
 
@@ -226,8 +220,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const fileExt = file.name.split('.').pop();
         const fileName = `pfp_${userId}_${Date.now()}.${fileExt}`;
 
+        // FIX: The bucket is properly named 'profile-pictures' here now!
         const { error: uploadError } = await window.supabase.storage
-            .from('profile-picture-img')
+            .from('profile-pictures')
             .upload(fileName, file);
 
         if (uploadError) {
@@ -236,8 +231,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // FIX: The bucket is properly named 'profile-pictures' here now!
         const { data: publicUrlData } = window.supabase.storage
-            .from('profile-picture-img')
+            .from('profile-pictures')
             .getPublicUrl(fileName);
 
         const publicUrl = publicUrlData.publicUrl;
@@ -257,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- 8. Handle Account Deletion ---
+
     document.getElementById('delete-account-btn').addEventListener('click', () => {
         document.getElementById('delete-account-modal').classList.add('show');
     });
@@ -266,15 +263,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.textContent = 'Deleting...';
         btn.disabled = true;
 
-        const { error } = await window.supabase.from('users').delete().eq('id', userId);
+        // 1. Delete user from your public 'users' table (which automatically deletes their reports)
+        const { error: dbError } = await window.supabase.from('users').delete().eq('id', userId);
 
-        if (!error) {
+        if (!dbError) {
+            
+            // 2. Trigger our new database function to completely wipe their Supabase Auth account
+            await window.supabase.rpc('delete_user_account');
+
+            // 3. Clear browser memory and redirect
             await window.supabase.auth.signOut();
             sessionStorage.clear();
-            alert("Your account has been successfully deleted.");
+            
+            alert("Your account has been completely and permanently deleted.");
             window.location.href = 'landing.html';
         } else {
-            alert("Failed to delete account: " + error.message);
+            alert("Failed to delete account: " + dbError.message);
             btn.textContent = 'Yes, Delete My Account';
             btn.disabled = false;
         }

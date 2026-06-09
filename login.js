@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
 
-        // 1. Hardcoded Admin Check (From your original PHP logic)
+        // 1. Hardcoded Admin Check 
         if (email === 'lostandfoundadmin@gmail.com' && password === 'admin12345') {
             sessionStorage.setItem('role', 'admin');
             sessionStorage.setItem('user_name', 'Site Administrator');
@@ -68,6 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (authError) throw authError;
+
+            // --- STRICT VERIFICATION CHECK ---
+            // We physically check if Supabase has logged the exact time they verified.
+            // If this is null, they haven't verified their email yet!
+            if (authData.user && !authData.user.email_confirmed_at) {
+                await window.supabase.auth.signOut(); // Immediately block them
+                throw new Error("Email not confirmed");
+            }
+
+            // --- SYNC PUBLIC DATABASE ---
+            // Since they passed the verification check, we update your custom 'is_verified' column to TRUE!
+            await window.supabase.from('users').update({ is_verified: true }).eq('email', email);
 
             // 3. Fetch user details from your public table to build their session
             const { data: userData, error: dbError } = await window.supabase
@@ -108,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalTitle.textContent = 'Login Failed';
             modalTitle.style.color = '#dc2626'; 
             
-            // Map Supabase's default unconfirmed error to something more user-friendly
+            // Catch our custom unverified error
             if (err.message === "Email not confirmed") {
                 modalMessage.textContent = "Please verify your email address before logging in. Check your inbox for the link!";
             } else {

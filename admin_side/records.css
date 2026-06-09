@@ -1,5 +1,5 @@
 /* ==========================================================
-   PENDING REPORTS STYLES (TUPV RETRIEVE) - PROFESSIONAL UI
+   COMPLETED RECORDS STYLES (TUPV RETRIEVE) - LIST LAYOUT
    ========================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -39,20 +39,30 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .logout-link { margin-top: auto; border-top: 1px solid var(--border-light); padding-top: 16px !important; color: var(--danger-red) !important; }
 .logout-link:hover { background-color: rgba(239, 68, 68, 0.05) !important; }
 
-/* --- MAIN CONTENT & TABLES --- */
+/* --- MAIN CONTENT & CONTROLS --- */
 .main-content { flex: 1; margin-left: var(--sidebar-width); margin-top: var(--header-height); padding: 32px 40px; min-width: 0; }
 .page-header { margin-bottom: 32px; }
 .page-header h2 { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
 .page-header p { color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px; }
 
-.table-container { background-color: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.05); overflow: hidden; margin-top: 24px; }
-.table-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); background-color: var(--bg-surface); }
-.table-header h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+.controls-container { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 24px; background: var(--bg-surface); padding: 16px; border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab-btn { padding: 8px 16px; border: 1px solid transparent; background: none; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; }
+.tab-btn:hover { background: var(--bg-body); }
+.tab-btn.active { background: rgba(30, 58, 138, 0.05); color: var(--primary-blue); }
 
+.search-box input { padding: 10px 12px 10px 36px; border: 1px solid var(--border-light); border-radius: 8px; outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease; width: 250px; }
+.search-box input:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
+#sortSelect { padding: 10px; border: 1px solid var(--border-light); border-radius: 8px; outline: none; cursor: pointer; }
+
+/* --- RECORDS TABLE LAYOUT --- */
+.table-container { background-color: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-light); box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.05); overflow: hidden; }
 .admin-table { width: 100%; border-collapse: collapse; text-align: left; }
 .admin-table th { background-color: var(--bg-body); color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 16px 24px; font-weight: 600; border-bottom: 1px solid var(--border-light); }
 .admin-table td { padding: 16px 24px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); font-size: 0.95rem; vertical-align: middle; }
 .admin-table tbody tr:hover { background-color: rgba(30, 58, 138, 0.02); }
+
+.badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
 
 /* --- PLAIN PROFESSIONAL MODALS --- */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.75); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s ease-in-out; }
@@ -64,20 +74,15 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .close-modal:hover { background-color: var(--border-light); color: var(--text-primary); }
 
 .modal-content h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
-.modal-content p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
 
+/* Forms inside Modals */
 .modal-form { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
 .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
 .form-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border-light); border-radius: 6px; font-size: 0.95rem; background-color: var(--bg-surface); color: var(--text-primary); font-family: 'Inter', sans-serif; box-sizing: border-box; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
 .form-input:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
 
-/* --- EDITABLE IMAGE WRAPPER --- */
-.image-upload-wrapper { position: relative; display: inline-block; cursor: pointer; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-light); background: var(--bg-body); min-height: 150px; display: flex; justify-content: center; align-items: center; }
-.image-upload-wrapper img { max-width: 100%; max-height: 250px; display: block; object-fit: cover; }
-.image-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; color: white; font-weight: 600; opacity: 0; transition: opacity 0.2s; gap: 8px; }
-.image-upload-wrapper:hover .image-overlay { opacity: 1; }
-
+/* Actions */
 .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); }
 .modal-actions.justify-center { justify-content: center; }
 .modal-btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background-color 0.15s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -86,10 +91,14 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .modal-btn.confirm-btn { background-color: var(--primary-blue); color: #ffffff; }
 .modal-btn.confirm-btn:hover { background-color: var(--primary-blue-hover); }
 
-.success-override { background-color: var(--success-green) !important; }
-.success-override:hover { background-color: #0d9668 !important; }
+/* NEW: Danger Override for Delete Buttons */
 .danger-override { background-color: var(--danger-red) !important; color: white !important; border: none !important; }
 .danger-override:hover { background-color: var(--danger-red-hover) !important; }
+
+/* --- DETAILS MODAL DATA LAYOUT --- */
+.details-grid { display: grid; grid-template-columns: 120px 1fr; gap: 8px 16px; margin-bottom: 16px; font-size: 0.95rem; }
+.details-label { font-weight: 600; color: var(--text-secondary); }
+.details-value { color: var(--text-primary); font-weight: 500; }
 
 .modal-content::-webkit-scrollbar { width: 6px; }
 .modal-content::-webkit-scrollbar-track { background: transparent; }
@@ -103,6 +112,7 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
     .main-content { margin-left: 0; padding: 24px 16px; }
 }
 @media (max-width: 768px) {
+    .controls-container { flex-direction: column; align-items: stretch; }
+    .search-box input { width: 100%; }
     .admin-table { display: block; overflow-x: auto; white-space: nowrap; }
-    .modal-content { margin: 16px; padding: 24px; }
 }

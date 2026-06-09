@@ -1,5 +1,5 @@
 /* ==========================================================
-   GLOBAL ADMIN STYLES & VARIABLES (TUPV RETRIEVE)
+   OVERVIEW ADMIN DASHBOARD STYLES (TUPV RETRIEVE)
    ========================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
@@ -34,7 +34,9 @@ body {
     overflow-x: hidden;
 }
 
-/* --- GLOBAL ADMIN HEADER --- */
+/* ==========================================================
+   LAYOUT: HEADER & SIDEBAR
+   ========================================================== */
 .admin-header {
     background-color: var(--primary-blue);
     color: #ffffff;
@@ -53,7 +55,6 @@ body {
 .admin-profile { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; font-weight: 500; }
 .admin-avatar { width: 36px; height: 36px; background-color: rgba(255,255,255,0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; }
 
-/* --- GLOBAL ADMIN SIDEBAR --- */
 .admin-sidebar {
     width: var(--sidebar-width);
     background-color: var(--bg-surface);
@@ -79,7 +80,6 @@ body {
 .logout-link { margin-top: auto; border-top: 1px solid var(--border-light); padding-top: 16px !important; color: var(--danger-red) !important; }
 .logout-link:hover { background-color: rgba(239, 68, 68, 0.05) !important; }
 
-/* --- MAIN CONTENT AREA --- */
 .main-content {
     flex: 1; margin-left: var(--sidebar-width); margin-top: var(--header-height);
     padding: 32px 40px; min-width: 0;
@@ -89,7 +89,9 @@ body {
 .page-header h2 { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
 .page-header p { color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px; }
 
-/* --- DASHBOARD SPECIFIC (Overview Stats) --- */
+/* ==========================================================
+   DASHBOARD STATS
+   ========================================================== */
 .dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 40px; }
 .stat-card {
     background-color: var(--bg-surface); border-radius: 16px; padding: 24px;
@@ -106,7 +108,9 @@ body {
 .stat-info h3 { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-weight: 600; }
 .stat-info p { font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
 
-/* --- GLOBAL TABLES --- */
+/* ==========================================================
+   TABLE STYLES
+   ========================================================== */
 .table-container {
     background-color: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border-light);
     box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.05); overflow: hidden;
@@ -131,30 +135,127 @@ body {
 .action-btn.view-btn:hover { background-color: var(--primary-blue); color: #fff; }
 .action-btn.delete-btn:hover { background-color: var(--danger-red); color: #fff; }
 
-/* --- GLOBAL MODALS --- */
-.modal-overlay { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s ease; }
-.modal-overlay.show { display: flex; opacity: 1; }
-.modal-content { background-color: var(--bg-surface); padding: 32px; width: 100%; max-width: 500px; border-radius: 20px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); transform: scale(0.95); transition: transform 0.2s ease; }
-.modal-overlay.show .modal-content { transform: scale(1); }
-.close-modal { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; background: none; border: none; transition: color 0.2s; }
-.close-modal:hover { color: var(--danger-red); }
-.modal-content h3 { font-size: 1.4rem; margin-bottom: 24px; color: var(--text-primary); }
+/* ==========================================================
+   PROFESSIONAL MODAL DESIGN
+   ========================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(15, 23, 42, 0.75); /* Deep solid overlay */
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
 
-.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
-.modal-btn { padding: 10px 20px; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+.modal-overlay.show { display: flex; opacity: 1; }
+
+.modal-content {
+    background-color: var(--bg-surface);
+    padding: 32px;
+    width: 100%; max-width: 550px;
+    border-radius: 12px; /* Clean, modern radius */
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(15px); /* Snappy slide up */
+    opacity: 0;
+    transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+    max-height: 90vh; overflow-y: auto;
+}
+
+.modal-overlay.show .modal-content {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.close-modal {
+    position: absolute; top: 20px; right: 20px;
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    background-color: transparent;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.25rem; color: var(--text-secondary);
+    cursor: pointer; border: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.close-modal:hover { background-color: var(--border-light); color: var(--text-primary); }
+
+.modal-content h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+.modal-content p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
+
+/* Modal Forms */
+.modal-form { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+
+.form-input {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--border-light); border-radius: 6px;
+    font-size: 0.95rem; background-color: var(--bg-surface);
+    color: var(--text-primary); font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.form-input:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
+
+/* Modal Actions */
+.modal-actions {
+    display: flex; justify-content: flex-end; gap: 12px;
+    margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+}
+
+.modal-btn {
+    padding: 10px 20px; border: none; border-radius: 6px;
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: background-color 0.15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
 .modal-btn.cancel-btn { background-color: var(--bg-body); color: var(--text-primary); border: 1px solid var(--border-light); }
 .modal-btn.cancel-btn:hover { background-color: var(--border-light); }
+
 .modal-btn.confirm-btn { background-color: var(--primary-blue); color: #ffffff; }
 .modal-btn.confirm-btn:hover { background-color: var(--primary-blue-hover); }
+
 .modal-btn.delete-btn { background-color: var(--danger-red); color: #ffffff; }
 .modal-btn.delete-btn:hover { background-color: var(--danger-red-hover); }
 
-/* --- RESPONSIVE --- */
-@media (max-width: 768px) {
+.success-override { background-color: var(--success-green) !important; }
+.success-override:hover { background-color: #0d9668 !important; }
+
+/* Custom Modal Scrollbar */
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-track { background: transparent; }
+.modal-content::-webkit-scrollbar-thumb { background-color: var(--border-light); border-radius: 10px; }
+
+/* --- EXPORT BADGE BUTTONS --- */
+.badge-btn {
+    background-color: var(--bg-body);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    transition: all 0.2s ease;
+}
+.badge-btn:hover { background-color: var(--primary-blue); color: #ffffff; border-color: var(--primary-blue); }
+
+/* ==========================================================
+   RESPONSIVE DESIGN
+   ========================================================== */
+@media (max-width: 992px) {
     .hamburger { display: block; }
-    .admin-sidebar { transform: translateX(-100%); box-shadow: 10px 0 25px rgba(0,0,0,0.1); }
+    .admin-header { left: 0; }
+    .admin-sidebar { transform: translateX(-100%); }
     .admin-sidebar.open { transform: translateX(0); }
-    .main-content { margin-left: 0; padding: 24px 16px; }
-    .dashboard-stats { grid-template-columns: 1fr; }
+    .main-content { margin-left: 0; width: 100%; padding: 24px 20px; }
+}
+
+@media (max-width: 768px) {
     .admin-table { display: block; overflow-x: auto; white-space: nowrap; }
+    .modal-content { margin: 16px; padding: 24px; }
+    .dashboard-stats { grid-template-columns: 1fr; }
 }

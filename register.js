@@ -42,13 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (authError) throw authError;
 
             // 4. Save their extra profile details to your public 'users' table
+           
             const { error: dbError } = await window.supabase
                 .from('users')
                 .insert([{
                     first_name: firstName,
                     last_name: lastName,
                     email: email,
-                    password: 'Managed By Supabase', 
                     contact_number: contactNumber,
                     course_section: courseSection,
                     address: address,
