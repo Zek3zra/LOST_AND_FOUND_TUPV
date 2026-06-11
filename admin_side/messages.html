@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retrieve TUPV | Support Messages</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="messages.css"> 
+</head>
+<body>
+
+    <header class="admin-header">
+        <div class="header-left">
+            <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+            <div class="header-title">Retrieve TUPV Admin</div>
+        </div>
+        <div class="admin-profile">
+            <span id="admin-name">Loading...</span>
+            <div class="admin-avatar"><i class="fa-solid fa-user-shield"></i></div>
+        </div>
+    </header>
+
+    <aside class="admin-sidebar" id="sidebar">
+        <ul class="nav-links">
+            <li><a href="overview.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="users.html"><i class="fa-solid fa-users"></i> Manage Users</a></li>
+            <li><a href="post-item.html"><i class="fa-solid fa-file-shield"></i> Pending Reports</a></li>
+            <li><a href="reports.html"><i class="fa-solid fa-box-open"></i> Active Posts</a></li>
+            <li><a href="records.html"><i class="fa-solid fa-folder-open"></i> Completed Records</a></li>
+            <li><a href="messages.html" class="active"><i class="fa-solid fa-envelope"></i> Support Messages</a></li>
+            <li style="margin-top: auto;">
+                <a href="#" id="admin-logout-btn" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</a>
+            </li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h2>Support Messages</h2>
+            <p>Manage incoming queries, photos, and support tickets from TUPV students.</p>
+        </div>
+
+        <div class="messenger-wrapper" id="messengerWrapper">
+            <div class="chat-sidebar">
+                <div class="contact-search">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="contactSearch" placeholder="Search students...">
+                    </div>
+                </div>
+                <div class="contacts-list" id="contactsList">
+                    <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Loading messages...
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-main" id="chatMain">
+                <div class="empty-chat-state" id="emptyChatState">
+                    <i class="fa-solid fa-messages"></i>
+                    <i class="fa-regular fa-comments" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 16px;"></i>
+                    <h3>No Conversation Selected</h3>
+                    <p style="color: var(--text-secondary);">Select a student from the menu on the left to view their support history and reply.</p>
+                </div>
+
+                <div class="active-chat-container" id="activeChatContainer" style="display: none; height: 100%; flex-direction: column;">
+                    <div class="chat-header">
+                        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                            <button id="mobileBackBtn" class="mobile-back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+                            <img src="../images/default-avatar.png" id="activeChatAvatar" class="chat-avatar" alt="Avatar">
+                            <div style="overflow: hidden;">
+                                <div class="chat-name" id="activeChatName" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Student Name</div>
+                                <div class="chat-status">Student Account</div>
+                            </div>
+                        </div>
+                        <button id="resolveTicketBtn" class="resolve-btn" style="display: none;"><i class="fa-solid fa-circle-check"></i> <span class="btn-text">Resolve Inquiry</span></button>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        </div>
+
+                    <div class="chat-input-area" style="flex-direction: column; gap: 8px;">
+                        <div id="chat-img-preview-container" class="chat-img-preview-container" style="display: none;">
+                            <img id="chat-img-preview" class="chat-img-preview" src="">
+                            <button id="remove-chat-img-btn" class="remove-img-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <input type="file" id="chatImageInput" accept="image/*" style="display: none;">
+                            <button class="attach-btn" id="attachBtn" title="Attach Image"><i class="fa-solid fa-paperclip"></i></button>
+                            <input type="text" id="chatInput" placeholder="Type your reply to the student..." autocomplete="off" style="flex: 1;">
+                            <button class="send-btn" id="sendBtn"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabaseClient.js"></script> 
+    <script src="messages.js"></script>
+</body>
+</html>

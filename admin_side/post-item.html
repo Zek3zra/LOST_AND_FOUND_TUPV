@@ -27,6 +27,7 @@
             <li><a href="post-item.html" class="active"><i class="fa-solid fa-file-shield"></i> Pending Reports</a></li>
             <li><a href="reports.html"><i class="fa-solid fa-box-open"></i> Active Posts</a></li>
             <li><a href="records.html"><i class="fa-solid fa-folder-open"></i> Completed Records</a></li>
+            <li><a href="messages.html"><i class="fa-solid fa-envelope"></i> Support Messages</a></li>
             <li style="margin-top: auto;">
                 <a href="#" id="admin-logout-btn" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</a>
             </li>
@@ -37,6 +38,13 @@
         <div class="page-header">
             <h2>Pending Reports</h2>
             <p>Review lost and found items submitted by students before they go live on the portal. You can alter details or reject false reports.</p>
+        </div>
+
+        <div class="controls-container">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search pending reports by item name, category, or reporter...">
+            </div>
         </div>
 
         <div class="table-container">
@@ -51,7 +59,7 @@
                             <th>Type</th>
                             <th>Item Details</th>
                             <th>Date Submitted</th>
-                            <th style="text-align: right;">Actions</th>
+                            <th class="actions-col">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="pending-reports-table">
@@ -63,68 +71,72 @@
     </main>
 
     <div id="publishModal" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content modal-lg">
             <button class="close-modal" data-close>&times;</button>
             <h3>Review & Alter Report</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">You can edit any incorrect or sensitive details before publishing.</p>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">You can edit any incorrect or sensitive details before publishing.</p>
             
             <form id="publishForm" class="modal-form">
                 <input type="hidden" id="reviewReportId">
                 <input type="hidden" id="reviewUserId">
                 <input type="hidden" id="reviewOriginalImage">
+                <input type="hidden" id="reviewReportType"> 
                 
-                <div class="form-group" style="text-align: center; margin-bottom: 16px;">
-                    <label style="text-align: left; margin-bottom: 4px;">Item Image</label>
-                    <div class="image-upload-wrapper" id="reviewImageWrapper" style="width: 100%;">
-                        <img id="reviewImage" src="" alt="No Image Provided">
-                        <div class="image-overlay"><i class="fa-solid fa-camera"></i> Change Image</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 24px;">
+                    <div style="flex: 0 0 250px;">
+                        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; display: block;">Item Image</label>
+                        <div class="image-upload-wrapper" id="reviewImageWrapper" style="width: 100%; height: 250px;">
+                            <img id="reviewImage" src="" alt="No Image Provided" style="display: none;">
+                            <div class="image-overlay"><i class="fa-solid fa-camera"></i> Change Image</div>
+                        </div>
+                        <input type="file" id="reviewNewImageInput" accept="image/*" style="display: none;">
                     </div>
-                    <input type="file" id="reviewNewImageInput" accept="image/*" style="display: none;">
+
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+                        <div style="display: flex; gap: 16px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Item Name / Title</label>
+                                <input type="text" id="reviewItemName" class="form-input" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Category</label>
+                                <select id="reviewCategory" class="form-input" required>
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Books & Notes">Books & Notes</option>
+                                    <option value="Clothing">Uniforms & Clothing</option>
+                                    <option value="Accessories">Accessories & IDs</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 16px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Date Occurred</label>
+                                <input type="date" id="reviewDate" class="form-input" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Time</label>
+                                <input type="time" id="reviewTime" class="form-input" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" id="reviewLocation" class="form-input" required>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="display: flex; gap: 16px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Item Name / Title</label>
-                        <input type="text" id="reviewItemName" class="form-input" required>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Category</label>
-                        <select id="reviewCategory" class="form-input" required>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Books & Notes">Books & Notes</option>
-                            <option value="Clothing">Uniforms & Clothing</option>
-                            <option value="Accessories">Accessories & IDs</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label id="reviewDescriptionLabel">Description</label>
+                    <textarea id="reviewDescription" class="form-input" rows="4" required></textarea>
                 </div>
 
-                <div style="display: flex; gap: 16px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Date Occurred</label>
-                        <input type="date" id="reviewDate" class="form-input" required>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Time</label>
-                        <input type="time" id="reviewTime" class="form-input" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Location</label>
-                    <input type="text" id="reviewLocation" class="form-input" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="reviewDescription" class="form-input" rows="3" required></textarea>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="modal-btn cancel-btn" id="rejectInitBtn" style="color: var(--danger-red); border-color: var(--danger-red);">Reject Report</button>
-                    <div style="flex-grow: 1;"></div>
+                <div class="modal-actions" style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light);">
+                    <button type="button" class="modal-btn cancel-btn danger-override" id="rejectInitBtn"><i class="fa-solid fa-xmark"></i> Reject</button>
                     <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
-                    <button type="submit" class="modal-btn confirm-btn success-override" id="publishConfirmBtn">Approve & Publish</button>
+                    <button type="submit" class="modal-btn confirm-btn" id="publishConfirmBtn"><i class="fa-solid fa-check"></i> Approve & Publish</button>
                 </div>
             </form>
         </div>

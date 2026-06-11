@@ -28,6 +28,7 @@
             <li><a href="post-item.html"><i class="fa-solid fa-file-shield"></i> Pending Reports</a></li>
             <li><a href="reports.html"><i class="fa-solid fa-box-open"></i> Active Posts</a></li>
             <li><a href="records.html"><i class="fa-solid fa-folder-open"></i> Completed Records</a></li>
+            <li><a href="messages.html"><i class="fa-solid fa-envelope"></i> Support Messages</a></li>
             <li style="margin-top: auto;">
                 <a href="#" id="admin-logout-btn" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</a>
             </li>
@@ -68,44 +69,22 @@
     </main>
 
     <div id="viewUserModal" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 600px;">
             <button class="close-modal" data-close>&times;</button>
-            <h3>User's Latest Report</h3>
-            <div class="user-details" id="modal-user-details" style="background: var(--bg-body); padding: 16px; border-radius: 8px; border: 1px solid var(--border-light); font-size: 0.95rem; line-height: 1.6;">
+            <h3 style="margin-bottom: 16px;">User Details & Activity</h3>
+            <div class="user-details" id="modal-user-details" style="font-size: 0.95rem; line-height: 1.6;">
                 </div>
-            <div class="modal-actions justify-center">
+            <div class="modal-actions justify-center" style="margin-top: 24px;">
                 <button class="modal-btn confirm-btn" data-close>Close</button>
             </div>
-        </div>
-    </div>
-
-    <div id="messageUserModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal" data-close>&times;</button>
-            <h3>Send Message</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">This message will appear in <strong id="messageUserName" style="color: var(--text-primary);">the user's</strong> notification bell.</p>
-            
-            <form id="messageForm" class="modal-form">
-                <input type="hidden" id="messageUserId">
-                
-                <div class="form-group">
-                    <label>Message Content</label>
-                    <textarea id="messageContent" class="form-input" rows="4" placeholder="Type your message here..." required></textarea>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
-                    <button type="submit" class="modal-btn confirm-btn" id="sendMessageBtn" style="display: flex; gap: 8px; align-items: center;"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
-                </div>
-            </form>
         </div>
     </div>
 
     <div id="editUserModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal" data-close>&times;</button>
-            <h3>Edit Account Details</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Manage permissions and verification status for <strong id="editUserName" style="color: var(--text-primary);">this user</strong>.</p>
+            <h3>Edit Account Role</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Manage administrative permissions for <strong id="editUserName" style="color: var(--text-primary);">this user</strong>.</p>
             
             <form id="editUserForm" class="modal-form">
                 <input type="hidden" id="editUserId">
@@ -115,14 +94,6 @@
                     <select id="editRole" class="form-input" required>
                         <option value="user">Standard User</option>
                         <option value="admin">Administrator</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Verification Status</label>
-                    <select id="editStatus" class="form-input" required>
-                        <option value="true">Verified</option>
-                        <option value="false">Pending Verification</option>
                     </select>
                 </div>
                 

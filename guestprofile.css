@@ -1,21 +1,22 @@
 /* --- STYLES FOR GUEST MODE PAGE (TUPV RETRIEVE UI) --- */
 
 .guest-container {
-    padding: 40px 24px;
+    padding: 24px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-grow: 1; /* Pushes the footer to the bottom naturally */
+    flex-grow: 1; 
     text-align: center;
-    background-color: var(--bg-body); 
+    background-color: #f8fafc; 
+    min-height: calc(100vh - 150px); /* Forces centering between header and footer */
 }
 
 .guest-card {
-    background-color: var(--bg-surface);
+    background-color: #ffffff;
     border-radius: 20px;
-    border: 1px solid var(--border-light);
-    padding: 48px 40px;
+    border: 1px solid #e2e8f0;
+    padding: 40px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -24,6 +25,13 @@
     max-width: 460px;
     box-shadow: 0 25px 50px -12px rgba(30, 58, 138, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@media (min-width: 640px) {
+    .guest-card {
+        padding: 48px 40px;
+    }
 }
 
 .guest-card:hover {
@@ -32,51 +40,29 @@
 }
 
 .guest-icon {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background-color: rgba(245, 158, 11, 0.1); /* Soft Amber Background */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: var(--accent-amber);
-    position: relative;
-    margin-bottom: 12px;
-}
-
-.guest-icon svg {
-    width: 50px;
-    height: 50px;
-}
-
-.guest-question-mark {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--primary-blue);
-    background: var(--bg-surface);
-    width: 36px;
-    height: 36px;
+    width: 80px;
+    height: 80px;
+    background-color: #f1f5f9;
+    color: #475569;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    border: 2px solid var(--bg-surface);
+    font-size: 2rem;
+    margin-bottom: 8px;
+    border: 2px solid #e2e8f0;
 }
 
 .guest-card h2 {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: #0f172a;
     letter-spacing: -0.02em;
 }
 
 .guest-card p {
     font-size: 0.95rem;
-    color: var(--text-secondary);
+    color: #475569;
     margin-bottom: 16px;
     line-height: 1.6;
 }
@@ -103,37 +89,46 @@
 }
 
 .guest-btn.login {
-    background-color: var(--primary-blue);
+    background-color: #1E3A8A;
     color: #ffffff;
     border: 1px solid transparent;
     box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
 }
 
 .guest-btn.login:hover {
-    background-color: var(--primary-blue-hover);
+    background-color: #1E40AF;
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(30, 58, 138, 0.3);
 }
 
 .guest-btn.signup {
-    background-color: var(--bg-surface);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-light);
+    background-color: transparent;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
 }
 
 .guest-btn.signup:hover {
-    border-color: var(--primary-blue);
-    color: var(--primary-blue);
-    background-color: rgba(30, 58, 138, 0.02);
+    background-color: #e2e8f0;
 }
 
-/* Remove the old mobile footer logic since we now use the responsive unified footer */
-.footer {
-    display: none;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-@media (min-width: 600px) {
-    .guest-buttons {
-        flex-direction: row;
-    }
-}
+/* --- STATIC INFO MODAL STYLES --- */
+.info-modal-text { color: #475569; font-size: 0.95rem; line-height: 1.7; text-align: left; }
+.info-modal-text h4 { color: #0f172a; margin-top: 20px; margin-bottom: 8px; font-size: 1.05rem; font-weight: 700; }
+.info-modal-text h4:first-child { margin-top: 0; }
+.info-modal-text p { margin-bottom: 16px; }
+.info-modal-text ul { margin-left: 20px; margin-bottom: 16px; }
+.info-modal-text li { margin-bottom: 8px; }
+
+.faq-item { border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 16px; }
+.faq-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.contact-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; text-align: left; }
+.contact-card i { font-size: 1.5rem; color: #1E3A8A; width: 30px; text-align: center; }
+
+.nav-icon { text-decoration: none; }
+.nav-icon i { color: #94a3b8; transition: color 0.2s ease; }
+.nav-icon.active i { color: #ffffff; }

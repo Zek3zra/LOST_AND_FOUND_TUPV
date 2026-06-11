@@ -1,20 +1,14 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // --- 1. Security Check ---
     const guestMode = sessionStorage.getItem('userType') === 'guest';
     if (!sessionStorage.getItem('user_id') && !guestMode) {
         window.location.href = 'login.html';
         return;
     }
+    const userId = sessionStorage.getItem('user_id');
 
-    if (guestMode) {
-        document.getElementById('profile-name').textContent = 'Guest User';
-        document.getElementById('profile-email').textContent = 'Read-only Access';
-        // Disable forms for guests
-        document.querySelectorAll('.profile-actions, .user-details-card button').forEach(el => el.style.display = 'none');
-    }
+    let currentUserData = {}; 
 
-    // --- 2. Basic UI & Logout ---
     function updateDateTime() {
         const dt = document.getElementById('current-date-time');
         if(dt) dt.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -24,11 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('desktop-sidebar');
-    if (sidebarToggle && sidebar) sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+    if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
+    }
 
     if (sessionStorage.getItem('role') === 'admin') {
         const adminLink = document.getElementById('admin-dashboard-link');
-        if(adminLink) adminLink.classList.remove('hidden');
+        if (adminLink) adminLink.classList.remove('hidden');
     }
 
     const logoutBtn = document.getElementById('logout-btn');
@@ -41,137 +37,152 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    document.querySelectorAll('.close-modal').forEach(btn => {
+    const modals = {
+        'about-link': 'about-modal', 'footer-about-link': 'about-modal',
+        'footer-how-it-works-link': 'how-it-works-modal', 'footer-faq-link': 'faq-modal',
+        'contact-link': 'footer-contact-modal', 'footer-contact-link': 'footer-contact-modal',
+        'footer-privacy-link': 'privacy-modal', 'footer-terms-link': 'terms-modal'
+    };
+    
+    Object.keys(modals).forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('click', (e) => { e.preventDefault(); document.getElementById(modals[id]).classList.add('show'); });
+    });
+    
+    document.querySelectorAll('.close-modal, [data-close]').forEach(btn => {
         btn.addEventListener('click', function() { this.closest('.modal-overlay').classList.remove('show'); });
     });
 
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
+    });
 
-    // --- 3. Fetch & Display User Data ---
-    const userId = sessionStorage.getItem('user_id');
+    if (guestMode) {
+        document.getElementById('profile-name').textContent = 'Guest Sandbox';
+        document.getElementById('profile-email').textContent = 'Read-only Access';
+        document.querySelectorAll('.profile-action-buttons button:not(#logout-btn), #pfp-trigger .avatar-overlay').forEach(el => el.style.display = 'none');
+        document.getElementById('pfp-trigger').style.cursor = 'default';
+        return; 
+    }
 
-    async function loadUserProfile() {
-        if (guestMode) return;
-
-        const { data, error } = await window.supabase
-            .from('users')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        if (data) {
-            document.getElementById('profile-name').textContent = `${data.first_name} ${data.last_name}`;
-            document.getElementById('profile-email').textContent = data.email;
-            document.getElementById('profile-contact').textContent = data.contact_number || 'N/A';
-            document.getElementById('profile-course').textContent = data.course_section || 'N/A';
-            document.getElementById('profile-address').textContent = data.address || 'N/A';
-            
-            if (data.profile_picture_path) {
-                document.getElementById('profile-picture-img').src = data.profile_picture_path;
+    // --- SMART NOTIFICATION DOT CHECKER ---
+    async function checkUnreadMessages() {
+        const { data: chats } = await window.supabase.from('chat_messages').select('msg_id, sender').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+        if (chats && chats.length > 0 && chats[0].sender === 'admin') {
+            const lastReadId = sessionStorage.getItem('lastReadMsgId');
+            if (String(lastReadId) !== String(chats[0].msg_id)) {
+                document.getElementById('support-notif-dot').style.display = 'block';
             }
+        }
 
-            // Pre-fill edit modal
-            document.getElementById('edit-first-name').value = data.first_name;
-            document.getElementById('edit-last-name').value = data.last_name;
-            document.getElementById('edit-contact').value = data.contact_number || '';
-            document.getElementById('edit-course').value = data.course_section || '';
-            document.getElementById('edit-address').value = data.address || '';
+        const { data: notifs } = await window.supabase.from('notifications').select('created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+        if (notifs && notifs.length > 0) {
+            const lastReadTime = sessionStorage.getItem('lastReadNotifTime');
+            if (!lastReadTime || new Date(notifs[0].created_at).getTime() > new Date(lastReadTime).getTime()) {
+                document.getElementById('general-notif-dot').style.display = 'block';
+            }
         }
     }
     
-    // --- 4. Notifications Fetcher ---
-    async function loadNotifications() {
-        if (guestMode) return;
+    checkUnreadMessages();
+    setInterval(checkUnreadMessages, 10000);
 
-        const { data, error } = await window.supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
+    // --- PROFILE DATA FETCHING ---
+    async function loadUserProfile() {
+        const { data, error } = await window.supabase.from('users').select('*').eq('id', userId).single();
+        if (error) return;
 
-        const list = document.getElementById('notifications-list');
-        const badge = document.getElementById('unread-count');
+        currentUserData = data; 
 
-        if (error || !data || data.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-secondary); text-align:center; padding:10px;">No recent notifications.</p>';
-            badge.textContent = '0 Unread';
-            return;
+        document.getElementById('profile-name').textContent = `${data.first_name} ${data.last_name}`;
+        document.getElementById('profile-email').textContent = data.email;
+        
+        document.getElementById('display-fullname').textContent = `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Not provided';
+        document.getElementById('display-course').textContent = data.course_section || 'Not provided';
+        document.getElementById('display-address').textContent = data.address || 'Not provided';
+        document.getElementById('display-contact').textContent = data.contact_number || 'Not provided';
+
+        if (data.profile_picture_path) {
+            document.getElementById('profile-picture-img').src = data.profile_picture_path;
         }
-
-        let unreadCount = 0;
-        list.innerHTML = data.map(n => {
-            const isRead = n.is_read == 1 || n.is_read === true;
-            if (!isRead) unreadCount++;
-            
-            const dateStr = new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            
-            return `
-                <div class="notif-item ${isRead ? '' : 'unread'}" data-id="${n.notification_id}">
-                    <div class="notif-content">
-                        <p>${n.message || 'New update regarding your report.'}</p>
-                        <small>${dateStr}</small>
-                    </div>
-                    ${!isRead ? `<button class="mark-read-btn" title="Mark as read"><i class="fa-solid fa-check"></i></button>` : ''}
-                </div>
-            `;
-        }).join('');
-
-        badge.textContent = `${unreadCount} Unread`;
-
-        document.querySelectorAll('.mark-read-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const item = e.target.closest('.notif-item');
-                const notifId = item.dataset.id;
-                
-                item.style.opacity = '0.5';
-                
-                await window.supabase
-                    .from('notifications')
-                    .update({ is_read: 1 })
-                    .eq('notification_id', notifId);
-                
-                loadNotifications();
-            });
-        });
     }
-
     loadUserProfile();
-    loadNotifications();
 
-    // --- 5. Handle Profile Editing ---
+    // --- IMAGE UPLOAD FIX ---
+    const pfpTrigger = document.getElementById('pfp-trigger');
+    const pfpInput = document.getElementById('pfp-upload-input');
+    const pfpImg = document.getElementById('profile-picture-img'); 
+
+    pfpTrigger.addEventListener('click', () => pfpInput.click());
+
+    pfpInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => { pfpImg.src = event.target.result; pfpImg.style.opacity = '0.5'; };
+        reader.readAsDataURL(file);
+
+        const fileExt = file.name.split('.').pop() || 'png';
+        const fileName = `user_${userId}_${Date.now()}.${fileExt}`;
+
+        try {
+            const { error: uploadError } = await window.supabase.storage.from('profile-pictures').upload(fileName, file);
+            if (uploadError) throw new Error(uploadError.message);
+
+            const { data } = window.supabase.storage.from('profile-pictures').getPublicUrl(fileName);
+            const { error: dbError } = await window.supabase.from('users').update({ profile_picture_path: data.publicUrl }).eq('id', userId);
+            if (dbError) throw new Error(dbError.message);
+
+            sessionStorage.setItem('profile_picture_path', data.publicUrl);
+            pfpImg.src = data.publicUrl;
+            pfpImg.style.opacity = '1';
+
+        } catch (error) {
+            alert("Profile picture upload failed: " + error.message);
+            pfpImg.style.opacity = '1';
+            loadUserProfile(); 
+        }
+    });
+
+    // --- PROFILE EDITS ---
     document.getElementById('edit-profile-btn').addEventListener('click', () => {
+        document.getElementById('edit-firstname').value = currentUserData.first_name || '';
+        document.getElementById('edit-lastname').value = currentUserData.last_name || '';
+        document.getElementById('edit-course').value = currentUserData.course_section || '';
+        document.getElementById('edit-address').value = currentUserData.address || '';
+        document.getElementById('edit-contact').value = currentUserData.contact_number || '';
         document.getElementById('edit-profile-modal').classList.add('show');
     });
 
     document.getElementById('edit-profile-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('save-profile-btn');
-        btn.textContent = 'Saving...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
         btn.disabled = true;
 
         const updates = {
-            first_name: document.getElementById('edit-first-name').value,
-            last_name: document.getElementById('edit-last-name').value,
+            first_name: document.getElementById('edit-firstname').value,
+            last_name: document.getElementById('edit-lastname').value,
             contact_number: document.getElementById('edit-contact').value,
             course_section: document.getElementById('edit-course').value,
-            address: document.getElementById('edit-address').value
+            address: document.getElementById('edit-address').value,
         };
 
         const { error } = await window.supabase.from('users').update(updates).eq('id', userId);
-
         if (!error) {
-            sessionStorage.setItem('user_name', `${updates.first_name} ${updates.last_name}`);
             document.getElementById('edit-profile-modal').classList.remove('show');
             loadUserProfile(); 
         } else {
-            alert('Failed to update profile: ' + error.message);
+            alert("Error updating profile: " + error.message);
         }
-
-        btn.textContent = 'Save Changes';
+        btn.innerHTML = 'Save Changes';
         btn.disabled = false;
     });
 
-    // --- 6. Handle Password Change ---
+    // --- SECURITY MODAL ---
     document.getElementById('change-pwd-btn').addEventListener('click', () => {
+        document.getElementById('change-pwd-form').reset();
         document.getElementById('change-pwd-modal').classList.add('show');
     });
 
@@ -180,107 +191,381 @@ document.addEventListener('DOMContentLoaded', async () => {
         const newPwd = document.getElementById('new-pwd').value;
         const confirmPwd = document.getElementById('confirm-pwd').value;
 
-        if (newPwd !== confirmPwd) {
-            alert("New passwords do not match!");
-            return;
-        }
-
+        if (newPwd !== confirmPwd) { alert("Passwords do not match!"); return; }
+        
         const btn = document.getElementById('save-pwd-btn');
-        btn.textContent = 'Updating...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
         btn.disabled = true;
 
         const { error } = await window.supabase.auth.updateUser({ password: newPwd });
-
         if (!error) {
-            alert("Password updated successfully!");
+            alert("Password successfully secured!");
             document.getElementById('change-pwd-modal').classList.remove('show');
-            document.getElementById('change-pwd-form').reset();
         } else {
             alert("Failed to update password: " + error.message);
         }
-
-        btn.textContent = 'Update Password';
+        btn.innerHTML = 'Update Password';
         btn.disabled = false;
     });
 
-    // --- 7. Handle Profile Picture Upload ---
-    const pfpTrigger = document.getElementById('pfp-trigger');
-    const pfpInput = document.getElementById('pfp-upload-input');
+    // --- SYSTEM NOTIFICATIONS LOGIC ---
+    const notifModal = document.getElementById('notifications-modal');
+    const notifList = document.getElementById('notifications-list');
+    const notifBtn = document.getElementById('open-notifications-btn');
 
-    if (pfpTrigger && !guestMode) {
-        pfpTrigger.addEventListener('click', () => pfpInput.click());
+    if (notifBtn) {
+        notifBtn.addEventListener('click', () => {
+            document.getElementById('general-notif-dot').style.display = 'none';
+            notifModal.classList.add('show');
+            loadNotifications();
+        });
     }
 
-    pfpInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        document.getElementById('profile-picture-img').style.opacity = '0.5';
-
-        const fileExt = file.name.split('.').pop();
-        const fileName = `pfp_${userId}_${Date.now()}.${fileExt}`;
-
-        // FIX: The bucket is properly named 'profile-pictures' here now!
-        const { error: uploadError } = await window.supabase.storage
-            .from('profile-pictures')
-            .upload(fileName, file);
-
-        if (uploadError) {
-            alert("Failed to upload image: " + uploadError.message);
-            document.getElementById('profile-picture-img').style.opacity = '1';
-            return;
-        }
-
-        // FIX: The bucket is properly named 'profile-pictures' here now!
-        const { data: publicUrlData } = window.supabase.storage
-            .from('profile-pictures')
-            .getPublicUrl(fileName);
-
-        const publicUrl = publicUrlData.publicUrl;
-
-        const { error: dbError } = await window.supabase
-            .from('users')
-            .update({ profile_picture_path: publicUrl })
-            .eq('id', userId);
-
-        if (!dbError) {
-            document.getElementById('profile-picture-img').src = publicUrl;
-        } else {
-            alert("Failed to save image path to database.");
-        }
+    async function loadNotifications() {
+        notifList.innerHTML = '<div style="text-align:center; padding: 20px; color: #475569;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>';
         
-        document.getElementById('profile-picture-img').style.opacity = '1';
-    });
+        try {
+            const { data: notifs, error } = await window.supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+            if (error) throw error;
 
-    // --- 8. Handle Account Deletion ---
+            if (!notifs || notifs.length === 0) {
+                notifList.innerHTML = '<div style="text-align:center; padding: 40px; color: #475569;"><i class="fa-regular fa-bell-slash" style="font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5;"></i><br>No new notifications.</div>';
+                return;
+            }
 
-    document.getElementById('delete-account-btn').addEventListener('click', () => {
-        document.getElementById('delete-account-modal').classList.add('show');
-    });
+            sessionStorage.setItem('lastReadNotifTime', new Date().toISOString());
 
-    document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-        const btn = document.getElementById('confirm-delete-btn');
-        btn.textContent = 'Deleting...';
-        btn.disabled = true;
-
-        // 1. Delete user from your public 'users' table (which automatically deletes their reports)
-        const { error: dbError } = await window.supabase.from('users').delete().eq('id', userId);
-
-        if (!dbError) {
-            
-            // 2. Trigger our new database function to completely wipe their Supabase Auth account
-            await window.supabase.rpc('delete_user_account');
-
-            // 3. Clear browser memory and redirect
-            await window.supabase.auth.signOut();
-            sessionStorage.clear();
-            
-            alert("Your account has been completely and permanently deleted.");
-            window.location.href = 'landing.html';
-        } else {
-            alert("Failed to delete account: " + dbError.message);
-            btn.textContent = 'Yes, Delete My Account';
-            btn.disabled = false;
+            notifList.innerHTML = notifs.map(n => {
+                const timeStr = new Date(n.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const cleanMessage = n.message.startsWith("System Admin:") ? n.message.replace("System Admin:", "").trim() : n.message;
+                
+                return `
+                    <div class="notif-item">
+                        <div class="notif-icon"><i class="fa-solid fa-circle-info"></i></div>
+                        <div class="notif-content">
+                            <div class="notif-text">${cleanMessage}</div>
+                            <div class="notif-time">${timeStr}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (err) {
+            notifList.innerHTML = `<div style="text-align:center; padding: 20px; color: #ef4444;">Could not load notifications: ${err.message}</div>`;
         }
+    }
+
+    // --- USER REPORT HISTORY LOGIC ---
+    const historyBtn = document.getElementById('open-history-btn');
+    const historyModal = document.getElementById('history-modal');
+    const historyList = document.getElementById('history-list');
+    let userHistoryData = []; 
+
+    if (historyBtn) {
+        historyBtn.addEventListener('click', () => {
+            historyModal.classList.add('show');
+            loadUserHistory();
+        });
+    }
+
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
+    const confirmClearHistoryModal = document.getElementById('confirmClearHistoryModal');
+    const executeClearHistoryBtn = document.getElementById('execute-clear-history-btn');
+
+    if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', () => confirmClearHistoryModal.classList.add('show'));
+    
+    if (executeClearHistoryBtn) {
+        executeClearHistoryBtn.addEventListener('click', () => {
+            localStorage.setItem(`hide_reports_until_${userId}`, new Date().toISOString());
+            confirmClearHistoryModal.classList.remove('show');
+            loadUserHistory();
+        });
+    }
+
+    async function loadUserHistory() {
+        historyList.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 40px; color: #475569;"><i class="fa-solid fa-circle-notch fa-spin"></i> Fetching your reports...</td></tr>';
+
+        try {
+            const { data, error } = await window.supabase.from('item_reports').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+            if (error) throw error;
+
+            let visibleData = data || [];
+            const hideUntil = localStorage.getItem(`hide_reports_until_${userId}`);
+            
+            if (hideUntil) {
+                const cutoffTime = new Date(hideUntil).getTime();
+                visibleData = visibleData.filter(report => new Date(report.created_at).getTime() > cutoffTime);
+            }
+
+            if (visibleData.length === 0) {
+                historyList.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 40px; color: #475569;">You have not reported any items yet, or your view has been cleared.</td></tr>';
+                return;
+            }
+
+            userHistoryData = visibleData; 
+
+            historyList.innerHTML = visibleData.map(report => {
+                const rDate = new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let statusClass = 'status-pending';
+                if (report.report_status === 'approved') statusClass = 'status-approved';
+                if (report.report_status === 'matched') statusClass = 'status-matched';
+                if (report.report_status === 'rejected') statusClass = 'status-rejected';
+                if (report.report_status === 'archived') statusClass = 'status-archived';
+
+                return `
+                    <tr>
+                        <td>
+                            <div><strong style="font-size:1rem; color:#0f172a;">${report.item_name_specific}</strong></div>
+                            <div style="font-size:0.8rem; color:#475569; text-transform:capitalize;">${report.report_type} Item &bull; ${report.item_category}</div>
+                        </td>
+                        <td>${rDate}</td>
+                        <td><span class="badge ${statusClass}" style="color: white;">${report.report_status}</span></td>
+                        <td style="text-align: right;">
+                            <button class="badge-btn" onclick="viewHistoryDetails('${report.report_id}')"><i class="fa-solid fa-eye"></i> View</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+        } catch (err) {
+            historyList.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color: #ef4444;">Failed to load history: ${err.message}</td></tr>`;
+        }
+    }
+
+    window.viewHistoryDetails = function(reportId) {
+        const report = userHistoryData.find(r => String(r.report_id) === String(reportId));
+        if (!report) return;
+
+        document.getElementById('hist-modal-item').textContent = report.item_name_specific;
+        document.getElementById('hist-modal-category').textContent = `${report.report_type} Item • ${report.item_category}`;
+        document.getElementById('hist-modal-location').textContent = report.item_location;
+        
+        const postedDate = new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const eventDate = new Date(report.item_datetime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+        
+        document.getElementById('hist-modal-posted-date').textContent = postedDate;
+        document.getElementById('hist-modal-datetime').textContent = eventDate;
+        
+        // 1. FIXED: Show the real description (admin_specific_details) if it's a found item
+        const actualDescription = report.report_type === 'found' && report.admin_specific_details 
+            ? report.admin_specific_details 
+            : report.item_description;
+        document.getElementById('hist-modal-description').textContent = actualDescription || 'No description provided.';
+        
+        // 2. NEW: Show Who Claimed/Found it if Matched
+        const matchBlock = document.getElementById('hist-match-details');
+        if (report.report_status === 'matched') {
+            const label = report.report_type === 'lost' ? 'Found and Returned By:' : 'Claimed By True Owner:';
+            const personName = report.matched_person_name || 'Verified by Admin'; 
+            
+            document.getElementById('hist-match-label').textContent = label;
+            document.getElementById('hist-match-person').textContent = personName;
+            matchBlock.style.display = 'block';
+        } else {
+            matchBlock.style.display = 'none';
+        }
+
+        const statusBadge = document.getElementById('hist-modal-status');
+        statusBadge.textContent = report.report_status;
+        
+        statusBadge.className = 'badge'; 
+        if (report.report_status === 'approved') statusBadge.classList.add('status-approved');
+        else if (report.report_status === 'matched') statusBadge.classList.add('status-matched');
+        else if (report.report_status === 'rejected') statusBadge.classList.add('status-rejected');
+        else if (report.report_status === 'archived') statusBadge.classList.add('status-archived');
+        else statusBadge.classList.add('status-pending');
+
+        const imgWrapper = document.getElementById('hist-image-wrapper');
+        const imgEl = document.getElementById('hist-modal-image');
+        const layoutContainer = document.getElementById('hist-modal-layout');
+
+        if (report.image_path) {
+            imgEl.src = report.image_path;
+            imgWrapper.style.display = 'block';
+            layoutContainer.classList.add('has-image');
+        } else {
+            imgWrapper.style.display = 'none';
+            imgEl.src = '';
+            layoutContainer.classList.remove('has-image');
+        }
+
+        document.getElementById('historyDetailsModal').classList.add('show');
+    };
+
+    // --- MESSENGER LOGIC ---
+    const messengerModal = document.getElementById('messenger-modal');
+    const chatHistory = document.getElementById('chat-history');
+    const chatInput = document.getElementById('chat-input');
+    const sendChatBtn = document.getElementById('send-chat-btn');
+    
+    const userChatImageInput = document.getElementById('userChatImageInput');
+    const userAttachBtn = document.getElementById('userAttachBtn');
+    const userPreviewContainer = document.getElementById('user-chat-img-preview-container');
+    const userPreviewImg = document.getElementById('user-chat-img-preview');
+    const userRemoveImgBtn = document.getElementById('user-remove-chat-img-btn');
+    let userPendingImageFile = null;
+
+    if (userAttachBtn) {
+        userAttachBtn.addEventListener('click', () => userChatImageInput.click());
+
+        userChatImageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                userPendingImageFile = file;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    userPreviewImg.src = event.target.result;
+                    userPreviewContainer.style.display = 'inline-block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        userRemoveImgBtn.addEventListener('click', () => {
+            userPendingImageFile = null;
+            userChatImageInput.value = '';
+            userPreviewContainer.style.display = 'none';
+            userPreviewImg.src = '';
+        });
+    }
+
+    window.rejectResolution = async function(msgId) {
+        await window.supabase.from('chat_messages').delete().eq('msg_id', msgId);
+        await window.supabase.from('chat_messages').insert([{ user_id: userId, sender: 'user', message: '❌ I still need help with this.' }]);
+        await loadMessenger(true);
+    };
+
+    window.confirmResolution = async function() {
+        const btn = document.querySelector('.confirm-resolve-btn');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Clearing...';
+
+        const { error } = await window.supabase.from('chat_messages').delete().eq('user_id', userId);
+        
+        if (error) {
+            alert("Failed to clear chat: " + error.message);
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Yes, resolved';
+        } else {
+            await loadMessenger(true);
+        }
+    };
+
+    async function loadMessenger(isSilent = false) {
+        if (!isSilent) {
+            chatHistory.innerHTML = '<div style="text-align:center; padding: 20px; color: #475569;"><i class="fa-solid fa-circle-notch fa-spin"></i></div>';
+        }
+
+        try {
+            const { data: chats, error: chatErr } = await window.supabase.from('chat_messages').select('msg_id, user_id, sender, message, image_url, created_at').eq('user_id', userId).order('created_at', { ascending: true });
+            if (chatErr) throw chatErr;
+
+            let allMessages = chats || [];
+
+            if (allMessages.length > 0) {
+                const latestChat = allMessages[allMessages.length - 1];
+                if (latestChat.sender === 'admin') {
+                    sessionStorage.setItem('lastReadMsgId', latestChat.msg_id);
+                    document.getElementById('support-notif-dot').style.display = 'none';
+                }
+            }
+
+            allMessages = allMessages.filter(msg => msg.message !== '✅ The student confirmed the resolution and closed the chat.');
+
+            if (allMessages.length === 0) {
+                chatHistory.innerHTML = '<div style="text-align:center; color: #475569; padding: 40px; margin: auto;"><i class="fa-solid fa-headset" style="font-size: 2.5rem; opacity: 0.2; margin-bottom:12px;"></i><br>Send a message or a photo to open a ticket with the Admin.</div>';
+                return;
+            }
+
+            chatHistory.innerHTML = allMessages.map(msg => {
+                const timeStr = new Date(msg.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                if (msg.message === '___RESOLVE_REQUEST___') {
+                    return `
+                        <div class="msg-wrap system" style="max-width: 100%; width: 100%; margin: 12px 0;">
+                            <div class="user-resolve-bubble">
+                                <i class="fa-solid fa-clipboard-check" style="color: #10b981; font-size: 2rem; margin-bottom: 8px;"></i><br>
+                                <strong style="font-size: 1rem; color: #0f172a;">Inquiry Resolved?</strong><br>
+                                <span style="display:block; margin-top:4px;">The Admin has marked this inquiry as resolved.</span>
+                                <div class="resolve-actions">
+                                    <button class="reject-resolve-btn" onclick="rejectResolution('${msg.msg_id}')">No, I need help</button>
+                                    <button class="confirm-resolve-btn" onclick="confirmResolution()"><i class="fa-solid fa-check"></i> Yes, resolved</button>
+                                </div>
+                            </div>
+                            <div class="msg-time" style="text-align: center;">${timeStr}</div>
+                        </div>
+                    `;
+                }
+
+                const role = msg.sender === 'user' ? 'user' : 'admin';
+                const textHtml = msg.message ? `<div>${msg.message}</div>` : '';
+                const imgHtml = msg.image_url ? `<img src="${msg.image_url}" class="chat-msg-img" onclick="window.open('${msg.image_url}', '_blank')">` : '';
+
+                return `<div class="msg-wrap ${role}"><div class="msg-bubble">${imgHtml}${textHtml}</div><div class="msg-time">${timeStr}</div></div>`;
+                
+            }).join('');
+            
+            setTimeout(() => chatHistory.scrollTop = chatHistory.scrollHeight, 50);
+
+        } catch (err) {
+            console.error("Messenger Rendering Error: ", err);
+            chatHistory.innerHTML = '<div style="text-align:center; padding: 20px; color: #b91c1c;">Could not load chat history at this time.</div>';
+        }
+    }
+
+    document.getElementById('open-messenger-btn').addEventListener('click', async () => {
+        document.getElementById('support-notif-dot').style.display = 'none'; 
+        messengerModal.classList.add('show');
+        loadMessenger();
     });
+
+    async function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text && !userPendingImageFile) return;
+
+        const originalBtnHtml = sendChatBtn.innerHTML;
+        chatInput.disabled = true;
+        userAttachBtn.disabled = true;
+        sendChatBtn.disabled = true;
+        sendChatBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+        try {
+            let publicImageUrl = null;
+
+            if (userPendingImageFile) {
+                const fileExt = userPendingImageFile.name.split('.').pop() || 'png';
+                const fileName = `user_${userId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                
+                const { error: uploadError } = await window.supabase.storage.from('chat-images').upload(fileName, userPendingImageFile);
+                if (uploadError) throw new Error("Image Upload Failed: " + uploadError.message);
+                
+                const { data } = window.supabase.storage.from('chat-images').getPublicUrl(fileName);
+                publicImageUrl = data.publicUrl;
+            }
+
+            const payload = { user_id: userId, sender: 'user', message: text };
+            if (publicImageUrl) payload.image_url = publicImageUrl;
+
+            const { error } = await window.supabase.from('chat_messages').insert([payload]);
+            if (error) throw new Error(error.message);
+
+            chatInput.value = '';
+            userPendingImageFile = null;
+            userChatImageInput.value = '';
+            userPreviewContainer.style.display = 'none';
+            userPreviewImg.src = '';
+
+            await loadMessenger(true); 
+
+        } catch (err) {
+            alert("Failed to dispatch message: " + err.message);
+        } finally {
+            chatInput.disabled = false;
+            userAttachBtn.disabled = false;
+            sendChatBtn.disabled = false;
+            sendChatBtn.innerHTML = originalBtnHtml;
+            chatInput.focus();
+        }
+    }
+
+    sendChatBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 });

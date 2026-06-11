@@ -15,15 +15,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     if (hamburger && sidebar) hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
 
+    function escapeQuote(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
     // ===================================
     // FETCH PENDING REPORTS
     // ===================================
     const tableBody = document.getElementById('pending-reports-table');
+    let allPendingReports = [];
 
     async function loadPendingReports() {
         const { data: reports, error } = await window.supabase
             .from('item_reports')
-            .select('*, users (first_name, last_name, email)')
+            .select('*, users (first_name, last_name, email, profile_picture_path)')
             .eq('report_status', 'pending')
             .order('created_at', { ascending: true });
 
@@ -32,22 +37,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        if (!reports || reports.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 40px;">No pending reports at this time. <i class="fa-solid fa-mug-hot" style="margin-left: 8px;"></i></td></tr>`;
+        allPendingReports = reports || [];
+        renderPendingTable(allPendingReports);
+    }
+
+    function renderPendingTable(reportsToRender) {
+        if (reportsToRender.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 40px;">No pending reports match your criteria. <i class="fa-solid fa-mug-hot" style="margin-left: 8px;"></i></td></tr>`;
             return;
         }
 
-        tableBody.innerHTML = reports.map(report => {
+        tableBody.innerHTML = reportsToRender.map(report => {
             const dateStr = new Date(report.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
             let badgeColor = report.report_type === 'lost' ? 'background-color: rgba(239, 68, 68, 0.1); color: var(--danger-red);' : 'background-color: rgba(16, 185, 129, 0.1); color: var(--success-green);';
             const reporterName = report.users ? `${report.users.first_name} ${report.users.last_name}` : 'Unknown User';
+            const avatarUrl = report.users?.profile_picture_path || '../images/default-avatar.png';
+            
             const reportJSON = encodeURIComponent(JSON.stringify(report));
 
             return `
                 <tr id="row-${report.report_id}">
                     <td>
-                        <div style="font-weight: 600; color: var(--text-primary);">${reporterName}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">${report.users?.email || ''}</div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="${avatarUrl}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-light);">
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${reporterName}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">${report.users?.email || ''}</div>
+                            </div>
+                        </div>
                     </td>
                     <td><span style="${badgeColor} padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">${report.report_type}</span></td>
                     <td>
@@ -55,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div style="font-size: 0.8rem; color: var(--text-secondary);">${report.item_category}</div>
                     </td>
                     <td>${dateStr}</td>
-                    <td style="text-align: right;">
+                    <td class="actions-col">
                         <button class="modal-btn confirm-btn" style="padding: 6px 16px; font-size: 0.85rem;" onclick="openReviewModal('${reportJSON}')">Review</button>
                     </td>
                 </tr>
@@ -66,17 +83,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadPendingReports();
 
     // ===================================
+    // SEARCH FEATURE
+    // ===================================
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = allPendingReports.filter(r => {
+            const nameMatch = r.users ? `${r.users.first_name} ${r.users.last_name}`.toLowerCase().includes(term) : false;
+            const itemMatch = (r.item_name_specific || '').toLowerCase().includes(term);
+            const catMatch = (r.item_category || '').toLowerCase().includes(term);
+            return nameMatch || itemMatch || catMatch;
+        });
+        renderPendingTable(filtered);
+    });
+
+    // ===================================
     // MODAL LOGIC & ACTIONS
     // ===================================
     const publishModal = document.getElementById('publishModal');
     const publishForm = document.getElementById('publishForm');
     const publishConfirmBtn = document.getElementById('publishConfirmBtn');
     
-    // Modals
     const successModal = document.getElementById('successModal');
     const successTitle = document.getElementById('success-title');
     const successMessage = document.getElementById('success-message');
     const successIcon = document.getElementById('success-icon');
+    
     const rejectReasonModal = document.getElementById('rejectReasonModal');
 
     // Image Upload Logic for Review
@@ -91,7 +123,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         replacementImageFile = e.target.files[0];
         if (replacementImageFile) {
             const reader = new FileReader();
-            reader.onload = (event) => reviewImage.src = event.target.result;
+            reader.onload = (event) => {
+                reviewImage.src = event.target.result;
+                reviewImage.style.display = 'block';
+            };
             reader.readAsDataURL(replacementImageFile);
         }
     });
@@ -99,17 +134,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.openReviewModal = function(encodedReport) {
         const report = JSON.parse(decodeURIComponent(encodedReport));
         
-        replacementImageFile = null; // reset
+        replacementImageFile = null; 
         document.getElementById('reviewReportId').value = report.report_id;
         document.getElementById('reviewUserId').value = report.user_id;
         document.getElementById('reviewOriginalImage').value = report.image_path || '';
+        document.getElementById('reviewReportType').value = report.report_type; 
         
         document.getElementById('reviewItemName').value = report.item_name_specific || report.item_category;
         document.getElementById('reviewCategory').value = report.item_category;
         document.getElementById('reviewLocation').value = report.item_location;
-        document.getElementById('reviewDescription').value = report.item_description;
+        
+        const isFound = report.report_type === 'found';
+        const descriptionLabel = document.getElementById('reviewDescriptionLabel');
+        const descriptionInput = document.getElementById('reviewDescription');
+        
+        if (isFound) {
+            descriptionLabel.innerHTML = 'Secret Identifiers <span style="color: var(--danger-red); font-size: 0.75rem; font-weight: 400;">(Only Admin can see this)</span>';
+            descriptionInput.value = report.admin_specific_details || '';
+        } else {
+            descriptionLabel.innerHTML = 'Public Description';
+            descriptionInput.value = report.item_description || '';
+        }
 
-        // Split datetime for the inputs
         if (report.item_datetime) {
             const dt = report.item_datetime.split('T');
             if(dt.length > 1) {
@@ -122,14 +168,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Image Handling
         if (report.image_path) {
             reviewImage.src = report.image_path;
             reviewImage.style.display = 'block';
         } else {
             reviewImage.src = '';
             reviewImage.style.display = 'none';
-            reviewImageWrapper.innerHTML = '<span style="color:var(--text-secondary);"><i class="fa-solid fa-image"></i> No Image. Click to add one.</span>' + reviewImageWrapper.innerHTML;
         }
 
         publishModal.classList.add('show');
@@ -158,10 +202,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const reportId = document.getElementById('reviewReportId').value;
         const ownerId = document.getElementById('reviewUserId').value;
         const itemName = document.getElementById('reviewItemName').value;
+        const reportType = document.getElementById('reviewReportType').value;
         const newDatetime = `${document.getElementById('reviewDate').value}T${document.getElementById('reviewTime').value}:00`;
+        const updatedDescValue = document.getElementById('reviewDescription').value;
 
         try {
-            // 1. Handle Image Replacement if admin uploaded a new one
             let finalImageUrl = document.getElementById('reviewOriginalImage').value;
             if (replacementImageFile) {
                 const fileExt = replacementImageFile.name.split('.').pop();
@@ -172,28 +217,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                 finalImageUrl = publicUrlData.publicUrl;
             }
 
-            // 2. Update Database with altered fields
+            const updatePayload = {
+                report_status: 'approved',
+                item_name_specific: itemName,
+                item_category: document.getElementById('reviewCategory').value,
+                item_location: document.getElementById('reviewLocation').value,
+                item_datetime: newDatetime,
+                image_path: finalImageUrl
+            };
+
+            if (reportType === 'found') {
+                updatePayload.admin_specific_details = updatedDescValue;
+                updatePayload.item_description = "Hidden for security purposes."; 
+            } else {
+                updatePayload.item_description = updatedDescValue;
+            }
+
             const { error: dbError } = await window.supabase
                 .from('item_reports')
-                .update({
-                    report_status: 'approved',
-                    item_name_specific: itemName,
-                    item_category: document.getElementById('reviewCategory').value,
-                    item_location: document.getElementById('reviewLocation').value,
-                    item_description: document.getElementById('reviewDescription').value,
-                    item_datetime: newDatetime,
-                    image_path: finalImageUrl
-                })
+                .update(updatePayload)
                 .eq('report_id', reportId);
 
             if (dbError) throw new Error("Database Error: " + dbError.message);
 
-            // 3. Notify User
             if (ownerId && ownerId !== 'null') {
                 await window.supabase.from('notifications').insert([{
                     user_id: ownerId,
                     report_id: reportId,
-                    message: `Your report for "${itemName}" has been approved and published.`
+                    message: `Your ${reportType.toUpperCase()} item report for "${itemName}" has been approved and published.`
                 }]);
             }
 
@@ -234,6 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const reportId = document.getElementById('reviewReportId').value;
         const ownerId = document.getElementById('reviewUserId').value;
         const itemName = document.getElementById('reviewItemName').value;
+        const reportType = document.getElementById('reviewReportType').value.toUpperCase();
         const reasonText = document.getElementById('rejectReasonText').value.trim();
 
         const { error: dbError } = await window.supabase
@@ -246,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await window.supabase.from('notifications').insert([{
                     user_id: ownerId,
                     report_id: reportId,
-                    message: `Your report for "${itemName}" was declined by the administrator. Reason: ${reasonText}`
+                    message: `Your ${reportType} item report for "${itemName}" was declined by the administrator. Reason: ${reasonText}`
                 }]);
             }
 

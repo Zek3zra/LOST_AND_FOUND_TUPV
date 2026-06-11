@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     if (hamburger && sidebar) hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
 
+    // Helper Function to escape quotes for HTML strings
+    function escapeQuote(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
     // ===================================
     // FETCH & RENDER LIVE POSTS
     // ===================================
@@ -24,376 +29,364 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadActivePosts() {
         const { data: posts, error } = await window.supabase
             .from('item_reports')
-            .select('*, users(first_name, last_name, contact_number)')
+            .select('*, users(first_name, last_name, email, contact_number)')
             .eq('report_status', 'approved')
             .order('created_at', { ascending: false });
 
         if (error) {
-            itemsContainer.innerHTML = `<p style="color:red; text-align:center; grid-column: 1/-1;">Error loading posts.</p>`;
+            itemsContainer.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center; padding:40px;">Error loading posts.</td></tr>`;
             return;
         }
 
         allPostsData = posts || [];
-        renderPosts();
+        renderPosts(allPostsData);
     }
 
-    function renderPosts() {
-        if (allPostsData.length === 0) {
-            itemsContainer.innerHTML = `<p style="text-align:center; color:var(--text-secondary); grid-column: 1/-1;">No active posts found. Feed is clean!</p>`;
+    function renderPosts(posts) {
+        if (posts.length === 0) {
+            itemsContainer.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 60px; color: var(--text-secondary);">No active posts match your criteria.</td></tr>`;
             return;
         }
 
-        itemsContainer.innerHTML = allPostsData.map(post => {
-            const dateStr = new Date(post.item_datetime).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            let badgeColor = post.report_type === 'lost' ? 'var(--danger-red)' : 'var(--success-green)';
-            let badgeText = post.report_type.toUpperCase();
+        itemsContainer.innerHTML = posts.map(post => {
+            const dateObj = new Date(post.item_datetime);
+            const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            let imgHtml = post.image_path 
+                ? `<img src="${post.image_path}" style="width:48px; height:48px; border-radius:8px; object-fit:cover; border: 1px solid var(--border-light);">` 
+                : `<div style="width:48px; height:48px; border-radius:8px; background:var(--bg-body); border: 1px solid var(--border-light); display:flex; align-items:center; justify-content:center; color:var(--text-secondary);"><i class="fa-solid fa-image"></i></div>`;
 
-            let reporterName = 'Admin Post';
-            if (post.reporter_name_manual) {
-                reporterName = post.reporter_name_manual + ' (Walk-in)';
-            } else if (post.users) {
-                reporterName = `${post.users.first_name} ${post.users.last_name}`;
+            let badgeClass = post.report_type === 'lost' ? 'badge-lost' : 'badge-found';
+            
+            let rName = 'Manual Post';
+            let rContact = post.reporter_contact_manual || '';
+            if (post.users) {
+                rName = `${post.users.first_name} ${post.users.last_name}`;
+                rContact = post.users.email || '';
+            } else if (post.reporter_name_manual) {
+                rName = post.reporter_name_manual;
             }
 
-            const imgHtml = post.image_path 
-                ? `<img src="${post.image_path}" style="width:100%; height:200px; object-fit:cover;">`
-                : `<div style="width:100%; height:200px; background:#e2e8f0; display:flex; align-items:center; justify-content:center; color:#94a3b8;">No Image</div>`;
-
-            const postJSON = encodeURIComponent(JSON.stringify(post));
-            const reporterJSON = encodeURIComponent(reporterName);
-            
-            const archiveBtn = `<button style="background:none; border:none; cursor:pointer; color: var(--text-secondary); padding: 6px; font-size: 1.1rem; transition: color 0.2s;" onmouseover="this.style.color='var(--danger-red)'" onmouseout="this.style.color='var(--text-secondary)'" onclick="archivePost('${post.report_id}')" title="Move to completed records without matching"><i class="fa-solid fa-folder-minus"></i></button>`;
-            const matchBtn = `<button class="modal-btn cancel-btn" style="padding: 6px 12px; font-size: 0.8rem; color: var(--primary-blue); border-color: var(--primary-blue);" onclick="openMatchModal('${post.report_id}', '${post.user_id}', '${post.report_type}', '${reporterJSON}')"><i class="fa-solid fa-handshake"></i> Resolve</button>`;
+            const safeItemName = escapeQuote(post.item_name_specific);
 
             return `
-                <div class="item-card" data-category="${post.report_type}" data-date="${post.created_at}">
-                    <div style="position:relative;">
-                        ${imgHtml}
-                        <span class="badge" style="position:absolute; top:12px; right:12px; background:${badgeColor}; color:white;">${badgeText}</span>
-                    </div>
-                    <div class="card-body">
-                        <h4>${post.item_name_specific || post.item_category}</h4>
-                        <p><i class="fa-solid fa-location-dot"></i> ${post.item_location}</p>
-                        <p><i class="fa-solid fa-calendar"></i> ${dateStr}</p>
-                        
-                        <div class="card-actions">
-                            <button class="modal-btn cancel-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="viewDetails('${postJSON}', '${reporterJSON}')">Details</button>
-                            <div style="display:flex; gap: 8px; align-items:center;">
-                                ${archiveBtn}
-                                ${matchBtn}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            ${imgHtml}
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">${post.item_name_specific}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeQuote(post.item_description)}">${post.item_description || 'No public description.'}</div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 500;">${rName}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">${rContact}</div>
+                    </td>
+                    <td>
+                        <span class="card-type-badge ${badgeClass}" style="position: static; box-shadow: none;">${post.report_type}</span>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${post.item_category}</div>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.9rem;"><i class="fa-solid fa-location-dot" style="width:16px; color:var(--text-secondary);"></i> ${post.item_location}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;"><i class="fa-solid fa-clock" style="width:16px;"></i> ${dateStr}</div>
+                    </td>
+                    <td style="text-align: right; white-space: nowrap;">
+                        <button class="action-icon-btn success" title="Mark as Resolved (Match)" onclick="openMatchModal('${post.report_id}', '${post.user_id}', '${safeItemName}', '${post.report_type}')"><i class="fa-solid fa-handshake"></i></button>
+                        <button class="action-icon-btn warning" title="Archive Post" onclick="archivePost('${post.report_id}')"><i class="fa-solid fa-folder-minus"></i></button>
+                        <button class="action-icon-btn danger" title="Delete Post" onclick="openDeleteModal('${post.report_id}', '${post.user_id}', '${safeItemName}', '${post.report_type}')"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
             `;
         }).join('');
-        
-        applyFilters();
     }
 
     loadActivePosts();
 
     // ===================================
-    // FILTERING, SEARCHING, SORTING
+    // FILTERING & SEARCH
     // ===================================
-    const tabButtons = document.querySelectorAll('.tab-btn');
     const searchInput = document.getElementById('searchInput');
-    const sortSelect = document.getElementById('sortSelect');
+    const typeFilter = document.getElementById('typeFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
 
-    function applyFilters() {
-        const activeTab = document.querySelector('.tab-btn.active').dataset.filter;
-        const searchTerm = searchInput.value.toLowerCase();
-        const cards = Array.from(itemsContainer.querySelectorAll('.item-card'));
-        
-        cards.sort((a, b) => {
-            const dateA = new Date(a.dataset.date);
-            const dateB = new Date(b.dataset.date);
-            return sortSelect.value === 'newest' ? dateB - dateA : dateA - dateB;
-        });
-        
-        cards.forEach(card => itemsContainer.appendChild(card));
+    function filterPosts() {
+        const term = searchInput.value.toLowerCase();
+        const type = typeFilter.value;
+        const cat = categoryFilter.value;
 
-        cards.forEach(card => {
-            const category = card.dataset.category;
-            const textContent = card.innerText.toLowerCase();
-            const matchesTab = activeTab === 'all' || category === activeTab;
-            const matchesSearch = textContent.includes(searchTerm);
-            
-            if (matchesTab && matchesSearch) card.style.display = 'flex';
-            else card.style.display = 'none';
+        const filtered = allPostsData.filter(p => {
+            const matchSearch = (p.item_name_specific && p.item_name_specific.toLowerCase().includes(term)) || 
+                                (p.item_category && p.item_category.toLowerCase().includes(term));
+            const matchType = type === 'all' || p.report_type === type;
+            const matchCat = cat === 'all' || p.item_category === cat;
+            return matchSearch && matchType && matchCat;
         });
+        renderPosts(filtered);
     }
 
-    tabButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            tabButtons.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            applyFilters();
-        });
-    });
-
-    searchInput.addEventListener('input', applyFilters);
-    sortSelect.addEventListener('change', applyFilters);
-
-    window.archivePost = async function(reportId) {
-        if (!confirm("Are you sure you want to move this post to the Completed Records page?")) return;
-        const { error } = await window.supabase.from('item_reports').update({ report_status: 'archived' }).eq('report_id', reportId);
-        if (error) alert("Error archiving: " + error.message);
-        else loadActivePosts(); 
-    };
-
-    // ===================================
-    // AUTOCOMPLETE LOGIC (USERS SEARCH)
-    // ===================================
-    function setupAutocomplete(inputId, listId, hiddenId) {
-        const input = document.getElementById(inputId);
-        const list = document.getElementById(listId);
-        const hidden = document.getElementById(hiddenId);
-        let debounceTimer;
-
-        input.addEventListener('input', (e) => {
-            clearTimeout(debounceTimer);
-            hidden.value = ''; // Reset hidden ID if they modify a selected name manually
-            
-            const val = e.target.value.trim();
-            if (!val) { list.style.display = 'none'; return; }
-
-            debounceTimer = setTimeout(async () => {
-                const { data } = await window.supabase
-                    .from('users')
-                    .select('id, first_name, last_name, email')
-                    .or(`first_name.ilike.%${val}%,last_name.ilike.%${val}%`)
-                    .limit(5);
-
-                if (data && data.length > 0) {
-                    list.innerHTML = data.map(u => `
-                        <li data-id="${u.id}" data-name="${u.first_name} ${u.last_name}">
-                            <div style="font-weight:600;">${u.first_name} ${u.last_name}</div>
-                            <span class="autocomplete-email">${u.email}</span>
-                        </li>
-                    `).join('');
-                    list.style.display = 'block';
-
-                    list.querySelectorAll('li').forEach(li => {
-                        li.addEventListener('click', () => {
-                            input.value = li.dataset.name;
-                            hidden.value = li.dataset.id; // Store ID for notification
-                            list.style.display = 'none';
-                        });
-                    });
-                } else {
-                    list.style.display = 'none';
-                }
-            }, 300);
-        });
-
-        // Close list if clicked outside
-        document.addEventListener('click', (e) => {
-            if (e.target !== input && e.target !== list) list.style.display = 'none';
-        });
-    }
-
-    setupAutocomplete('matchFinderName', 'finderSuggestions', 'matchFinderId');
-    setupAutocomplete('matchReceiverName', 'receiverSuggestions', 'matchReceiverId');
+    searchInput.addEventListener('input', filterPosts);
+    typeFilter.addEventListener('change', filterPosts);
+    categoryFilter.addEventListener('change', filterPosts);
 
 
     // ===================================
-    // DYNAMIC MATCH MODAL LOGIC
+    // GLOBAL MODAL HELPERS
     // ===================================
-    const markMatchedModal = document.getElementById('markMatchedModal');
-    const markMatchedForm = document.getElementById('markMatchedForm');
-    const confirmMatchBtn = document.getElementById('confirmMatchBtn');
-
-    window.openMatchModal = function(reportId, userId, reportType, encodedReporter) {
-        document.getElementById('matchReportId').value = reportId;
-        document.getElementById('matchUserId').value = userId; // Original Poster ID
-        document.getElementById('matchReportType').value = reportType;
-        
-        const reporterName = decodeURIComponent(encodedReporter);
-        const cleanReporterName = reporterName.replace(' (Walk-in)', ''); 
-
-        const finderInput = document.getElementById('matchFinderName');
-        const receiverInput = document.getElementById('matchReceiverName');
-        document.getElementById('matchFinderId').value = '';
-        document.getElementById('matchReceiverId').value = '';
-        
-        const matchTitle = document.getElementById('matchModalTitle');
-        const matchDesc = document.getElementById('matchModalDesc');
-        const finderLabel = document.getElementById('matchFinderLabel');
-        const receiverLabel = document.getElementById('matchReceiverLabel');
-
-        finderInput.value = '';
-        receiverInput.value = '';
-
-        // Pre-fill the original reporter's name if applicable
-        if (cleanReporterName !== 'Admin Post') {
-            if (reportType === 'lost') {
-                matchTitle.textContent = 'Resolve Lost Item';
-                matchDesc.textContent = 'This item was LOST. Search for the student who found it, and confirm the owner who is receiving it.';
-                finderLabel.textContent = 'Found By (Finder)';
-                receiverLabel.innerHTML = 'Returned To (Owner) <span style="color: var(--danger-red);">*</span>';
-                
-                receiverInput.value = cleanReporterName;
-                if (userId && userId !== 'null') document.getElementById('matchReceiverId').value = userId;
-
-            } else if (reportType === 'found') {
-                matchTitle.textContent = 'Resolve Found Item';
-                matchDesc.textContent = 'This item was FOUND. Log who is claiming it as the owner.';
-                finderLabel.textContent = 'Turned Over By (Finder)';
-                receiverLabel.innerHTML = 'Claimed By (Owner) <span style="color: var(--danger-red);">*</span>';
-                
-                finderInput.value = cleanReporterName;
-                if (userId && userId !== 'null') document.getElementById('matchFinderId').value = userId;
-            }
-        }
-        
-        markMatchedModal.classList.add('show');
-    };
-
-    markMatchedForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const originalText = confirmMatchBtn.innerHTML;
-        confirmMatchBtn.disabled = true;
-        confirmMatchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-        const reportId = document.getElementById('matchReportId').value;
-        const originalPosterId = document.getElementById('matchUserId').value;
-        const reportType = document.getElementById('matchReportType').value;
-        
-        const finderName = document.getElementById('matchFinderName').value.trim();
-        const receiverName = document.getElementById('matchReceiverName').value.trim();
-        
-        const finderId = document.getElementById('matchFinderId').value;
-        const receiverId = document.getElementById('matchReceiverId').value;
-
-        // 1. Update Database Status
-        const { error: updateError } = await window.supabase
-            .from('item_reports')
-            .update({ report_status: 'matched', finder_name: finderName, receiver_name: receiverName })
-            .eq('report_id', reportId);
-
-        if (updateError) {
-            alert("Error updating status: " + updateError.message);
-            confirmMatchBtn.disabled = false;
-            confirmMatchBtn.innerHTML = originalText;
-            return;
-        }
-
-        // 2. Intelligent Notification System (Avoid duplicate notifications)
-        const notificationsToInsert = [];
-        const notifiedUsers = new Set(); // Keep track so we don't double-ping someone
-        const adminId = sessionStorage.getItem('user_id');
-
-        // Target A: The Registered Finder
-        if (finderId && finderId !== adminId && !notifiedUsers.has(finderId)) {
-            notificationsToInsert.push({
-                user_id: finderId, report_id: reportId,
-                message: `You were successfully logged as the finder for an item turned over to the office. Thank you for your honesty!`
-            });
-            notifiedUsers.add(finderId);
-        }
-
-        // Target B: The Registered Owner/Claimer
-        if (receiverId && receiverId !== adminId && !notifiedUsers.has(receiverId)) {
-            notificationsToInsert.push({
-                user_id: receiverId, report_id: reportId,
-                message: `Your item was successfully logged as claimed/returned to you.`
-            });
-            notifiedUsers.add(receiverId);
-        }
-
-        // Target C: The Original Poster (Fallback if they weren't logged as finder/receiver but still own the post)
-        if (originalPosterId && originalPosterId !== 'null' && originalPosterId !== adminId && !notifiedUsers.has(originalPosterId)) {
-            const msg = reportType === 'lost' 
-                ? 'Good news! Your LOST item report has been marked as "Found & Matched".'
-                : `Your FOUND item report has been successfully claimed by ${receiverName}.`;
-            notificationsToInsert.push({ user_id: originalPosterId, report_id: reportId, message: msg });
-        }
-
-        // Push all notifications
-        if (notificationsToInsert.length > 0) {
-            await window.supabase.from('notifications').insert(notificationsToInsert);
-        }
-
-        markMatchedModal.classList.remove('show');
-        confirmMatchBtn.disabled = false;
-        confirmMatchBtn.innerHTML = originalText;
-        
-        loadActivePosts(); 
-    });
-
-    // ===================================
-    // VIEW DETAILS & CREATE POST
-    // ===================================
-    window.viewDetails = function(encodedReport, encodedReporter) {
-        const report = JSON.parse(decodeURIComponent(encodedReport));
-        const reporter = decodeURIComponent(encodedReporter);
-        
-        document.getElementById('modal-status').textContent = `REPORTED ${report.report_type.toUpperCase()}`;
-        document.getElementById('modal-status').style.backgroundColor = report.report_type === 'lost' ? 'var(--danger-red)' : 'var(--success-green)';
-        
-        document.getElementById('modal-item').textContent = report.item_name_specific || 'N/A';
-        document.getElementById('modal-category').textContent = report.item_category;
-        document.getElementById('modal-location').textContent = report.item_location;
-        
-        const roleTag = report.report_type === 'lost' ? '(Owner)' : '(Finder)';
-        document.getElementById('modal-reporter').textContent = `${reporter} ${roleTag}`;
-        
-        const contactLabel = document.getElementById('modal-contact-label');
-        const contactText = document.getElementById('modal-contact');
-        const contactNumber = report.reporter_contact_manual || (report.users ? report.users.contact_number : null);
-
-        if (contactNumber) {
-            contactLabel.style.display = 'block';
-            contactText.style.display = 'block';
-            contactText.textContent = contactNumber;
-        } else {
-            contactLabel.style.display = 'none';
-            contactText.style.display = 'none';
-        }
-        
-        const dateObj = new Date(report.item_datetime);
-        document.getElementById('modal-datetime').textContent = dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
-        document.getElementById('modal-description').textContent = report.item_description;
-        
-        const imgEl = document.getElementById('modal-image');
-        if (report.image_path) {
-            imgEl.src = report.image_path;
-            imgEl.style.display = 'inline-block';
-        } else {
-            imgEl.style.display = 'none';
-        }
-
-        document.getElementById('viewDetailsModal').classList.add('show');
-    };
-
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.modal-overlay').classList.remove('show');
         });
     });
 
+    function showSuccess(title, message, type = "success") {
+        const modal = document.getElementById('successModal');
+        const icon = document.getElementById('success-icon');
+        const titleEl = document.getElementById('success-title');
+        
+        titleEl.textContent = title;
+        document.getElementById('success-message').textContent = message;
+        
+        if (type === 'danger') {
+            titleEl.style.color = "var(--danger-red)";
+            icon.className = "fa-solid fa-trash-can";
+            icon.parentElement.style.color = "var(--danger-red)";
+        } else if (type === 'warning') {
+            titleEl.style.color = "var(--text-secondary)";
+            icon.className = "fa-solid fa-folder-minus";
+            icon.parentElement.style.color = "var(--text-secondary)";
+        } else {
+            titleEl.style.color = "var(--success-green)";
+            icon.className = "fa-solid fa-handshake";
+            icon.parentElement.style.color = "var(--success-green)";
+        }
+        
+        modal.classList.add('show');
+    }
+
+    document.getElementById('successOkBtn').addEventListener('click', () => {
+        document.getElementById('successModal').classList.remove('show');
+    });
+
+
+    // ===================================
+    // DIRECT ACTIONS (RESOLVE, ARCHIVE, DELETE)
+    // ===================================
+
+    // 1. OPEN MATCH (RESOLVE) MODAL
+    window.openMatchModal = function(id, userId, itemName, type) {
+        document.getElementById('matchReportId').value = id;
+        document.getElementById('matchUserId').value = userId;
+        document.getElementById('matchItemName').value = itemName;
+        document.getElementById('matchReportType').value = type;
+        
+        document.getElementById('matchSearchInput').value = '';
+        document.getElementById('matchSelectedUserId').value = '';
+        document.getElementById('matchSuggestions').style.display = 'none';
+        
+        document.getElementById('matchReportModal').classList.add('show');
+    };
+
+    // 2. ARCHIVE POST (1-CLICK)
+    window.archivePost = async function(reportId) {
+        if (!confirm("Are you sure you want to instantly archive this post?")) return;
+        const { error } = await window.supabase.from('item_reports').update({ report_status: 'archived' }).eq('report_id', reportId);
+        if (!error) {
+            showSuccess("Post Archived", "The item has been successfully moved to Completed Records.", "warning");
+            loadActivePosts();
+        } else {
+            alert("Error archiving post: " + error.message);
+        }
+    };
+
+    // 3. OPEN DELETE REASON MODAL
+    window.openDeleteModal = function(id, userId, itemName, type) {
+        document.getElementById('deleteReportId').value = id;
+        document.getElementById('deleteUserId').value = userId;
+        document.getElementById('deleteItemName').value = itemName;
+        document.getElementById('deleteReportType').value = type;
+        document.getElementById('deleteReasonText').value = '';
+        document.getElementById('deleteReasonModal').classList.add('show');
+    };
+
+    // SUBMIT DELETE REASON
+    document.getElementById('deleteReasonForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('deleteConfirmBtn');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+        btn.disabled = true;
+
+        const reportId = document.getElementById('deleteReportId').value;
+        const ownerId = document.getElementById('deleteUserId').value;
+        const itemName = document.getElementById('deleteItemName').value;
+        const reportType = document.getElementById('deleteReportType').value.toUpperCase();
+        const reason = document.getElementById('deleteReasonText').value.trim();
+
+        // Delete from DB completely
+        const { error } = await window.supabase.from('item_reports').delete().eq('report_id', reportId);
+
+        if (!error) {
+            if (ownerId && ownerId !== 'null') {
+                await window.supabase.from('notifications').insert([{
+                    user_id: ownerId,
+                    report_id: reportId,
+                    message: `Your active ${reportType} post for "${itemName}" was removed by the administrator. Reason: ${reason}`
+                }]);
+            }
+            document.getElementById('deleteReasonModal').classList.remove('show');
+            showSuccess("Post Deleted", "The post has been removed and the reporter was notified.", "danger");
+            loadActivePosts();
+        } else {
+            alert("Delete failed: " + error.message);
+        }
+
+        btn.innerHTML = origText;
+        btn.disabled = false;
+    });
+
+
+    // ===================================
+    // AUTOCOMPLETE MATCHING SYSTEM LOGIC
+    // ===================================
+    const matchSearchInput = document.getElementById('matchSearchInput');
+    const matchSuggestions = document.getElementById('matchSuggestions');
+    const matchSelectedUserId = document.getElementById('matchSelectedUserId');
+    const matchConfirmBtn = document.getElementById('matchConfirmBtn');
+
+    let debounceTimer;
+    matchSearchInput.addEventListener('input', (e) => {
+        clearTimeout(debounceTimer);
+        const val = e.target.value.trim();
+        matchSelectedUserId.value = ''; 
+        
+        if (val.length < 2) {
+            matchSuggestions.style.display = 'none';
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            const { data, error } = await window.supabase
+                .from('users')
+                .select('id, first_name, last_name, email')
+                .or(`first_name.ilike.%${val}%,last_name.ilike.%${val}%,email.ilike.%${val}%`)
+                .limit(5);
+
+            if (data && data.length > 0) {
+                matchSuggestions.innerHTML = data.map(u => `
+                    <div class="suggestion-item" data-id="${u.id}" data-name="${u.first_name} ${u.last_name}">
+                        <div style="font-weight: 600;">${u.first_name} ${u.last_name}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">${u.email}</div>
+                    </div>
+                `).join('');
+                matchSuggestions.style.display = 'block';
+            } else {
+                matchSuggestions.style.display = 'none';
+            }
+        }, 300);
+    });
+
+    matchSuggestions.addEventListener('click', (e) => {
+        const item = e.target.closest('.suggestion-item');
+        if (item) {
+            matchSearchInput.value = item.dataset.name;
+            matchSelectedUserId.value = item.dataset.id;
+            matchSuggestions.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#matchSearchInput') && !e.target.closest('#matchSuggestions')) {
+            matchSuggestions.style.display = 'none';
+        }
+    });
+
+    // Submit Match Update to Database
+    document.getElementById('matchReportForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const originalText = matchConfirmBtn.innerHTML;
+        matchConfirmBtn.disabled = true;
+        matchConfirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Matching...';
+
+        const reportId = document.getElementById('matchReportId').value;
+        const ownerId = document.getElementById('matchUserId').value;
+        const itemName = document.getElementById('matchItemName').value;
+        const reportType = document.getElementById('matchReportType').value.toUpperCase(); 
+        const personName = matchSearchInput.value.trim();
+        const matchedUserId = matchSelectedUserId.value;
+
+        const { error: dbError } = await window.supabase
+            .from('item_reports')
+            .update({ 
+                report_status: 'matched',
+                matched_person_name: personName 
+            })
+            .eq('report_id', reportId);
+
+        if (!dbError) {
+            // Notify Original Reporter
+            if (ownerId && ownerId !== 'null') {
+                await window.supabase.from('notifications').insert([{
+                    user_id: ownerId,
+                    report_id: reportId,
+                    message: `Your ${reportType} item report for "${itemName}" has been successfully MATCHED and marked as resolved!`
+                }]);
+            }
+
+            // Notify Auto-Completed Matched User
+            if (matchedUserId) {
+                let matchMsg = reportType === 'LOST' 
+                    ? `You have been recorded as finding/returning the LOST item: "${itemName}". Thank you for your honesty!`
+                    : `You have successfully claimed your FOUND item: "${itemName}".`;
+                
+                await window.supabase.from('notifications').insert([{
+                    user_id: matchedUserId,
+                    report_id: reportId,
+                    message: matchMsg
+                }]);
+            }
+
+            document.getElementById('matchReportModal').classList.remove('show');
+            showSuccess("Item Matched!", "The item has been successfully resolved and users notified.");
+            loadActivePosts(); 
+        } else {
+            alert("Error matching report: " + dbError.message);
+        }
+
+        matchConfirmBtn.disabled = false;
+        matchConfirmBtn.innerHTML = originalText;
+    });
+
+    // ===================================
+    // CREATE MANUAL POST
+    // ===================================
     const createPostModal = document.getElementById('createPostModal');
-    const newPhotoPreview = document.getElementById('newPhotoPreview');
-    const newPhotoInput = document.getElementById('newPhotoInput');
+    const openCreatePostBtn = document.getElementById('openCreatePostBtn');
     const createPostForm = document.getElementById('createPostForm');
     const submitNewPostBtn = document.getElementById('submitNewPostBtn');
-    let adminUploadedFile = null;
 
-    document.getElementById('openCreatePostBtn').addEventListener('click', () => {
+    const newPhotoPreview = document.getElementById('newPhotoPreview');
+    const newPhotoInput = document.getElementById('newPhotoInput');
+    let newPostImageFile = null;
+
+    openCreatePostBtn.addEventListener('click', () => {
         createPostForm.reset();
+        newPostImageFile = null;
         newPhotoPreview.innerHTML = '<span><i class="fa-solid fa-camera"></i> Click to upload</span>';
-        adminUploadedFile = null;
         createPostModal.classList.add('show');
     });
 
     newPhotoPreview.addEventListener('click', () => newPhotoInput.click());
+
     newPhotoInput.addEventListener('change', (e) => {
-        adminUploadedFile = e.target.files[0];
-        if (adminUploadedFile) {
+        newPostImageFile = e.target.files[0];
+        if (newPostImageFile) {
             const reader = new FileReader();
-            reader.onload = (event) => newPhotoPreview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
-            reader.readAsDataURL(adminUploadedFile);
+            reader.onload = (event) => {
+                newPhotoPreview.innerHTML = `<img src="${event.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+            };
+            reader.readAsDataURL(newPostImageFile);
         }
     });
 
@@ -401,14 +394,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         const originalText = submitNewPostBtn.innerHTML;
         submitNewPostBtn.disabled = true;
-        submitNewPostBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Publishing...';
+        submitNewPostBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publishing...';
 
         try {
             let publicImageUrl = null;
-            if (adminUploadedFile) {
-                const fileExt = adminUploadedFile.name.split('.').pop();
-                const fileName = `admin_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                const { error: uploadError } = await window.supabase.storage.from('item-images').upload(fileName, adminUploadedFile);
+            if (newPostImageFile) {
+                const fileExt = newPostImageFile.name.split('.').pop();
+                const fileName = `manual_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const { error: uploadError } = await window.supabase.storage.from('item-images').upload(fileName, newPostImageFile);
                 if (uploadError) throw new Error('Image Upload Failed: ' + uploadError.message);
                 const { data: publicUrlData } = window.supabase.storage.from('item-images').getPublicUrl(fileName);
                 publicImageUrl = publicUrlData.publicUrl;
@@ -431,6 +424,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (dbError) throw new Error('Database Error: ' + dbError.message);
             createPostModal.classList.remove('show');
+            showSuccess("Post Created", "The manual post has been published to the live feed.");
             loadActivePosts();
         } catch (error) {
             alert(error.message);

@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // ===================================
-    // 1. ADMIN SECURITY CHECK
-    // ===================================
+    // --- 1. ADMIN SECURITY CHECK ---
     const userRole = sessionStorage.getItem('role');
     if (userRole !== 'admin') {
         window.location.href = '../login.html';
@@ -24,63 +22,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
     }
 
-    // ===================================
-    // 2. FETCH AND RENDER USERS
-    // ===================================
+    // --- 2. FETCH AND RENDER USERS ---
     const userTableBody = document.getElementById('userTableBody');
+    let allUsers = [];
 
     async function loadUsers() {
         const { data: users, error } = await window.supabase
             .from('users')
-            .select('id, first_name, last_name, email, role, is_verified')
-            .order('last_name', { ascending: true });
+            .select('id, first_name, last_name, email, role, is_verified, profile_picture_path')
+            .order('created_at', { ascending: false });
 
         if (error) {
-            userTableBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger-red); text-align:center;">Failed to load users.</td></tr>`;
+            userTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--danger-red);">Error loading users: ${error.message}</td></tr>`;
             return;
         }
 
-        if (!users || users.length === 0) {
-            userTableBody.innerHTML = `<tr class="empty-state"><td colspan="5" style="text-align:center; color: var(--text-secondary); padding: 40px;">No users found.</td></tr>`;
+        allUsers = users || [];
+        renderUsers(allUsers);
+    }
+
+    function renderUsers(usersToRender) {
+        if (usersToRender.length === 0) {
+            userTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-secondary); padding: 40px;">No users found.</td></tr>';
             return;
         }
 
-        userTableBody.innerHTML = users.map(user => {
-            const fullName = `${user.first_name} ${user.last_name}`;
-            
-            // Badges
-            const roleBadge = user.role === 'admin' 
-                ? `<span class="badge" style="background: rgba(30, 58, 138, 0.1); color: var(--primary-blue);">ADMIN</span>` 
-                : `<span class="badge" style="background: var(--bg-body); border: 1px solid var(--border-light); color: var(--text-secondary);">USER</span>`;
-            
-            const statusBadge = user.is_verified
-                ? `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success-green);"><i class="fa-solid fa-check"></i> Verified</span>`
-                : `<span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-amber);"><i class="fa-solid fa-clock"></i> Pending</span>`;
-
-            const safeName = fullName.replace(/'/g, "\\'");
-            
-            // Action Buttons
-            let adminActions = '';
-            if (user.role !== 'admin') {
-                adminActions = `
-                    <button class="action-btn view-btn" title="View Latest Report" onclick="viewUserReport(${user.id})"><i class="fa-solid fa-eye"></i></button>
-                    <button class="action-btn message-btn" title="Send Notification" onclick="openMessageModal(${user.id}, '${safeName}')"><i class="fa-solid fa-envelope"></i></button>
-                    <button class="action-btn edit-btn" title="Edit Permissions" onclick="openEditModal(${user.id}, '${safeName}', '${user.role}', ${user.is_verified})"><i class="fa-solid fa-pen-to-square"></i></button>
-                    <button class="action-btn delete-btn" title="Delete User" onclick="confirmDeleteUser(${user.id}, '${safeName}')"><i class="fa-solid fa-trash-can"></i></button>
-                `;
-            } else {
-                adminActions = `<span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;">Admin Protected</span>`;
-            }
+        userTableBody.innerHTML = usersToRender.map(user => {
+            const avatar = user.profile_picture_path || '../images/default-avatar.png';
+            const statusClass = user.is_verified ? 'success-green' : 'accent-amber';
+            const statusText = user.is_verified ? 'Verified' : 'Pending';
 
             return `
-                <tr data-user-id="${user.id}" data-name="${fullName}" data-email="${user.email}" data-role="${user.role}">
-                    <td><div style="font-weight: 600; color: var(--text-primary);">${fullName}</div></td>
-                    <td>${user.email}</td>
-                    <td>${statusBadge}</td>
-                    <td>${roleBadge}</td>
+                <tr data-user-id="${user.id}">
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <img src="${avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 1px solid var(--border-light);">
+                            <span style="font-weight:600; color: var(--text-primary);">${user.first_name} ${user.last_name}</span>
+                        </div>
+                    </td>
+                    <td style="color: var(--text-secondary);">${user.email}</td>
+                    <td><span style="background-color: var(--${statusClass}); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 500;">${statusText}</span></td>
+                    <td style="text-transform: capitalize; font-weight: 500;">${user.role}</td>
                     <td style="text-align: right;">
-                        <div class="action-buttons" style="display: flex; justify-content: flex-end; gap: 8px;">
-                            ${adminActions}
+                        <div style="display:flex; gap:8px; justify-content:flex-end;">
+                            <button class="badge-btn" title="View Full Details" onclick="viewUserDetails('${user.id}')"><i class="fa-solid fa-eye"></i></button>
+                            <button class="badge-btn" title="Open Support Chat" onclick="openSupportChat('${user.id}')"><i class="fa-solid fa-comment-dots"></i></button>
+                            <button class="badge-btn" title="Edit Role" onclick="openEditModal('${user.id}', '${user.role}', '${user.first_name}')"><i class="fa-solid fa-user-shield"></i></button>
+                            <button class="badge-btn" style="color: var(--danger-red); border-color: #fca5a5;" title="Delete User" onclick="confirmDeleteUser('${user.id}', '${user.first_name} ${user.last_name}')"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -88,183 +76,174 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).join('');
     }
 
-    loadUsers();
-
-    // ===================================
-    // 3. SEARCH FILTER
-    // ===================================
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput && userTableBody) {
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = userTableBody.querySelectorAll('tr');
-
-            rows.forEach(row => {
-                if (row.classList.contains('empty-state')) return; 
-                const name = row.dataset.name ? row.dataset.name.toLowerCase() : '';
-                const email = row.dataset.email ? row.dataset.email.toLowerCase() : '';
-                const role = row.dataset.role ? row.dataset.role.toLowerCase() : '';
-
-                if (name.includes(searchTerm) || email.includes(searchTerm) || role.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    }
-
-    // ===================================
-    // 4. MODALS & ADMIN ACTIONS
-    // ===================================
-    
-    // -- View Report --
-    const viewUserModal = document.getElementById('viewUserModal');
-    const modalUserDetails = document.getElementById('modal-user-details');
-
-    window.viewUserReport = async function(userId) {
-        modalUserDetails.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Fetching records...</div>';
-        viewUserModal.classList.add('show');
-
-        const { data: report, error } = await window.supabase
-            .from('item_reports')
-            .select('item_name_specific, item_category, report_type, item_location, item_datetime')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-        if (error || !report) {
-            modalUserDetails.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">No reports found for this user.</p>';
-            return;
-        }
-
-        const dateObj = new Date(report.item_datetime);
-        const formattedDate = dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
-
-        modalUserDetails.innerHTML = `
-            <p><strong>Type:</strong> <span style="text-transform: uppercase;">${report.report_type}</span></p>
-            <p><strong>Item:</strong> ${report.item_name_specific || report.item_category}</p>
-            <p><strong>Location:</strong> ${report.item_location}</p>
-            <p><strong>Date & Time:</strong> ${formattedDate}</p>
-        `;
-    };
-
-    // -- Message User --
-    const messageUserModal = document.getElementById('messageUserModal');
-    const messageForm = document.getElementById('messageForm');
-    const sendMessageBtn = document.getElementById('sendMessageBtn');
-
-    window.openMessageModal = function(userId, userName) {
-        document.getElementById('messageUserId').value = userId;
-        document.getElementById('messageUserName').textContent = userName;
-        document.getElementById('messageContent').value = '';
-        messageUserModal.classList.add('show');
-    };
-
-    messageForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const originalText = sendMessageBtn.innerHTML;
-        sendMessageBtn.disabled = true;
-        sendMessageBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-
-        const userId = document.getElementById('messageUserId').value;
-        const msg = document.getElementById('messageContent').value;
-
-        // Insert directly into the user's notification feed
-        const { error } = await window.supabase.from('notifications').insert([{
-            user_id: userId,
-            message: "System Admin: " + msg
-        }]);
-
-        if (!error) {
-            alert('Message successfully sent to the user!');
-            messageUserModal.classList.remove('show');
-        } else {
-            alert('Error sending message: ' + error.message);
-        }
-
-        sendMessageBtn.disabled = false;
-        sendMessageBtn.innerHTML = originalText;
+    // --- 3. SEARCH LISTENER ---
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = allUsers.filter(u => 
+            `${u.first_name} ${u.last_name}`.toLowerCase().includes(term) ||
+            u.email.toLowerCase().includes(term) ||
+            u.role.toLowerCase().includes(term)
+        );
+        renderUsers(filtered);
     });
 
-    // -- Edit User Account --
-    const editUserModal = document.getElementById('editUserModal');
-    const editUserForm = document.getElementById('editUserForm');
-    const saveEditBtn = document.getElementById('saveEditBtn');
+    // --- 4. VIEW COMPREHENSIVE USER DETAILS ---
+    window.viewUserDetails = async function(userId) {
+        const detailsContainer = document.getElementById('modal-user-details');
+        detailsContainer.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-notch fa-spin"></i> Fetching profile & records...</div>';
+        document.getElementById('viewUserModal').classList.add('show');
 
-    window.openEditModal = function(userId, userName, currentRole, isVerified) {
+        try {
+            // 1. Fetch User Data
+            const { data: user, error: userErr } = await window.supabase.from('users').select('*').eq('id', userId).single();
+            if (userErr) throw userErr;
+
+            // 2. Fetch User's Latest Record from item_reports
+            const { data: reports, error: repErr } = await window.supabase.from('item_reports')
+                .select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+            
+            let reportHtml = '<p style="color: var(--text-secondary); font-size: 0.9rem; font-style: italic;">No items reported by this user yet.</p>';
+            
+            if (reports && reports.length > 0) {
+                const r = reports[0];
+                const rDate = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                // Color code the status badge dynamically
+                let statusColor = 'var(--accent-amber)';
+                if (r.report_status === 'approved') statusColor = 'var(--primary-blue)';
+                if (r.report_status === 'matched' || r.report_status === 'archived') statusColor = 'var(--success-green)';
+
+                reportHtml = `
+                    <div style="background: var(--bg-body); padding: 16px; border-radius: 12px; border: 1px solid var(--border-light); margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary); font-size: 1.05rem;">${r.item_name_specific}</strong>
+                            <span style="background: ${statusColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase;">${r.report_status}</span>
+                        </div>
+                        <p style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-secondary);"><strong>Type:</strong> <span style="text-transform: capitalize;">${r.report_type} Item</span></p>
+                        <p style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-secondary);"><strong>Category:</strong> ${r.item_category}</p>
+                        <p style="margin-bottom: 0; font-size: 0.9rem; color: var(--text-secondary);"><strong>Submitted:</strong> ${rDate}</p>
+                    </div>
+                `;
+            }
+
+            // Build Comprehensive Layout
+            const joinDate = new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const avatar = user.profile_picture_path || '../images/default-avatar.png';
+            
+            detailsContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">
+                    <img src="${avatar}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-light); box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div>
+                        <h4 style="font-size: 1.25rem; color: var(--text-primary); margin-bottom: 4px;">${user.first_name} ${user.last_name}</h4>
+                        <span style="font-size: 0.8rem; background: var(--primary-blue); color: white; padding: 3px 10px; border-radius: 12px; text-transform: capitalize; font-weight: 500;">${user.role} Account</span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; font-size: 0.95rem;">
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Email Address</strong><br>
+                        <span style="color: var(--text-primary); font-weight: 500;">${user.email}</span>
+                    </div>
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Contact #</strong><br>
+                        <span style="color: var(--text-primary); font-weight: 500;">${user.contact_number || 'Not Provided'}</span>
+                    </div>
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Course / Section</strong><br>
+                        <span style="color: var(--text-primary); font-weight: 500;">${user.course_section || 'Not Provided'}</span>
+                    </div>
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Home Address</strong><br>
+                        <span style="color: var(--text-primary); font-weight: 500;">${user.address || 'Not Provided'}</span>
+                    </div>
+                    <div style="grid-column: 1 / -1; background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Member Since</strong><br>
+                        <span style="color: var(--text-primary); font-weight: 500;">${joinDate}</span>
+                    </div>
+                </div>
+                
+                <h5 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px;">Most Recent Report</h5>
+                ${reportHtml}
+            `;
+
+        } catch (error) {
+            detailsContainer.innerHTML = `<div style="color: var(--danger-red); text-align: center; padding: 20px;">Failed to load user records: ${error.message}</div>`;
+        }
+    };
+
+    // --- 5. REDIRECT TO MESSENGER ---
+    window.openSupportChat = function(userId) {
+        // We drop a pin in sessionStorage so messages.html knows exactly who to open
+        sessionStorage.setItem('targetChatUserId', userId);
+        window.location.href = 'messages.html';
+    };
+
+    // --- 6. SIMPLIFIED EDIT ROLE ---
+    window.openEditModal = function(userId, currentRole, firstName) {
         document.getElementById('editUserId').value = userId;
-        document.getElementById('editUserName').textContent = userName;
         document.getElementById('editRole').value = currentRole;
-        document.getElementById('editStatus').value = isVerified ? "true" : "false";
-        editUserModal.classList.add('show');
+        document.getElementById('editUserName').textContent = firstName;
+        document.getElementById('editUserModal').classList.add('show');
     };
 
-    editUserForm.addEventListener('submit', async (e) => {
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const originalText = saveEditBtn.innerHTML;
-        saveEditBtn.disabled = true;
-        saveEditBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-        const userId = document.getElementById('editUserId').value;
+        const uId = document.getElementById('editUserId').value;
         const newRole = document.getElementById('editRole').value;
-        const newStatus = document.getElementById('editStatus').value === "true";
+        
+        const btn = document.getElementById('saveEditBtn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; 
+        btn.disabled = true;
 
-        const { error } = await window.supabase.from('users').update({
-            role: newRole,
-            is_verified: newStatus
-        }).eq('id', userId);
-
-        if (!error) {
-            editUserModal.classList.remove('show');
-            loadUsers(); // Refresh the table
+        // ONLY updates the role, ignores verification status entirely
+        const { error } = await window.supabase.from('users').update({ role: newRole }).eq('id', uId);
+        
+        if(!error) {
+            document.getElementById('editUserModal').classList.remove('show');
+            loadUsers(); // Refresh table
         } else {
-            alert('Error updating user: ' + error.message);
+            alert("Update failed: " + error.message);
         }
-
-        saveEditBtn.disabled = false;
-        saveEditBtn.innerHTML = originalText;
+        btn.innerHTML = 'Save Changes'; 
+        btn.disabled = false;
     });
 
-    // -- Delete User --
-    const deleteUserModal = document.getElementById('deleteUserModal');
-    const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+    // --- 7. DELETE USER ---
     let currentUserIdToDelete = null;
 
     window.confirmDeleteUser = function(userId, userName) {
         currentUserIdToDelete = userId;
         document.getElementById('deleteUserName').textContent = userName;
-        deleteUserModal.classList.add('show');
+        document.getElementById('deleteUserModal').classList.add('show');
     };
 
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', async function() {
-            if (!currentUserIdToDelete) return;
-            const originalText = confirmDeleteBtn.innerHTML;
-            confirmDeleteBtn.disabled = true;
-            confirmDeleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+    document.getElementById('confirm-delete-btn').addEventListener('click', async function() {
+        if (!currentUserIdToDelete) return;
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
 
-            const { error } = await window.supabase.from('users').delete().eq('id', currentUserIdToDelete);
+        const { error } = await window.supabase.from('users').delete().eq('id', currentUserIdToDelete);
 
-            if (!error) {
-                const rowToRemove = userTableBody.querySelector(`tr[data-user-id="${currentUserIdToDelete}"]`);
-                if (rowToRemove) rowToRemove.remove();
-                deleteUserModal.classList.remove('show');
-            } else {
-                alert('Error: Could not delete user. ' + error.message);
-            }
+        if (!error) {
+            document.getElementById('deleteUserModal').classList.remove('show');
+            loadUsers(); // Refresh table
+        } else {
+            alert('Error: Could not delete user. ' + error.message);
+        }
 
-            confirmDeleteBtn.disabled = false;
-            confirmDeleteBtn.innerHTML = originalText;
-            currentUserIdToDelete = null;
-        });
-    }
+        this.disabled = false;
+        this.innerHTML = originalText;
+        currentUserIdToDelete = null;
+    });
 
-    // Modal Global Close functionality
+    // --- 8. CLOSE MODALS ---
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.modal-overlay').classList.remove('show');
         });
     });
+
+    // Initialize
+    loadUsers();
 });

@@ -1,13 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- 1. Security Check ---
+    // --- 1. Strict Security Check ---
     const guestMode = sessionStorage.getItem('userType') === 'guest';
-    if (!sessionStorage.getItem('user_id') && !guestMode) {
+    
+    // KICK GUESTS OUT IMMEDIATELY
+    if (guestMode) {
+        window.location.href = 'guestprofile.html';
+        return;
+    }
+    
+    // REDIRECT UNAUTHENTICATED USERS TO LOGIN
+    if (!sessionStorage.getItem('user_id')) {
         window.location.href = 'login.html';
         return;
     }
 
-    // --- 2. Basic UI & Modals ---
+    // --- 2. Basic UI & Global Modals ---
     function updateDateTime() {
         const dt = document.getElementById('current-date-time');
         if(dt) dt.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -21,27 +29,22 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
     }
     
-    // Admin Link Logic
     if (sessionStorage.getItem('role') === 'admin') {
         const adminLink = document.getElementById('admin-dashboard-link');
         if (adminLink) adminLink.classList.remove('hidden');
     }
 
-    // --- NEW: Handle Logout ---
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            // Sign out of Supabase if not a guest
-            if (!guestMode) {
-                await window.supabase.auth.signOut();
-            }
-            // Clear local browser memory and redirect to login
+            if (!guestMode) await window.supabase.auth.signOut();
             sessionStorage.clear();
             window.location.href = 'login.html';
         });
     }
 
+    // Initialize Header & Footer Links to Modals
     const modals = {
         'about-link': 'about-modal', 'footer-about-link': 'about-modal',
         'footer-how-it-works-link': 'how-it-works-modal', 'footer-faq-link': 'faq-modal',
@@ -51,87 +54,133 @@ document.addEventListener('DOMContentLoaded', () => {
     
     Object.keys(modals).forEach(id => {
         const el = document.getElementById(id);
-        if(el) el.addEventListener('click', (e) => { e.preventDefault(); document.getElementById(modals[id]).classList.add('show'); });
+        if(el) {
+            el.addEventListener('click', (e) => { 
+                e.preventDefault(); 
+                document.getElementById(modals[id]).classList.add('show'); 
+            });
+        }
     });
-    
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', function() { this.closest('.modal-overlay').classList.remove('show'); });
-    });
 
-
-    // --- 3. Photo Uploader Preview ---
-    const photoUploader = document.getElementById('photo-uploader');
-    const photoInput = document.getElementById('photo-input');
-    let uploadedImageFile = null; 
-
-    if (photoUploader && photoInput) {
-        photoUploader.addEventListener('click', () => photoInput.click());
-
-        photoInput.addEventListener('change', (event) => {
-            uploadedImageFile = event.target.files[0];
-            if (uploadedImageFile) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    photoUploader.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">`;
-                    document.getElementById('summary-image').src = e.target.result;
-                    document.getElementById('summary-image').style.display = 'block';
-                };
-                reader.readAsDataURL(uploadedImageFile);
-            }
+    document.querySelectorAll('[data-close]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.modal-overlay').classList.remove('show');
         });
-    }
+    });
 
-    // --- 4. Form Submission & Supabase Integration ---
-    const reportForm = document.getElementById('report-form');
-    const confirmationModal = document.getElementById('confirmation-modal');
-    const successModal = document.getElementById('success-modal');
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+            e.target.classList.remove('show');
+        }
+    });
+
+
+    // --- 3. PHOTO UPLOAD LOGIC (Encouraged for Lost Items) ---
+    const uploadTrigger = document.getElementById('upload-trigger');
+    const itemImageInput = document.getElementById('item-image');
+    
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const removeImageBtn = document.getElementById('remove-image-btn');
+
+    let selectedFile = null;
+
+    uploadTrigger.addEventListener('click', (e) => {
+        if (e.target === removeImageBtn) return; 
+        itemImageInput.click();
+    });
+
+    itemImageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.style.display = 'block';
+                uploadPrompt.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    removeImageBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        itemImageInput.value = '';
+        selectedFile = null;
+        imagePreviewContainer.style.display = 'none';
+        imagePreview.src = '';
+        uploadPrompt.style.display = 'block';
+    });
+
+    // --- 4. FORM SUBMISSION -> SUMMARY MODAL ---
+    const reportForm = document.getElementById('report-lost-form');
+    const summaryModal = document.getElementById('summary-modal');
     const confirmBtn = document.getElementById('confirm-btn');
+    const successModal = document.getElementById('success-modal');
 
-    reportForm.addEventListener('submit', (event) => {
-        event.preventDefault(); 
-        // Populate confirmation modal
-        document.getElementById('summary-category').textContent = document.getElementById('category-select').value;
-        document.getElementById('summary-description').textContent = document.getElementById('item-description').value;
-        document.getElementById('summary-datetime').textContent = `${document.getElementById('lost-date').value} at ${document.getElementById('lost-time').value}`;
-        document.getElementById('summary-location').textContent = document.getElementById('location').value;
-        confirmationModal.classList.add('show');
-    });
-
-    document.getElementById('cancel-btn').addEventListener('click', () => {
-        confirmationModal.classList.remove('show');
-    });
-
-    // The actual database insertion
-    confirmBtn.addEventListener('click', async () => {
+    reportForm.addEventListener('submit', (e) => {
+        e.preventDefault();
         
-        // Disable button to prevent double-clicks
+        // Populate standard fields
+        document.getElementById('summary-item-name').textContent = document.getElementById('item-name').value;
+        document.getElementById('summary-category').textContent = document.getElementById('category-select').value;
+        document.getElementById('summary-location').textContent = document.getElementById('location').value;
+        
+        const dateStr = document.getElementById('lost-date').value;
+        const timeStr = document.getElementById('lost-time').value;
+        const dt = new Date(`${dateStr}T${timeStr}`);
+        document.getElementById('summary-datetime').textContent = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+        
+        document.getElementById('summary-description').textContent = document.getElementById('item-description').value.trim();
+
+        // Image Review handling
+        const sumImage = document.getElementById('summary-image');
+        const sumNoImage = document.getElementById('summary-no-image');
+        
+        if (selectedFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                sumImage.src = e.target.result;
+                sumImage.style.display = 'block';
+                sumNoImage.style.display = 'none';
+            }
+            reader.readAsDataURL(selectedFile);
+        } else {
+            sumImage.style.display = 'none';
+            sumNoImage.style.display = 'flex';
+        }
+
+        summaryModal.classList.add('show');
+    });
+
+    // --- 5. FINALIZE SUBMIT TO DATABASE ---
+    confirmBtn.addEventListener('click', async () => {
         const originalBtnText = confirmBtn.innerHTML;
         confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Submitting...';
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
         try {
             let publicImageUrl = null;
 
-            // Step A: Upload image to Supabase Storage (if a file was selected)
-            if (uploadedImageFile) {
-                const fileExt = uploadedImageFile.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+            if (selectedFile) {
+                const fileExt = selectedFile.name.split('.').pop() || 'png';
+                const fileName = `lost_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                 
-                const { data: uploadData, error: uploadError } = await window.supabase.storage
+                const { error: uploadError } = await window.supabase.storage
                     .from('item-images')
-                    .upload(fileName, uploadedImageFile);
-                
+                    .upload(fileName, selectedFile);
+
                 if (uploadError) throw new Error('Image Upload Failed: ' + uploadError.message);
-                
-                // Get the public URL for the database
-                const { data: publicUrlData } = window.supabase.storage
+
+                const { data } = window.supabase.storage
                     .from('item-images')
                     .getPublicUrl(fileName);
-                    
-                publicImageUrl = publicUrlData.publicUrl;
+                publicImageUrl = data.publicUrl;
             }
 
-            // Step B: Insert the record into 'item_reports'
+            // Insert into Supabase
             const { error: dbError } = await window.supabase
                 .from('item_reports')
                 .insert([{
@@ -139,17 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     report_type: 'lost',
                     item_category: document.getElementById('category-select').value,
                     item_name_specific: document.getElementById('item-name').value,
-                    item_description: document.getElementById('item-description').value,
+                    item_description: document.getElementById('item-description').value, 
                     item_datetime: `${document.getElementById('lost-date').value} ${document.getElementById('lost-time').value}:00`,
                     item_location: document.getElementById('location').value,
                     image_path: publicImageUrl,
-                    report_status: 'pending' // Admin must approve it
+                    report_status: 'pending' 
                 }]);
 
             if (dbError) throw new Error('Database Error: ' + dbError.message);
 
-            // Step C: Success UI
-            confirmationModal.classList.remove('show');
+            summaryModal.classList.remove('show');
             successModal.classList.add('show');
 
         } catch (error) {

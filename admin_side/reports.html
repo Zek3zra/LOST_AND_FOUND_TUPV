@@ -27,6 +27,7 @@
             <li><a href="post-item.html"><i class="fa-solid fa-file-shield"></i> Pending Reports</a></li>
             <li><a href="reports.html" class="active"><i class="fa-solid fa-box-open"></i> Active Posts</a></li>
             <li><a href="records.html"><i class="fa-solid fa-folder-open"></i> Completed Records</a></li>
+            <li><a href="messages.html"><i class="fa-solid fa-envelope"></i> Support Messages</a></li>
             <li style="margin-top: auto;">
                 <a href="#" id="admin-logout-btn" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Log Out</a>
             </li>
@@ -34,109 +35,106 @@
     </aside>
 
     <main class="main-content">
-        <div class="page-header">
-            <h2>Active Posts</h2>
-            <p>Manage all live lost and found items. Matched or archived items are automatically moved to Completed Records.</p>
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <h2>Active Posts Feed</h2>
+                <p>Manage all currently live lost and found items visible to the campus community.</p>
+            </div>
+            <button class="modal-btn confirm-btn" id="openCreatePostBtn"><i class="fa-solid fa-plus"></i> Create Manual Post</button>
         </div>
 
         <div class="controls-container">
-            <div class="tabs">
-                <button class="tab-btn active" data-filter="all">All Live Posts</button>
-                <button class="tab-btn" data-filter="lost">Lost Items</button>
-                <button class="tab-btn" data-filter="found">Found Items</button>
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Search by item name, category, or reporter...">
             </div>
-
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <div class="search-box" style="position: relative;">
-                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
-                    <input type="text" id="searchInput" placeholder="Search items...">
-                </div>
-                
-                <select id="sortSelect">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
+            <div class="filter-group">
+                <select id="typeFilter" class="form-input" style="width: auto;">
+                    <option value="all">All Types</option>
+                    <option value="lost">Lost Items</option>
+                    <option value="found">Found Items</option>
                 </select>
-                
-                <button id="openCreatePostBtn" class="modal-btn confirm-btn"><i class="fa-solid fa-plus"></i> Create Post</button>
+                <select id="categoryFilter" class="form-input" style="width: auto;">
+                    <option value="all">All Categories</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Books & Notes">Books & Notes</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Other">Other</option>
+                </select>
             </div>
         </div>
 
-        <div id="itemsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px;">
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary);">
-                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading active posts...
+        <div class="table-container">
+            <div class="table-header">
+                <h3>Live Feed Items</h3>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Item Details</th>
+                            <th>Reporter</th>
+                            <th>Type & Category</th>
+                            <th>Location & Date</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsContainer">
+                        <tr><td colspan="5" style="text-align:center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading active posts...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
 
-    <div id="viewDetailsModal" class="modal-overlay">
+    <div id="matchReportModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal" data-close>&times;</button>
-            <h3>Report Details</h3>
+            <h3>Mark as Resolved (Matched)</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Who is claiming or returning this item? Search for a registered user to notify them, or manually type a name.</p>
             
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img id="modal-image" src="" style="max-width: 100%; max-height: 250px; border-radius: 8px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            </div>
-            
-            <div class="details-grid">
-                <div class="details-label">Status:</div>
-                <div class="details-value"><span class="badge" id="modal-status" style="color:white;"></span></div>
-                <div class="details-label">Item:</div>
-                <div class="details-value" id="modal-item"></div>
-                <div class="details-label">Category:</div>
-                <div class="details-value" id="modal-category"></div>
-                <div class="details-label">Location:</div>
-                <div class="details-value" id="modal-location"></div>
-                <div class="details-label">Date/Time:</div>
-                <div class="details-value" id="modal-datetime"></div>
-                
-                <div class="details-label">Reporter:</div>
-                <div class="details-value" id="modal-reporter" style="font-weight: 700;"></div>
-                <div class="details-label" id="modal-contact-label" style="display: none;">Contact #:</div>
-                <div class="details-value" id="modal-contact" style="display: none;"></div>
-            </div>
-
-            <div style="margin-top: 16px;">
-                <div class="details-label" style="margin-bottom: 6px;">Description:</div>
-                <div id="modal-description" style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light); font-size: 0.95rem; line-height: 1.5;"></div>
-            </div>
-
-            <div class="modal-actions justify-center">
-                <button class="modal-btn confirm-btn" data-close>Close Window</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="markMatchedModal" class="modal-overlay">
-        <div class="modal-content" style="overflow: visible;"> <button class="close-modal" data-close>&times;</button>
-            <h3 id="matchModalTitle">Resolve Item</h3>
-            <p id="matchModalDesc" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Record the final details to securely log this resolution. Type a name to search registered students.</p>
-            
-            <form id="markMatchedForm" class="modal-form">
+            <form id="matchReportForm" class="modal-form">
                 <input type="hidden" id="matchReportId">
                 <input type="hidden" id="matchUserId">
+                <input type="hidden" id="matchItemName">
                 <input type="hidden" id="matchReportType">
-                
-                <div class="form-group">
-                    <label id="matchFinderLabel">Found By (Finder)</label>
-                    <div class="autocomplete-wrapper">
-                        <input type="text" id="matchFinderName" class="form-input" placeholder="Search registered user or type a walk-in name..." autocomplete="off">
-                        <input type="hidden" id="matchFinderId">
-                        <ul id="finderSuggestions" class="autocomplete-list"></ul>
-                    </div>
-                </div>
-                
-                <div class="form-group" style="margin-top: 8px;">
-                    <label id="matchReceiverLabel">Returned To (Owner) <span style="color: var(--danger-red);">*</span></label>
-                    <div class="autocomplete-wrapper">
-                        <input type="text" id="matchReceiverName" class="form-input" placeholder="Search registered user or type a walk-in name..." autocomplete="off" required>
-                        <input type="hidden" id="matchReceiverId">
-                        <ul id="receiverSuggestions" class="autocomplete-list"></ul>
-                    </div>
+
+                <div class="form-group" style="position: relative;">
+                    <label>Person's Name or Email <span style="color: var(--danger-red);">*</span></label>
+                    <input type="text" id="matchSearchInput" class="form-input" placeholder="Start typing to search registered users..." autocomplete="off" required>
+                    <input type="hidden" id="matchSelectedUserId">
+                    <div id="matchSuggestions" class="autocomplete-suggestions" style="display: none;"></div>
                 </div>
 
                 <div class="modal-actions">
                     <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
-                    <button type="submit" class="modal-btn confirm-btn success-override" id="confirmMatchBtn"><i class="fa-solid fa-handshake"></i> Complete & Archive</button>
+                    <button type="submit" class="modal-btn confirm-btn success-override" id="matchConfirmBtn"><i class="fa-solid fa-handshake"></i> Confirm Match</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="deleteReasonModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" data-close>&times;</button>
+            <h3>Delete Post</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Please provide a reason for deleting this active post. The reporter will receive this as a notification.</p>
+            
+            <form id="deleteReasonForm" class="modal-form">
+                <input type="hidden" id="deleteReportId">
+                <input type="hidden" id="deleteUserId">
+                <input type="hidden" id="deleteItemName">
+                <input type="hidden" id="deleteReportType">
+                
+                <div class="form-group">
+                    <label>Reason for Deletion <span style="color: var(--danger-red);">*</span></label>
+                    <textarea id="deleteReasonText" class="form-input" rows="4" placeholder="e.g., This post violates our guidelines, or is a duplicate..." required></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
+                    <button type="submit" class="modal-btn confirm-btn danger-override" id="deleteConfirmBtn"><i class="fa-solid fa-trash-can"></i> Delete & Notify</button>
                 </div>
             </form>
         </div>
@@ -145,26 +143,24 @@
     <div id="createPostModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal" data-close>&times;</button>
-            <h3>Create Direct Post</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Log a walk-in report on behalf of a student. Posts created here go live immediately.</p>
+            <h3>Create Manual Post</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Post an item directly to the live feed on behalf of someone.</p>
             
             <form id="createPostForm" class="modal-form">
-                <h4 style="margin: 8px 0; font-size: 0.95rem; color: var(--primary-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">Reporter Information</h4>
                 <div style="display: flex; gap: 16px;">
                     <div class="form-group" style="flex: 1;">
-                        <label>Reporter's Name</label>
-                        <input type="text" id="newReporterName" class="form-input" placeholder="e.g., Juan Dela Cruz" required>
+                        <label>Reporter Name</label>
+                        <input type="text" id="newReporterName" class="form-input" placeholder="e.g., John Doe (Manual)" required>
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label>Contact Number</label>
-                        <input type="text" id="newReporterContact" class="form-input" placeholder="e.g., 09123456789" required>
+                        <label>Contact Info</label>
+                        <input type="text" id="newReporterContact" class="form-input" placeholder="e.g., At the Admin Office" required>
                     </div>
                 </div>
 
-                <h4 style="margin: 16px 0 8px 0; font-size: 0.95rem; color: var(--primary-blue); border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">Item Details</h4>
                 <div style="display: flex; gap: 16px;">
                     <div class="form-group" style="flex: 1;">
-                        <label>Report Type</label>
+                        <label>Type</label>
                         <select id="newType" class="form-input" required>
                             <option value="lost">Lost Item</option>
                             <option value="found">Found Item</option>
@@ -173,24 +169,23 @@
                     <div class="form-group" style="flex: 1;">
                         <label>Category</label>
                         <select id="newCategory" class="form-input" required>
-                            <option value="" disabled selected>Select Category</option>
                             <option value="Electronics">Electronics</option>
                             <option value="Books & Notes">Books & Notes</option>
-                            <option value="Clothing">Uniforms & Clothing</option>
-                            <option value="Accessories">Accessories & IDs</option>
+                            <option value="Clothing">Clothing</option>
+                            <option value="Accessories">Accessories</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Item Name / Title</label>
-                    <input type="text" id="newName" class="form-input" placeholder="e.g., iPhone 13 Pro Max" required>
+                    <label>Item Name</label>
+                    <input type="text" id="newName" class="form-input" required>
                 </div>
 
                 <div style="display: flex; gap: 16px;">
                     <div class="form-group" style="flex: 1;">
-                        <label>Date</label>
+                        <label>Date Occurred</label>
                         <input type="date" id="newDate" class="form-input" required>
                     </div>
                     <div class="form-group" style="flex: 1;">
@@ -222,6 +217,17 @@
                     <button type="submit" class="modal-btn confirm-btn success-override" id="submitNewPostBtn">Publish Post</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-content" style="text-align: center; max-width: 400px;">
+            <div style="font-size: 3rem; color: var(--success-green); margin-bottom: 16px;"><i class="fa-solid fa-circle-check" id="success-icon"></i></div>
+            <h3 id="success-title">Success!</h3>
+            <p id="success-message" style="color: var(--text-secondary); margin-bottom: 24px;">Action completed successfully.</p>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="modal-btn confirm-btn success-override" id="successOkBtn">Continue</button>
+            </div>
         </div>
     </div>
 
