@@ -107,7 +107,7 @@ textarea.form-input {
     min-height: 80px;
 }
 
-/* Image Upload UI (Adapted for Lost Items) */
+/* Image Upload UI */
 .image-upload-wrapper {
     border: 2px dashed var(--border-light);
     border-radius: 12px;
@@ -232,6 +232,12 @@ textarea.form-input {
 .modal-btn.confirm-btn { background-color: var(--primary-blue); color: #ffffff; box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2); }
 .modal-btn.confirm-btn:hover { transform: translateY(-2px); }
 
+/* COLOR OVERRIDES FOR WARNING MODALS */
+.success-override { background-color: #10b981 !important; color: white !important; border: none !important; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
+.success-override:hover { background-color: #0d9668 !important; transform: translateY(-1px); }
+.danger-override { background-color: #ef4444 !important; color: white !important; border: none !important; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2); }
+.danger-override:hover { background-color: #dc2626 !important; transform: translateY(-1px); }
+
 /* Review Summary Modal Grid */
 .summary-grid {
     display: flex;
@@ -280,7 +286,6 @@ textarea.form-input {
     color: #ffffff; 
 }
 
-
 .nav-icon {
     width: 48px; 
     height: 48px; 
@@ -289,7 +294,7 @@ textarea.form-input {
     justify-content: center; 
     align-items: center; 
     transition: all 0.2s ease; 
-    text-decoration: none; /* ADD THIS LINE TO REMOVE THE PURPLE LINE */
+    text-decoration: none; 
 }
 
 /* --- STATIC INFO MODAL STYLES --- */

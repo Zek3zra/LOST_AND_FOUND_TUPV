@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = false;
     });
 
-    // --- SECURITY MODAL ---
+    // --- SECURITY MODAL (OLD PASSWORD CHECK INCLUDED) ---
     document.getElementById('change-pwd-btn').addEventListener('click', () => {
         document.getElementById('change-pwd-form').reset();
         document.getElementById('change-pwd-modal').classList.add('show');
@@ -188,15 +188,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('change-pwd-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const currentPwd = document.getElementById('current-pwd').value;
         const newPwd = document.getElementById('new-pwd').value;
         const confirmPwd = document.getElementById('confirm-pwd').value;
 
-        if (newPwd !== confirmPwd) { alert("Passwords do not match!"); return; }
+        if (newPwd !== confirmPwd) { 
+            alert("New passwords do not match!"); 
+            return; 
+        }
         
         const btn = document.getElementById('save-pwd-btn');
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
         btn.disabled = true;
 
+        // 1. Verify the Current Password first by signing in behind the scenes
+        const { error: signInError } = await window.supabase.auth.signInWithPassword({ 
+            email: currentUserData.email, 
+            password: currentPwd 
+        });
+
+        if (signInError) {
+            alert("Incorrect Current Password!");
+            btn.innerHTML = 'Update Password';
+            btn.disabled = false;
+            return;
+        }
+
+        // 2. If current password matches, proceed to update the password
         const { error } = await window.supabase.auth.updateUser({ password: newPwd });
         if (!error) {
             alert("Password successfully secured!");
@@ -204,6 +222,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             alert("Failed to update password: " + error.message);
         }
+        
         btn.innerHTML = 'Update Password';
         btn.disabled = false;
     });
@@ -212,12 +231,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     const notifModal = document.getElementById('notifications-modal');
     const notifList = document.getElementById('notifications-list');
     const notifBtn = document.getElementById('open-notifications-btn');
+    const clearNotifsBtn = document.getElementById('clear-notifs-btn');
 
     if (notifBtn) {
         notifBtn.addEventListener('click', () => {
             document.getElementById('general-notif-dot').style.display = 'none';
             notifModal.classList.add('show');
             loadNotifications();
+        });
+    }
+
+    // Clear Notifications Button Logic
+    if (clearNotifsBtn) {
+        clearNotifsBtn.addEventListener('click', async () => {
+            const originalText = clearNotifsBtn.innerHTML;
+            clearNotifsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Clearing...';
+            
+            // This actually deletes notifications from the database to clear them out
+            await window.supabase.from('notifications').delete().eq('user_id', userId);
+            
+            await loadNotifications();
+            clearNotifsBtn.innerHTML = originalText;
         });
     }
 
@@ -230,9 +264,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!notifs || notifs.length === 0) {
                 notifList.innerHTML = '<div style="text-align:center; padding: 40px; color: #475569;"><i class="fa-regular fa-bell-slash" style="font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5;"></i><br>No new notifications.</div>';
+                clearNotifsBtn.style.display = 'none'; // Hide clear button if empty
                 return;
             }
 
+            clearNotifsBtn.style.display = 'block'; // Show clear button if there are notifications
             sessionStorage.setItem('lastReadNotifTime', new Date().toISOString());
 
             notifList.innerHTML = notifs.map(n => {
@@ -346,13 +382,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('hist-modal-posted-date').textContent = postedDate;
         document.getElementById('hist-modal-datetime').textContent = eventDate;
         
-        // 1. FIXED: Show the real description (admin_specific_details) if it's a found item
+        // Show actual description or admin description
         const actualDescription = report.report_type === 'found' && report.admin_specific_details 
             ? report.admin_specific_details 
             : report.item_description;
         document.getElementById('hist-modal-description').textContent = actualDescription || 'No description provided.';
         
-        // 2. NEW: Show Who Claimed/Found it if Matched
+        // Matched Section
         const matchBlock = document.getElementById('hist-match-details');
         if (report.report_status === 'matched') {
             const label = report.report_type === 'lost' ? 'Found and Returned By:' : 'Claimed By True Owner:';
