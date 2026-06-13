@@ -135,8 +135,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmBtn = document.getElementById('confirm-btn');
     const successModal = document.getElementById('success-modal');
 
-    reportForm.addEventListener('submit', (e) => {
+   reportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Prevent spam clicking while loading
+        const generateBtn = document.getElementById('generate-report-btn');
+        const originalText = generateBtn.innerHTML;
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+
+        // --- SPAM PROTECTION CHECK ---
+        const { count, error: countError } = await window.supabase
+            .from('item_reports')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', sessionStorage.getItem('user_id'))
+            .eq('report_status', 'pending'); 
+
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = originalText;
+
+        if (countError) {
+            alert("System error checking account status. Please try again.");
+            return;
+        }
+
+        if (count >= 3) {
+            alert("SPAM PROTECTION: You already have 3 pending reports. Please wait for the Admin to review them before submitting more.");
+            return;
+        }
+
         turnoverModal.classList.add('show');
     });
 

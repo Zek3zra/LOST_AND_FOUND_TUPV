@@ -27,9 +27,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (adminLink) adminLink.classList.remove('hidden');
     }
 
+    // Standard Sidebar Logout
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (!guestMode) await window.supabase.auth.signOut();
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        });
+    }
+
+    // New Mobile-Only Logout
+    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             if (!guestMode) await window.supabase.auth.signOut();
             sessionStorage.clear();
@@ -60,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (guestMode) {
         document.getElementById('profile-name').textContent = 'Guest Sandbox';
         document.getElementById('profile-email').textContent = 'Read-only Access';
-        document.querySelectorAll('.profile-action-buttons button:not(#logout-btn), #pfp-trigger .avatar-overlay').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.profile-action-buttons button:not(#logout-btn):not(#mobile-logout-btn), #pfp-trigger .avatar-overlay').forEach(el => el.style.display = 'none');
         document.getElementById('pfp-trigger').style.cursor = 'default';
         return; 
     }
@@ -268,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            clearNotifsBtn.style.display = 'block'; // Show clear button if there are notifications
+            clearNotifsBtn.style.display = 'flex'; // Show clear button if there are notifications
             sessionStorage.setItem('lastReadNotifTime', new Date().toISOString());
 
             notifList.innerHTML = notifs.map(n => {
@@ -368,6 +380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // MATCHED HOMEPAGE MODAL FUNCTION
     window.viewHistoryDetails = function(reportId) {
         const report = userHistoryData.find(r => String(r.report_id) === String(reportId));
         if (!report) return;
@@ -382,13 +395,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('hist-modal-posted-date').textContent = postedDate;
         document.getElementById('hist-modal-datetime').textContent = eventDate;
         
-        // Show actual description or admin description
         const actualDescription = report.report_type === 'found' && report.admin_specific_details 
             ? report.admin_specific_details 
             : report.item_description;
         document.getElementById('hist-modal-description').textContent = actualDescription || 'No description provided.';
         
-        // Matched Section
         const matchBlock = document.getElementById('hist-match-details');
         if (report.report_status === 'matched') {
             const label = report.report_type === 'lost' ? 'Found and Returned By:' : 'Claimed By True Owner:';
@@ -396,7 +407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             document.getElementById('hist-match-label').textContent = label;
             document.getElementById('hist-match-person').textContent = personName;
-            matchBlock.style.display = 'block';
+            matchBlock.style.display = 'flex';
         } else {
             matchBlock.style.display = 'none';
         }
@@ -411,18 +422,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (report.report_status === 'archived') statusBadge.classList.add('status-archived');
         else statusBadge.classList.add('status-pending');
 
-        const imgWrapper = document.getElementById('hist-image-wrapper');
         const imgEl = document.getElementById('hist-modal-image');
-        const layoutContainer = document.getElementById('hist-modal-layout');
+        const noImgEl = document.getElementById('hist-no-image');
 
         if (report.image_path) {
             imgEl.src = report.image_path;
-            imgWrapper.style.display = 'block';
-            layoutContainer.classList.add('has-image');
+            imgEl.style.display = 'block';
+            noImgEl.style.display = 'none';
         } else {
-            imgWrapper.style.display = 'none';
             imgEl.src = '';
-            layoutContainer.classList.remove('has-image');
+            imgEl.style.display = 'none';
+            noImgEl.style.display = 'flex';
         }
 
         document.getElementById('historyDetailsModal').classList.add('show');

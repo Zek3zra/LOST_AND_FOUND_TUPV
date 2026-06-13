@@ -90,19 +90,19 @@
     text-overflow: ellipsis;
 }
 
-/* --- ACTION BUTTONS (Smart Wrapping Grid) --- */
+/* --- ACTION BUTTONS --- */
 .profile-action-buttons {
     display: flex;
-    flex-wrap: wrap; /* Allows buttons to drop to the next line */
+    flex-wrap: wrap; 
     gap: 10px;
-    justify-content: center; /* Centers them neatly on mobile */
+    justify-content: center; 
     margin-top: 16px;
     width: 100%;
 }
 
 .action-btn {
-    flex: 1 1 calc(50% - 10px); /* Takes up half the screen minus gap on mobile */
-    min-width: 130px; /* Prevents them from getting too narrow */
+    flex: 1 1 calc(50% - 10px); 
+    min-width: 130px; 
     padding: 10px 14px;
     border-radius: 8px;
     font-size: 0.85rem;
@@ -122,7 +122,7 @@
 .outline-btn { background-color: #ffffff; border-color: #cbd5e1; color: #0f172a; }
 .outline-btn:hover { background-color: #f8fafc; border-color: #94a3b8; }
 
-/* Details Section - STRICT 2x2 GRID */
+/* Details Section */
 .details-section h2 {
     font-size: 1.1rem;
     font-weight: 600;
@@ -191,12 +191,10 @@
 }
 .modal-overlay.show .modal-content { transform: translateY(0); opacity: 1; }
 
-/* Modal Sizing Classes */
 .modal-md { max-width: 500px; }
 .modal-lg { max-width: 800px; }
 .modal-chat { max-width: 650px; height: 85vh; }
 
-/* Structural Components */
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -224,7 +222,6 @@
     flex-shrink: 0;
 }
 
-/* Close Button strictly in Header */
 .close-modal {
     background: none; border: none; font-size: 1.5rem; 
     color: #475569; cursor: pointer; padding: 0; 
@@ -232,7 +229,6 @@
 }
 .close-modal:hover { color: #ef4444; }
 
-/* Form Styles */
 .profile-form-grid { display: flex; flex-direction: column; gap: 16px; }
 .form-group { display: flex; flex-direction: column; }
 .form-group label { font-size: 0.9rem; font-weight: 600; color: #475569; margin-bottom: 8px; }
@@ -244,7 +240,6 @@
 }
 .form-input:focus { outline: none; border-color: #1E3A8A; background-color: #ffffff; }
 
-/* Action Buttons inside Modals */
 .modal-btn {
     border: none; border-radius: 8px; padding: 12px 24px;
     font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
@@ -288,6 +283,28 @@
 #notifications-list::-webkit-scrollbar-track { background: transparent; }
 #notifications-list::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 
+/* CLEARED NOTIFICATIONS BUTTON STYLE */
+#clear-notifs-btn {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#clear-notifs-btn:hover {
+    background-color: #fee2e2;
+    color: #ef4444;
+    border-color: #fca5a5;
+}
+
 /* --- COMPACT RESOLUTION BUBBLE --- */
 .user-resolve-bubble { background-color: #ffffff; border: 1px solid #10b981; padding: 16px; border-radius: 12px; text-align: center; color: #0f172a; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1); width: 100%; max-width: 320px; margin: 0 auto; }
 .user-resolve-bubble span { color: #475569; }
@@ -312,44 +329,128 @@
 .status-rejected { background-color: #ef4444; } 
 .status-archived { background-color: #64748b; } 
 
-/* --- 2-COLUMN HISTORY DETAILS --- */
-.hist-modal-layout { display: flex; flex-direction: column; gap: 24px; }
+/* --- MATCHED TO HOMEPAGE - HISTORY MODAL DETAILS --- */
+.hist-modal-layout { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 24px; 
+}
 
+.hist-modal-image-container { 
+    width: 100%; 
+    aspect-ratio: 1 / 1; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    border: 1px solid #e2e8f0; 
+    background-color: #f8fafc; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+.hist-modal-image-container img { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+.gallery-no-image { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+.gallery-no-image i { font-size: 2.5rem; color: #cbd5e1; margin-bottom: 6px; }
+.gallery-no-image span { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #94a3b8; }
+#hist-no-image i { font-size: 4.5rem; color: #cbd5e1; margin-bottom: 12px; }
+#hist-no-image span { font-size: 0.95rem; font-weight: 700; letter-spacing: 0.05em; color: #94a3b8; }
+
+.item-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.detail-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 12px 16px;
+    background-color: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.2s;
+}
+
+.detail-block:hover { border-color: #cbd5e1; }
+
+.detail-icon {
+    width: 34px; height: 34px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #1E3A8A;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0; font-size: 1rem;
+}
+
+.detail-content { flex: 1; min-width: 0; }
+.detail-content label { display: block; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.detail-content span { display: block; font-size: 0.95rem; color: #0f172a; line-height: 1.4; word-wrap: break-word; }
+.desc-text { font-size: 0.95rem; line-height: 1.6; color: #475569; white-space: pre-wrap; }
+
+
+/* --- STATIC INFO MODAL STYLES --- */
+.info-modal-text { color: #475569; font-size: 0.95rem; line-height: 1.7; }
+.info-modal-text h4 { color: #0f172a; margin-top: 20px; margin-bottom: 8px; font-size: 1.05rem; font-weight: 700; }
+.info-modal-text h4:first-child { margin-top: 0; }
+.info-modal-text p { margin-bottom: 16px; }
+.info-modal-text ul { margin-left: 20px; margin-bottom: 16px; }
+.info-modal-text li { margin-bottom: 8px; }
+
+/* FAQ Specifics */
+.faq-item { border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 16px; }
+.faq-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+/* Contact Cards Specifics */
+.contact-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; }
+.contact-card i { font-size: 1.5rem; color: #1E3A8A; width: 30px; text-align: center; }
+
+/* Responsive adjustments */
 @media (min-width: 640px) {
-    /* Desk/Tablet Adjustments */
     .profile-container { padding: 40px 24px; }
     .profile-card { padding: 40px; gap: 32px; }
     .profile-header { flex-direction: row; text-align: left; justify-content: flex-start; }
     .profile-hero-info { width: auto; flex-grow: 1; }
     .profile-action-buttons { justify-content: flex-start; }
     .action-btn { flex: 0 0 auto; font-size: 0.9rem; padding: 10px 18px; }
-    
-    .hist-modal-layout.has-image { flex-direction: row; align-items: flex-start; }
-    .hist-modal-image-container { flex: 0 0 320px; }
 }
 
-.hist-modal-image-container { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background-color: #f8fafc; display: none; }
-.hist-modal-image-container img { width: 100%; height: auto; display: block; object-fit: cover; max-height: 400px; }
-.hist-modal-info { flex: 1; min-width: 0; }
-.hist-details-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
-.hist-detail-row { display: flex; align-items: flex-start; gap: 16px; }
-.hist-detail-row i { color: #1E3A8A; font-size: 1.15rem; margin-top: 2px; width: 24px; text-align: center; opacity: 0.8; }
-.hist-detail-row label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; font-weight: 600; margin-bottom: 4px; }
-.hist-detail-row span { font-size: 0.95rem; color: #0f172a; font-weight: 500; line-height: 1.4; display: block; }
-
-/* Hide mobile logout button on larger screens */
 @media (min-width: 768px) {
+    .hist-modal-layout { 
+        flex-direction: row; 
+        align-items: flex-end; 
+        gap: 32px;
+    }
+    
+    .hist-modal-left {
+        flex: 0 0 320px; 
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 0;
+    }
+
+    .hist-modal-image-container { 
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
+
+    .hist-modal-right {
+        flex: 1;
+        min-width: 0;
+        align-self: end;
+    }
+
+    .modal-lg {
+        max-width: 800px; 
+    }
+
+    /* Hide mobile logout button on larger screens */
     #mobile-logout-btn { display: none !important; }
 }
 
-.nav-icon i { 
-    color: #94a3b8; /* Gray for inactive icons */
-    transition: color 0.2s ease;
-}
-
-.nav-icon.active i {
-    color: #ffffff; /* White icon to pop against the blue background */
-}
+.nav-icon i { color: #94a3b8; transition: color 0.2s ease; }
+.nav-icon.active i { color: #ffffff; }
 
 .nav-icon {
     width: 48px; 
@@ -359,70 +460,5 @@
     justify-content: center; 
     align-items: center; 
     transition: all 0.2s ease; 
-    text-decoration: none; /* ADD THIS LINE TO REMOVE THE PURPLE LINE */
-}
-
-
-/* --- STATIC INFO MODAL STYLES --- */
-.info-modal-text {
-    color: #475569;
-    font-size: 0.95rem;
-    line-height: 1.7;
-}
-
-.info-modal-text h4 {
-    color: #0f172a;
-    margin-top: 20px;
-    margin-bottom: 8px;
-    font-size: 1.05rem;
-    font-weight: 700;
-}
-
-.info-modal-text h4:first-child {
-    margin-top: 0;
-}
-
-.info-modal-text p {
-    margin-bottom: 16px;
-}
-
-.info-modal-text ul {
-    margin-left: 20px;
-    margin-bottom: 16px;
-}
-
-.info-modal-text li {
-    margin-bottom: 8px;
-}
-
-/* FAQ Specifics */
-.faq-item {
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
-}
-
-.faq-item:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-/* Contact Cards Specifics */
-.contact-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.contact-card i {
-    font-size: 1.5rem;
-    color: #1E3A8A;
-    width: 30px;
-    text-align: center;
+    text-decoration: none; 
 }
