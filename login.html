@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RETRIEVE | TUPV Log In</title>
     
+    <link rel="icon" type="image/png" href="images/logo.png">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="header.css">
     <link rel="stylesheet" href="footer.css">
-    <link rel="stylesheet" href="landing.css"> <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="landing.css"> 
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
 
@@ -21,6 +24,7 @@
                     <img src="images/logo.png" alt="TUPV Retrieve Logo" class="logoImg">
                     <div class="headerText">
                         <span class="universityName">Retrieve TUPV</span>
+                        <span class="universityMotto">Reuniting you with your belongings</span>
                     </div>
                 </a>
             </div>
@@ -56,30 +60,27 @@
         <div class="footer-row">
             <div class="footer-col">
                 <h3 class="foot_logo_text">Retrieve | TUP Visayas</h3>
-                <p>Your trusted campus partner in finding what's lost.</p>
+                <p>Your trusted campus partner in finding what's lost. We create a community of trust and support for all TUPV students and faculty.</p>
             </div>
-            
             <div class="footer-col">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a id="footer-about-link">About Us</a></li>
-                    <li><a id="footer-how-it-works-link">How It Works</a></li>
-                    <li><a id="footer-faq-link">FAQ</a></li>
+                    <li><a href="#" id="footer-about-link">About Us</a></li>
+                    <li><a href="#" id="footer-how-it-works-link">How It Works</a></li>
+                    <li><a href="#" id="footer-faq-link">FAQ</a></li>
                 </ul>
             </div>
-            
             <div class="footer-col">
                 <h3>Contact & Legal</h3>
                 <ul>
-                    <li><a id="footer-contact-link">Contact Us</a></li>
-                    <li><a id="footer-privacy-link">Privacy Policy</a></li>
-                    <li><a id="footer-terms-link">Terms of Service</a></li>
+                    <li><a href="#" id="footer-contact-link">Contact Us</a></li>
+                    <li><a href="#" id="footer-privacy-link">Privacy Policy</a></li>
+                    <li><a href="#" id="footer-terms-link">Terms of Service</a></li>
                 </ul>
             </div>
-
             <div class="footer-col">
                 <h3>Stay Connected</h3>
-                <p>Follow us on social media for system updates.</p>
+                <p>Follow us on social media for system updates and important TUPV announcements.</p>
                 <div class="social-icons">
                     <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                     <a href="https://x.com/" target="_blank"><i class="fa-brands fa-twitter"></i></a>
@@ -88,66 +89,145 @@
             </div>
         </div>
         <hr>
-        <p class="copyright">&copy; 2025 Retrieve. All rights reserved.</p>
+        <p class="copyright">&copy; 2025 Retrieve. All rights reserved. | Technological University of the Philippines Visayas</p>
     </footer>
 
     <div id="about-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>About Retrieve TUPV</h2>
-            <p>Retrieve is a modern solution specifically built for the Technological University of the Philippines Visayas campus.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-circle-info" style="color: var(--primary-blue);"></i> About Retrieve TUPV</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p><strong>Retrieve TUPV</strong> is the official, centralized lost-and-found repository designed exclusively for the Technological University of the Philippines Visayas campus.</p>
+                <p>Our mission is to foster a community of honesty, trust, and security by providing a reliable digital platform where students, faculty, and staff can easily report missing valuables or turnover items they have found.</p>
+                <p>Built with efficiency and privacy in mind, this system directly connects the campus community with the Administration Office to ensure items are returned to their rightful owners safely and swiftly.</p>
+            </div>
         </div>
     </div>
 
     <div id="how-it-works-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>How It Works</h2>
-            <p>Post details about your lost or found item securely. Our system catalogues the entry, and you can wait for TUPV administrative approval.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-gears" style="color: var(--primary-blue);"></i> How It Works</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <h4>1. Submit a Report</h4>
+                <p>Use your dashboard to report an item you have lost or found. Provide accurate details. If you found an item, physically turn it over to the Administration Office.</p>
+                
+                <h4>2. Administrator Review</h4>
+                <p>The TUPV Admin will review your submission. Once verified, the item will be posted to the public feed for the campus community to see.</p>
+                
+                <h4>3. Verification & Claiming</h4>
+                <p>If you see your lost item on the feed, visit the Admin Office and provide your "Secret Identifiers" (proof of ownership). Once verified, the item will be marked as matched and safely returned to you!</p>
+            </div>
         </div>
     </div>
 
     <div id="faq-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Frequently Asked Questions</h2>
-            <div class="faq-item">
-                <h4>How do I report an item on campus?</h4>
-                <p>Click on the "Report Lost Item" or "Report Found Item" button on your dashboard to securely fill out the necessary details.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-clipboard-question" style="color: var(--primary-blue);"></i> Frequently Asked Questions</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <div class="faq-item">
+                    <h4>How do I claim an item?</h4>
+                    <p>Go to the TUPV Administration Office with your Student/Faculty ID. You will be asked to describe specific details about the item that only the true owner would know.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Why is my report still "Pending"?</h4>
+                    <p>Found items remain pending until they are physically turned over to the Admin. Lost items require Admin review before they are published to prevent spam.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Can I delete a report?</h4>
+                    <p>Users cannot delete active reports to maintain system integrity. If you need a report removed, please use the Support Chat to contact the Administrator.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="footer-contact-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Contact TUPV Admin</h2>
-            <p><strong>Email:</strong> support@retrieve.tupv.edu.ph</p>
-            <p><strong>Phone:</strong> +63 994 300 8493</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-address-book" style="color: var(--primary-blue);"></i> Contact Administration</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p>If you have urgent inquiries, need to turn over a found item, or require assistance beyond the Support Chat, you can reach the TUPV Admin via the following channels:</p>
+                
+                <div class="contact-card">
+                    <i class="fa-solid fa-building"></i>
+                    <div>
+                        <strong>Office Location</strong><br>
+                        TUP Visayas Administration Building, Ground Floor
+                    </div>
+                </div>
+                
+                <div class="contact-card">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div>
+                        <strong>Email Address</strong><br>
+                        support@retrieve.tupv.edu.ph
+                    </div>
+                </div>
+                
+                <div class="contact-card">
+                    <i class="fa-solid fa-clock"></i>
+                    <div>
+                        <strong>Operating Hours</strong><br>
+                        Monday - Friday, 8:00 AM - 5:00 PM
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="privacy-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Privacy Policy</h2>
-            <p>Your privacy is important to us. We only collect personal information when we truly need it to provide a service to you.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-shield" style="color: var(--primary-blue);"></i> Privacy Policy</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p>Your privacy is important to us. This policy outlines how Retrieve TUPV handles your data.</p>
+                <h4>Data Collection</h4>
+                <p>We collect basic directory information (Name, Course, Contact Number) solely to facilitate the returning of lost items. We do not track your location or browsing habits outside of the application.</p>
+                <h4>Data Usage & Visibility</h4>
+                <p>Your contact details are strictly hidden from the public feed. Only the System Administrator can view your full profile to verify ownership and send system notifications.</p>
+                <h4>Data Protection</h4>
+                <p>All user data is encrypted and securely stored using modern authentication standards. We will never sell or share your personal information with third-party entities.</p>
+            </div>
         </div>
     </div>
 
     <div id="terms-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Terms of Service</h2>
-            <p>By accessing this website, you are agreeing to be bound by these terms of service and agree that you are responsible for compliance with TUPV rules and local laws.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-file-contract" style="color: var(--primary-blue);"></i> Terms of Service</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p>By accessing and using Retrieve TUPV, you agree to comply with the following campus guidelines:</p>
+                <ul>
+                    <li><strong>Honesty Policy:</strong> Attempting to claim an item that does not belong to you is a severe violation. False claims will be reported directly to the Disciplinary Board.</li>
+                    <li><strong>Accuracy:</strong> All reports submitted must be truthful and accurate to the best of your knowledge. Spamming or posting fake items will result in immediate account suspension.</li>
+                    <li><strong>Liability:</strong> While Retrieve TUPV facilitates the recovery process, the platform and the University are not liable for items that are permanently lost, stolen, or damaged prior to turnover.</li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <div id="message-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal" id="close-msg-modal">&times;</button>
-            <h2 id="modal-title">Login Failed</h2>
-            <p id="modal-message">Invalid email or password.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2 id="modal-title">Login Failed</h2>
+                <button class="close-modal" id="close-msg-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center; padding-top: 30px;">
+                <p id="modal-message" style="font-size: 1rem; color: var(--text-secondary);">Invalid email or password.</p>
+            </div>
         </div>
     </div>
 
@@ -155,4 +235,4 @@
     <script src="supabaseClient.js"></script>
     <script src="login.js"></script>
 </body>
-</html>
+</html> 

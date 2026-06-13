@@ -5,34 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RETRIEVE | Create TUPV Account</title>
     
+    <link rel="icon" type="image/png" href="images/logo.png">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="header.css">
     <link rel="stylesheet" href="footer.css">
-    <link rel="stylesheet" href="landing.css"> <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="landing.css"> 
+    <link rel="stylesheet" href="register.css">
 </head>
 <body>
-
-    <header class="main-header">
-        <nav class="main-nav">
-            <div class="logoContainer">
-                <a href="landing.html" class="logoLink"> 
-                    <img src="images/logo.png" alt="Portal Logo" class="logoImg">
-                    <div class="headerText">
-                        <span class="universityName">Retrieve TUPV</span>
-                        <span class="universityMotto">Reuniting you with your belongings</span>
-                    </div>
-                </a>
-            </div>
-            
-            <div class="navigationItems">
-                <div class="navItem"><a href="landing.html">Home</a></div>
-                <div class="navItem"><a href="#" id="about-link">About</a></div>
-                <div class="navItem"><a href="#" id="contact-link">Contact</a></div>
-            </div>
-        </nav>
-    </header>
 
     <main class="register-container">
         <div class="form-card">
@@ -40,48 +23,53 @@
             <h2>Create an Account</h2>
             
             <form id="registerForm">
-                <div class="form-row">
+                <div class="form-grid">
                     <div class="form-group">
                         <label for="firstName">First Name</label>
-                        <input type="text" id="firstName" required>
+                        <input type="text" id="firstName" name="firstName" placeholder="e.g., Juan" required>
                     </div>
+                    
                     <div class="form-group">
                         <label for="lastName">Last Name</label>
-                        <input type="text" id="lastName" required>
+                        <input type="text" id="lastName" name="lastName" placeholder="e.g., Dela Cruz" required>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="email">TUPV Email Address</label>
-                    <input type="email" id="email" placeholder="student@tupv.edu.ph" required>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="email">TUPV Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="student@tupv.edu.ph" required>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
                         <label for="contact_number">Contact Number</label>
-                        <input type="text" id="contact_number" placeholder="09xxxxxxxxx" required>
+                        <input type="tel" id="contact_number" name="contact_number" placeholder="e.g., 09123456789" required>
                     </div>
-                    <div class="form-group">
-                        <label for="course_section">Course & Section</label>
-                        <input type="text" id="course_section" placeholder="BSIT 3-A" required>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="program">Program</label>
+                        <input type="text" id="program" name="program" placeholder="Click to select your program..." readonly required>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="address">Complete Address</label>
-                    <input type="text" id="address" placeholder="Bacolod City" required>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="section">Section</label>
+                        <input type="text" id="section" name="section" placeholder="e.g., BET 1 - A or T09 - A" required>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="address">Home Address</label>
+                        <input type="text" id="address" name="address" placeholder="City / Municipality" required>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="password">Create Password</label>
+                        <input type="password" id="password" name="password" placeholder="Must be at least 8 characters" minlength="8" required>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="At least 8 characters" minlength="8" required>
-                </div>
-                
                 <button type="submit" class="create-account-btn" id="create-account-btn">Sign Up</button>
             </form>
-
-            <div class="login-prompt">
-                Already have an account? <a href="login.html">Log in here</a>
+            
+            <div class="auth-links">
+                <p>Already have an account? <a href="login.html">Log In here</a></p>
             </div>
         </div>
     </main>
@@ -90,7 +78,7 @@
         <div class="footer-row">
             <div class="footer-col">
                 <h3 class="foot_logo_text">Retrieve | TUP Visayas</h3>
-                <p>Your trusted campus partner in finding what's lost. We create a community of trust and support for all TUPV students and faculty.</p>
+                <p>Your trusted campus partner in finding what's lost.</p>
             </div>
             
             <div class="footer-col">
@@ -113,7 +101,7 @@
 
             <div class="footer-col">
                 <h3>Stay Connected</h3>
-                <p>Follow us on social media for system updates and important TUPV announcements.</p>
+                <p>Follow us on social media for system updates.</p>
                 <div class="social-icons">
                     <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                     <a href="https://x.com/" target="_blank"><i class="fa-brands fa-twitter"></i></a>
@@ -125,62 +113,150 @@
         <p class="copyright">&copy; 2025 Retrieve. All rights reserved.</p>
     </footer>
 
+    <div id="program-modal" class="modal-overlay" style="z-index: 1050;">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-graduation-cap" style="color: var(--primary-blue);"></i> Select Program</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="program-group">
+                    <h3>College of Engineering (COE)</h3>
+                    <button class="program-btn" data-value="BS Computer Engineering">BS Computer Engineering</button>
+                    <button class="program-btn" data-value="BS Electrical Engineering">BS Electrical Engineering</button>
+                    <button class="program-btn" data-value="BS Electronics Engineering">BS Electronics Engineering</button>
+                    <button class="program-btn" data-value="BS Mechanical Engineering">BS Mechanical Engineering</button>
+                </div>
+
+                <div class="program-group">
+                    <h3>College of Engineering Technology (COET)</h3>
+                    <button class="program-btn" data-value="BS Chemistry">BS Chemistry</button>
+                    <button class="program-btn" data-value="BET major in Automotive Engineering Technology">BET major in Automotive Engineering Technology</button>
+                    <button class="program-btn" data-value="BET major in Computer Engineering Technology">BET major in Computer Engineering Technology</button>
+                    <button class="program-btn" data-value="BET major in Chemical Engineering Technology">BET major in Chemical Engineering Technology</button>
+                    <button class="program-btn" data-value="BET major in Electrical Engineering Technology">BET major in Electrical Engineering Technology</button>
+                    <button class="program-btn" data-value="BET major in Electromechanical Engineering Technology">BET major in Electromechanical Engineering Technology</button>
+                    <button class="program-btn" data-value="BET major in Heating, Ventilation, Air-Conditioning & Refrigeration Engineering Technology">BET major in HVAC & R Engineering Technology</button>
+                    <button class="program-btn" data-value="BET major in Manufacturing Engineering Technology">BET major in Manufacturing Engineering Technology</button>
+                    <button class="program-btn" data-value="BET major in Electronics Engineering Technology">BET major in Electronics Engineering Technology</button>
+                </div>
+
+                <div class="program-group">
+                    <h3>College of Automation and Control (COAC)</h3>
+                    <button class="program-btn" data-value="BS Instrumentation and Control Engineering">BS Instrumentation and Control Engineering</button>
+                    <button class="program-btn" data-value="BS Mechatronics Engineering">BS Mechatronics Engineering</button>
+                    <button class="program-btn" data-value="BET major in Mechatronics Engineering Technology">BET major in Mechatronics Engineering Technology</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="duplicate-modal" class="modal-overlay" style="z-index: 1060;">
+        <div class="modal-content modal-md" style="text-align: center; padding: 40px 24px 32px; max-width: 400px; border-radius: 16px;">
+            <button class="close-modal" data-close style="position: absolute; right: 16px; top: 16px; background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: color 0.2s;">&times;</button>
+            
+            <div style="width: 80px; height: 80px; background-color: #fee2e2; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px;">
+                <i class="fa-solid fa-user-xmark" style="font-size: 2.5rem; color: #ef4444;"></i>
+            </div>
+            
+            <h3 style="margin-bottom: 12px; color: #0f172a; font-size: 1.5rem; font-weight: 800;">Account Already Exists</h3>
+            <p id="duplicate-msg" style="color: #475569; font-size: 0.95rem; margin-bottom: 32px; line-height: 1.6;"></p>
+            
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button type="button" data-close style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #334155; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s;">Close</button>
+                
+                <a href="login.html" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background-color: #1E3A8A; color: #ffffff !important; text-decoration: none; display: flex; justify-content: center; align-items: center; font-weight: 600; font-size: 0.95rem; transition: background-color 0.2s;">Log In Instead</a>
+            </div>
+        </div>
+    </div>
+
     <div id="about-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>About Retrieve</h2>
-            <p>Retrieve is a modern solution connecting people who have lost items with those who have found them, fostering a community of trust.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-circle-info" style="color: var(--primary-blue);"></i> About Retrieve TUPV</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p>Retrieve is a modern solution specifically built for the Technological University of the Philippines Visayas campus.</p>
+            </div>
         </div>
     </div>
+
     <div id="how-it-works-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>How It Works</h2>
-            <p>Post details about your lost or found item securely. Our system catalogues the entry, and you can wait for administrative approval to finalize the match safely and transparently.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-gears" style="color: var(--primary-blue);"></i> How It Works</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p>Post details about your lost or found item securely. Our system catalogues the entry, and you can wait for TUPV administrative approval.</p>
+            </div>
         </div>
     </div>
+
     <div id="faq-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Frequently Asked Questions</h2>
-            <div class="faq-item">
-                <h4>How do I report an item on campus?</h4>
-                <p>Click on the "Report Lost Item" or "Report Found Item" button on your dashboard to securely fill out the necessary details.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-clipboard-question" style="color: var(--primary-blue);"></i> Frequently Asked Questions</h2>
+                <button class="close-modal" data-close>&times;</button>
             </div>
-            <div class="faq-item">
-                <h4>What happens after I submit a report?</h4>
-                <p>Your report is sent to an administrator for review. Once verified, it will be visible on the public feed to help facilitate a match.</p>
+            <div class="modal-body info-modal-text">
+                <div class="faq-item">
+                    <h4>How do I report an item on campus?</h4>
+                    <p>Click on the "Report Lost Item" or "Report Found Item" button on your dashboard to securely fill out the necessary details.</p>
+                </div>
             </div>
         </div>
     </div>
+
     <div id="footer-contact-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Contact Admin</h2>
-            <p><strong>Email:</strong> support@retrieve.edu.ph</p>
-            <p><strong>Phone:</strong> +63 994 300 8493</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-address-book" style="color: var(--primary-blue);"></i> Contact TUPV Admin</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p><strong>Email:</strong> support@retrieve.tupv.edu.ph</p>
+                <p><strong>Phone:</strong> +63 994 300 8493</p>
+            </div>
         </div>
     </div>
+
     <div id="privacy-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Privacy Policy</h2>
-            <p>Your privacy is important to us. We only collect personal information when we truly need it to provide a service to you, collecting it by fair and lawful means.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-shield" style="color: var(--primary-blue);"></i> Privacy Policy</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p>Your privacy is important to us. We only collect personal information when we truly need it to provide a service to you.</p>
+            </div>
         </div>
     </div>
+
     <div id="terms-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal">&times;</button>
-            <h2>Terms of Service</h2>
-            <p>By accessing this website, you are agreeing to be bound by these terms of service and agree that you are responsible for compliance with rules and local laws.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-file-contract" style="color: var(--primary-blue);"></i> Terms of Service</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body info-modal-text">
+                <p>By accessing this website, you are agreeing to be bound by these terms of service and agree that you are responsible for compliance with TUPV rules and local laws.</p>
+            </div>
         </div>
     </div>
 
     <div id="message-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal" id="close-msg-modal">&times;</button>
-            <h2 id="modal-title">Success!</h2>
-            <p id="modal-message">Sign-up complete! Please check your email.</p>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2 id="modal-title">Notice</h2>
+                <button class="close-modal" id="close-msg-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center; padding-top: 24px;">
+                <p id="modal-message" style="font-size: 1rem; color: var(--text-secondary);"></p>
+            </div>
         </div>
     </div>
 
@@ -210,7 +286,7 @@
             }
         });
 
-        document.querySelectorAll('.close-modal').forEach(button => {
+        document.querySelectorAll('.close-modal, [data-close]').forEach(button => {
             button.addEventListener('click', function() {
                 this.closest('.modal-overlay').classList.remove('show');
             });

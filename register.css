@@ -36,37 +36,32 @@
     color: var(--primary-blue); 
 }
 
-.form-card h2 { 
-    font-size: 1.5rem; 
-    color: var(--text-primary); 
-    margin-bottom: 24px; 
-    text-align: center; 
-    font-weight: 600; 
+.form-card h2 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
-.form-row { 
-    display: flex; 
-    gap: 16px; 
-    flex-wrap: wrap; 
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
-.form-row .form-group { 
-    flex: 1; 
-    min-width: 180px; 
+.form-group {
+    display: flex;
+    flex-direction: column;
 }
 
-.form-group { 
-    margin-bottom: 16px; 
-    width: 100%; 
-    box-sizing: border-box; 
-}
-
-.form-group label { 
-    display: block; 
-    font-size: 0.85rem; 
-    margin-bottom: 6px; 
-    color: var(--text-secondary); 
-    font-weight: 600; 
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
 }
 
 .form-group input { 
@@ -79,6 +74,15 @@
     color: var(--text-primary); 
     transition: all 0.2s ease; 
     box-sizing: border-box; 
+    font-family: inherit;
+}
+
+/* Custom styling for the readonly Program input to look clickable */
+input#program[readonly] {
+    cursor: pointer;
+    background-color: #ffffff;
+    border: 1px solid var(--primary-blue);
+    box-shadow: 0 2px 4px rgba(30, 58, 138, 0.05);
 }
 
 .form-group input:focus { 
@@ -102,12 +106,14 @@
     transition: all 0.2s; 
     display: flex; 
     justify-content: center; 
-    align-items: center; 
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2); 
 }
 
 .create-account-btn:hover:not(:disabled) { 
     background-color: var(--primary-blue-hover); 
     transform: translateY(-2px); 
+    box-shadow: 0 6px 15px rgba(30, 58, 138, 0.3); 
 }
 
 .create-account-btn:disabled { 
@@ -115,25 +121,68 @@
     cursor: not-allowed; 
 }
 
-.login-prompt { 
-    text-align: center; 
-    margin-top: 24px; 
-    font-size: 0.9rem; 
-    color: var(--text-secondary); 
+.auth-links {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
-.login-prompt a { 
-    color: var(--primary-blue); 
-    text-decoration: none; 
-    font-weight: 600; 
+.auth-links a {
+    color: var(--primary-blue);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.auth-links a:hover {
+    color: var(--primary-blue-hover);
+    text-decoration: underline;
+}
+
+/* --- PROGRAM MODAL STYLES --- */
+.program-group {
+    margin-bottom: 24px;
+}
+
+.program-group h3 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.program-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.program-btn:hover {
+    background: #eff6ff;
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    transform: translateX(4px);
 }
 
 @media (max-width: 600px) {
-    .form-card { 
-        padding: 32px 24px; 
+    .form-grid {
+        grid-template-columns: 1fr;
     }
-    .form-row { 
-        flex-direction: column; 
-        gap: 0; 
+    .form-card {
+        padding: 32px 24px;
     }
 }
