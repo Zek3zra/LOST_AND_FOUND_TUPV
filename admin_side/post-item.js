@@ -20,6 +20,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ===================================
+    // GLOBAL SUCCESS UI HANDLER (Dynamic Colors)
+    // ===================================
+    function showSuccess(title, message, type = "success") {
+        const modal = document.getElementById('successModal');
+        const icon = document.getElementById('success-icon');
+        const wrapper = document.getElementById('success-icon-wrapper');
+        const titleEl = document.getElementById('success-title');
+        const btn = document.getElementById('successOkBtn');
+        
+        titleEl.textContent = title;
+        document.getElementById('success-message').textContent = message;
+        
+        // Reset classes
+        btn.className = "modal-btn confirm-btn";
+        wrapper.style.backgroundColor = "";
+        wrapper.style.color = "";
+        
+        // Apply Dynamic Styling
+        if (type === 'danger') {
+            titleEl.style.color = "var(--danger-red)";
+            wrapper.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+            wrapper.style.color = "var(--danger-red)";
+            icon.className = "fa-solid fa-trash-can";
+            btn.classList.add('danger-override');
+        } else {
+            titleEl.style.color = "var(--success-green)";
+            wrapper.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
+            wrapper.style.color = "var(--success-green)";
+            icon.className = "fa-solid fa-circle-check";
+            btn.classList.add('success-override');
+        }
+        
+        // Retrigger animation
+        wrapper.style.animation = 'none';
+        wrapper.offsetHeight; 
+        wrapper.style.animation = null;
+
+        modal.classList.add('show');
+    }
+
+    document.getElementById('successOkBtn').addEventListener('click', () => {
+        document.getElementById('successModal').classList.remove('show');
+    });
+
+    // ===================================
     // FETCH PENDING REPORTS
     // ===================================
     const tableBody = document.getElementById('pending-reports-table');
@@ -103,12 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const publishModal = document.getElementById('publishModal');
     const publishForm = document.getElementById('publishForm');
     const publishConfirmBtn = document.getElementById('publishConfirmBtn');
-    
-    const successModal = document.getElementById('successModal');
-    const successTitle = document.getElementById('success-title');
-    const successMessage = document.getElementById('success-message');
-    const successIcon = document.getElementById('success-icon');
-    
     const rejectReasonModal = document.getElementById('rejectReasonModal');
 
     // Image Upload Logic for Review
@@ -185,12 +224,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    document.getElementById('successOkBtn').addEventListener('click', () => {
-        successModal.classList.remove('show');
-    });
-
     // ===================================
-    // APPROVE, ALTER & PUBLISH
+    // APPROVE & PUBLISH
     // ===================================
     publishForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -249,12 +284,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             publishModal.classList.remove('show');
-            successTitle.textContent = "Published!";
-            successTitle.style.color = "var(--success-green)";
-            successMessage.textContent = "The item is now live on the public feed.";
-            successIcon.className = "fa-solid fa-circle-check";
-            successIcon.parentElement.style.color = "var(--success-green)";
-            successModal.classList.add('show');
+            
+            // Trigger dynamic success popup
+            showSuccess("Published!", "The item is now live on the public feed.", "success");
             
             loadPendingReports(); 
 
@@ -304,12 +336,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             rejectReasonModal.classList.remove('show');
             
-            successTitle.textContent = "Report Rejected";
-            successTitle.style.color = "var(--danger-red)";
-            successMessage.textContent = "The report has been removed and the user has been notified of the reason.";
-            successIcon.className = "fa-solid fa-trash-can";
-            successIcon.parentElement.style.color = "var(--danger-red)";
-            successModal.classList.add('show');
+            // Trigger dynamic Danger/Reject popup
+            showSuccess("Report Rejected", "The report has been removed and the user has been notified of the reason.", "danger");
             
             loadPendingReports(); 
         } else {

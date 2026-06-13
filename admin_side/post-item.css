@@ -65,7 +65,7 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .admin-table th.actions-col, 
 .admin-table td.actions-col {
     text-align: right;
-    padding-right: 32px; /* Perfectly aligns the text and the button */
+    padding-right: 32px; 
     width: 140px;
 }
 
@@ -75,11 +75,14 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .modal-content { background-color: var(--bg-surface); padding: 32px; width: 100%; max-width: 550px; border-radius: 12px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); transform: translateY(15px); opacity: 0; transition: transform 0.25s ease-out, opacity 0.25s ease-out; max-height: 90vh; overflow-y: auto; }
 .modal-overlay.show .modal-content { transform: translateY(0); opacity: 1; }
 .modal-lg { max-width: 800px; }
+.modal-md { max-width: 500px; }
 
-.close-modal { position: absolute; top: 20px; right: 20px; width: 32px; height: 32px; border-radius: 6px; background-color: transparent; display: flex; justify-content: center; align-items: center; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer; border: none; transition: background-color 0.15s ease, color 0.15s ease; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.modal-header h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px; }
+
+.close-modal { width: 32px; height: 32px; border-radius: 6px; background-color: transparent; display: flex; justify-content: center; align-items: center; font-size: 1.25rem; color: var(--text-secondary); cursor: pointer; border: none; transition: background-color 0.15s ease, color 0.15s ease; flex-shrink: 0;}
 .close-modal:hover { background-color: var(--border-light); color: var(--text-primary); }
 
-.modal-content h3 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
 .modal-content p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
 
 .modal-form { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
@@ -94,20 +97,63 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .image-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; color: white; font-weight: 600; opacity: 0; transition: opacity 0.2s; gap: 8px; }
 .image-upload-wrapper:hover .image-overlay { opacity: 1; }
 
-.modal-btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background-color 0.15s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.modal-btn.cancel-btn { background-color: var(--bg-body); color: var(--text-primary); border: 1px solid var(--border-light); }
-.modal-btn.cancel-btn:hover { background-color: var(--border-light); }
-.modal-btn.confirm-btn { background-color: var(--primary-blue); color: #ffffff; }
-.modal-btn.confirm-btn:hover { background-color: var(--primary-blue-hover); }
+.modal-actions { display: flex; justify-content: flex-end; align-items: stretch; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); }
+.modal-actions.justify-center { justify-content: center; }
 
-.success-override { background-color: var(--success-green) !important; }
-.success-override:hover { background-color: #0d9668 !important; }
-.danger-override { background-color: var(--danger-red) !important; color: white !important; border: none !important; }
-.danger-override:hover { background-color: var(--danger-red-hover) !important; }
+/* FIX: Added border: 1px solid transparent to force uniform heights across all buttons */
+.modal-btn { padding: 10px 20px; border: 1px solid transparent; border-radius: 6px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.modal-btn.cancel-btn { background-color: var(--bg-body); color: var(--text-primary); border-color: var(--border-light); }
+.modal-btn.cancel-btn:hover { background-color: var(--border-light); }
+.modal-btn.confirm-btn { background-color: var(--primary-blue); color: #ffffff; border-color: var(--primary-blue); }
+.modal-btn.confirm-btn:hover { background-color: var(--primary-blue-hover); border-color: var(--primary-blue-hover); }
+
+/* COLOR OVERRIDES (Changed to alter border-color instead of removing the border) */
+.success-override { background-color: var(--success-green) !important; border-color: var(--success-green) !important; color: white !important;}
+.success-override:hover { background-color: #0d9668 !important; border-color: #0d9668 !important; }
+.danger-override { background-color: var(--danger-red) !important; color: white !important; border-color: var(--danger-red) !important; }
+.danger-override:hover { background-color: var(--danger-red-hover) !important; border-color: var(--danger-red-hover) !important; }
 
 .modal-content::-webkit-scrollbar { width: 6px; }
 .modal-content::-webkit-scrollbar-track { background: transparent; }
 .modal-content::-webkit-scrollbar-thumb { background-color: var(--border-light); border-radius: 10px; }
+
+/* --- POLISHED SUCCESS MODAL ANIMATIONS --- */
+#success-icon-wrapper {
+    width: 80px; 
+    height: 80px; 
+    border-radius: 50%; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    margin: 0 auto 24px; 
+    font-size: 2.5rem;
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- AUTOCOMPLETE SUGGESTIONS --- */
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 4px;
+}
+.suggestion-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border-light); transition: background-color 0.2s; }
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background-color: var(--bg-body); }
 
 /* --- RESPONSIVE --- */
 @media (max-width: 992px) {

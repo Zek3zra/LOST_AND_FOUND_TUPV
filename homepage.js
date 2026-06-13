@@ -74,11 +74,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // --- 3. DATA FETCHING ---
-    let globalFetchedItems = []; // Store items so we can access them when a card is clicked
+    let globalFetchedItems = []; 
 
     const { data: allItems, error: fetchError } = await window.supabase
         .from('item_reports')
-        .select('*')
+        .select('*, users(first_name, last_name, email, contact_number)')
         .eq('report_status', 'approved')
         .order('item_datetime', { ascending: false });
 
@@ -90,52 +90,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     globalFetchedItems = allItems || [];
-    const lostItems = globalFetchedItems.filter(item => item.report_type === 'lost');
-    const foundItems = globalFetchedItems.filter(item => item.report_type === 'found');
+    
+    const lostListContainer = document.getElementById('lost-items-list');
+    const foundListContainer = document.getElementById('found-items-list');
 
-
-    // --- 4. HTML GENERATION (Clean Gallery Card) ---
-    function createGalleryCardHTML(item) {
-        const dateObj = new Date(item.item_datetime);
-        const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        
-        let imageContent = '';
-        if (item.image_path) {
-            imageContent = `<img src="${item.image_path}" alt="Item">`;
-        } else {
-            imageContent = `
-                <div class="gallery-no-image">
-                    <i class="fa-solid fa-image fa-2x"></i>
-                    <span>NO IMAGE</span>
-                </div>
-            `;
+    // --- 4. HTML GENERATION (Compact Grid Cards) ---
+    function renderCards(container, itemsArray) {
+        if (itemsArray.length === 0) {
+            container.innerHTML = '<div class="empty-state">No items match your criteria.</div>';
+            return;
         }
 
-        // Return a clean, minimal card structure. Note the data-id attribute.
-        return `
-            <div class="gallery-card" data-id="${item.report_id}" data-category="${item.item_category}">
-                <div class="gallery-image-container">
-                    ${imageContent}
+        container.innerHTML = itemsArray.map(item => {
+            const dateObj = new Date(item.item_datetime);
+            const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            let imageContent = item.image_path 
+                ? `<img src="${item.image_path}" alt="Item">` 
+                : `<div class="gallery-no-image"><i class="fa-regular fa-image"></i><span>NO PHOTO</span></div>`;
+
+            const badgeClass = item.report_type === 'lost' ? 'badge-lost' : 'badge-found';
+
+            return `
+                <div class="gallery-card" data-id="${item.report_id}">
+                    <div class="gallery-image-container">
+                        ${imageContent}
+                        <span class="gallery-badge ${badgeClass}">${item.report_type.toUpperCase()}</span>
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title" title="${item.item_name_specific}">${item.item_name_specific}</div>
+                        <div class="gallery-meta"><i class="fa-solid fa-location-dot"></i> <span>${item.item_location}</span></div>
+                        <div class="gallery-meta"><i class="fa-solid fa-clock"></i> <span>${formattedDate}</span></div>
+                    </div>
                 </div>
-                <div class="gallery-info">
-                    <div class="gallery-title" title="${item.item_name_specific}">${item.item_name_specific}</div>
-                    <span class="gallery-date">${formattedDate}</span>
-                </div>
-            </div>
-        `;
+            `;
+        }).join('');
     }
 
-    const lostList = document.getElementById('lost-items-list');
-    const foundList = document.getElementById('found-items-list');
-
-    lostList.innerHTML = lostItems.length > 0 ? lostItems.map(createGalleryCardHTML).join('') : '<div class="empty-state">No lost items reported yet.</div>';
-    foundList.innerHTML = foundItems.length > 0 ? foundItems.map(createGalleryCardHTML).join('') : '<div class="empty-state">No found items reported yet.</div>';
+    // Initial render
+    const lostItems = globalFetchedItems.filter(item => item.report_type === 'lost');
+    const foundItems = globalFetchedItems.filter(item => item.report_type === 'found');
+    renderCards(lostListContainer, lostItems);
+    renderCards(foundListContainer, foundItems);
 
 
     // --- 5. OPEN ITEM DETAILS MODAL ---
     const itemDetailsModal = document.getElementById('item-details-modal');
     
-    // Use event delegation on the container
     document.querySelector('.items-container').addEventListener('click', (e) => {
         const card = e.target.closest('.gallery-card');
         if (!card) return;
@@ -144,18 +145,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const item = globalFetchedItems.find(i => String(i.report_id) === String(itemId));
         if (!item) return;
 
-        // Populate Modal Info
         const statusBadge = document.getElementById('modal-item-status');
+        const footerMessage = document.getElementById('modal-footer-message');
+        
         if (item.report_type === 'lost') {
             statusBadge.textContent = 'LOST ITEM';
             statusBadge.style.backgroundColor = 'var(--accent-amber)';
             document.getElementById('modal-location-label').textContent = 'Last Seen At';
             document.getElementById('modal-date-label').textContent = 'Lost On';
+            footerMessage.innerHTML = '<strong>Did you find this item?</strong> Please surrender it to the Admin at the library or contact support.';
         } else {
             statusBadge.textContent = 'FOUND ITEM';
             statusBadge.style.backgroundColor = 'var(--primary-blue)';
             document.getElementById('modal-location-label').textContent = 'Found At';
             document.getElementById('modal-date-label').textContent = 'Found On';
+            footerMessage.innerHTML = '<strong>Is this your item?</strong> Please contact the TUPV Administration Office to claim it.';
         }
 
         document.getElementById('modal-item-name').textContent = item.item_name_specific;
@@ -165,9 +169,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         const dt = new Date(item.item_datetime);
         document.getElementById('modal-item-datetime').textContent = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
         
-        document.getElementById('modal-item-description').textContent = item.item_description;
+        const reporterNameEl = document.getElementById('modal-reporter-name');
+        const reporterContactEl = document.getElementById('modal-reporter-contact');
+        
+        if (item.users) {
+            reporterNameEl.textContent = `${item.users.first_name} ${item.users.last_name}`;
+            reporterContactEl.textContent = item.users.contact_number || item.users.email || 'No contact provided';
+        } else if (item.reporter_name_manual) {
+            reporterNameEl.textContent = `${item.reporter_name_manual} (Posted by Admin)`;
+            reporterContactEl.textContent = item.reporter_contact_manual || 'No contact provided';
+        } else {
+            reporterNameEl.textContent = 'Anonymous / Unknown';
+            reporterContactEl.textContent = '';
+        }
 
-        // Populate Image
+        document.getElementById('modal-item-description').textContent = item.item_description || 'No description provided.';
+
         const imgContainer = document.getElementById('modal-image-container');
         const itemImg = document.getElementById('modal-item-image');
         const noImg = document.getElementById('modal-no-image');
@@ -192,37 +209,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
 
-    // --- 6. FILTERING & TABS ---
+    // --- 6. FILTERING & SEARCH LOGIC ---
+    const searchInput = document.getElementById('searchInput');
+    const categorySelect = document.getElementById('category-filter-select');
     const lostBtn = document.getElementById('lost-btn');
     const foundBtn = document.getElementById('found-btn');
-    const categorySelect = document.getElementById('category-filter-select');
 
     function applyFilters() {
-        const activeContainer = lostBtn.classList.contains('active') ? lostList : foundList;
+        const activeType = lostBtn.classList.contains('active') ? 'lost' : 'found';
+        const searchTerm = searchInput.value.toLowerCase().trim();
         const selectedCat = categorySelect.value;
         
-        activeContainer.querySelectorAll('.gallery-card').forEach(card => {
-            const matches = !selectedCat || card.dataset.category === selectedCat;
-            if (matches) card.classList.remove('hidden');
-            else card.classList.add('hidden');
+        const filteredArray = globalFetchedItems.filter(item => {
+            const isCorrectType = item.report_type === activeType;
+            const matchesCategory = selectedCat === '' || item.item_category === selectedCat;
+            const matchesSearch = 
+                (item.item_name_specific && item.item_name_specific.toLowerCase().includes(searchTerm)) ||
+                (item.item_location && item.item_location.toLowerCase().includes(searchTerm));
+                
+            return isCorrectType && matchesCategory && matchesSearch;
         });
+
+        if (activeType === 'lost') {
+            renderCards(lostListContainer, filteredArray);
+        } else {
+            renderCards(foundListContainer, filteredArray);
+        }
     }
+
+    searchInput.addEventListener('input', applyFilters);
+    categorySelect.addEventListener('change', applyFilters);
 
     lostBtn.addEventListener('click', () => {
         lostBtn.classList.add('active');
         foundBtn.classList.remove('active');
-        lostList.classList.remove('hidden');
-        foundList.classList.add('hidden');
+        lostListContainer.classList.remove('hidden');
+        foundListContainer.classList.add('hidden');
         applyFilters();
     });
 
     foundBtn.addEventListener('click', () => {
         foundBtn.classList.add('active');
         lostBtn.classList.remove('active');
-        foundList.classList.remove('hidden');
-        lostList.classList.add('hidden');
+        foundListContainer.classList.remove('hidden');
+        lostListContainer.classList.add('hidden');
         applyFilters();
     });
 
-    categorySelect.addEventListener('change', applyFilters);
 });

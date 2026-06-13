@@ -15,6 +15,14 @@
 </head>
 <body>
 
+    <script>
+        if (sessionStorage.getItem('userType') === 'guest') {
+            window.location.replace('guestprofile.html');
+        } else if (!sessionStorage.getItem('user_id')) {
+            window.location.replace('login.html');
+        }
+    </script>
+
     <header class="main-header">
         <nav class="main-nav">
             <div class="logoContainer">
@@ -85,22 +93,28 @@
             </nav>
 
             <div class="main-content">
-                <div class="filter-controls">
-                     <div class="category-filter-container">
-                         <div class="select-wrapper">
-                             <select id="category-filter-select">
-                                 <option value="">All Categories</option>
-                                 <option value="Electronics">Electronics</option>
-                                 <option value="Books & Notes">Books & Notes</option>
-                                 <option value="Clothing">Uniforms & Clothing</option>
-                                 <option value="Accessories">Accessories & IDs</option>
-                                 <option value="Other">Other</option>
-                             </select>
-                         </div>
-                     </div>
-                    <div class="filter-buttons">
-                        <button class="filter-btn active" id="lost-btn">Looking For (Lost)</button>
-                        <button class="filter-btn" id="found-btn">Turned In (Found)</button>
+                
+                <div class="top-controls-bar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" placeholder="Search items or locations...">
+                    </div>
+                    
+                    <div class="filter-actions">
+                        <div class="select-wrapper">
+                            <select id="category-filter-select">
+                                <option value="">All Categories</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Books & Notes">Books & Notes</option>
+                                <option value="Clothing">Uniforms & Clothing</option>
+                                <option value="Accessories">Accessories & IDs</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" id="lost-btn">Looking For (Lost)</button>
+                            <button class="filter-btn" id="found-btn">Turned In (Found)</button>
+                        </div>
                     </div>
                 </div>
 
@@ -114,7 +128,7 @@
                     <div id="found-items-list" class="gallery-grid hidden"></div>
                 </div>
 
-               <section class="minimal-info-banner" style="background-color: #eff6ff; border-top: 1px solid #bfdbfe; text-align: center;">
+                <section class="minimal-info-banner" style="background-color: #eff6ff; border-top: 1px solid #bfdbfe; text-align: center;">
                     <div class="minimal-step" style="color: #1E3A8A; font-weight: 500; justify-content: center; width: 100%;">
                         <i class="fa-solid fa-circle-info" style="font-size: 1.2rem; margin-right: 4px;"></i>
                         <span><strong>Need help?</strong> For better guidance and immediate assistance, it is highly recommended to visit the Admin directly at the Library.</span>
@@ -128,7 +142,7 @@
         <div class="footer-row">
             <div class="footer-col">
                 <h3 class="foot_logo_text">Retrieve | TUP Visayas</h3>
-                <p>Your trusted campus partner in finding what's lost.</p>
+                <p>Your trusted campus partner in finding what's lost. We create a community of trust and support for all TUPV students and faculty.</p>
             </div>
             <div class="footer-col">
                 <h3>Quick Links</h3>
@@ -148,29 +162,32 @@
             </div>
             <div class="footer-col">
                 <h3>Stay Connected</h3>
+                <p>Follow us on social media for system updates and important TUPV announcements.</p>
                 <div class="social-icons">
-                    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.facebook.com/" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://x.com/" target="_blank"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
                 </div>
             </div>
         </div>
         <hr>
-        <p class="copyright">&copy; 2025 Retrieve. All rights reserved.</p>
+        <p class="copyright">&copy; 2025 Retrieve. All rights reserved. | Technological University of the Philippines Visayas</p>
     </footer>
 
     <div id="item-details-modal" class="modal-overlay" style="z-index: 1050;">
         <div class="modal-content modal-lg">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-file-lines" style="color: var(--primary-blue);"></i> Item Details</h2>
+                <h2><i class="fa-solid fa-file-lines" style="color: var(--primary-blue);"></i> Report Details</h2>
                 <button class="close-modal" id="close-item-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="hist-modal-layout">
+                    
                     <div class="hist-modal-image-container" id="modal-image-container">
-                        <img id="modal-item-image" src="" alt="Item Photo">
-                        <div id="modal-no-image" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #f8fafc; color: #94a3b8;">
-                            <i class="fa-solid fa-image fa-2x"></i>
+                        <img id="modal-item-image" src="" alt="Item Photo" style="display: none;">
+                        <div id="modal-no-image" class="gallery-no-image" style="display: none;">
+                            <i class="fa-regular fa-image"></i>
+                            <span>NO PHOTO</span>
                         </div>
                     </div>
                     
@@ -198,17 +215,25 @@
                                     <span id="modal-item-datetime"></span>
                                 </div>
                             </div>
+                            <div class="hist-detail-row">
+                                <i class="fa-solid fa-user"></i>
+                                <div>
+                                    <label>Reported By</label>
+                                    <span id="modal-reporter-name" style="font-weight: 600;"></span>
+                                    <span id="modal-reporter-contact" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <div style="margin-top: 24px;">
                             <label style="font-size: 0.8rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Public Description</label>
-                            <div id="modal-item-description" style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.95rem; line-height: 1.6; color: #0f172a;"></div>
+                            <div id="modal-item-description" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary);"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="justify-content: center;">
-                <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center;">Is this your item? Please contact the <strong>TUPV Administration Office</strong> to claim it.</p>
+            <div class="modal-footer" style="justify-content: center; background-color: #f8fafc;">
+                <p id="modal-footer-message" style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; margin: 0;"></p>
             </div>
         </div>
     </div>
