@@ -9,6 +9,57 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentUserData = {}; 
 
+    // --- DYNAMIC SYSTEM ALERTS (REPLACES DEFAULT ALERTS) ---
+    function showAlert(title, message, type = "success") {
+        const modal = document.getElementById('systemAlertModal');
+        const icon = document.getElementById('alert-icon');
+        const wrapper = document.getElementById('alert-icon-wrapper');
+        const titleEl = document.getElementById('alert-title');
+        const btn = document.getElementById('alertOkBtn');
+        
+        titleEl.textContent = title;
+        document.getElementById('alert-message').textContent = message;
+        
+        btn.className = "modal-btn confirm-btn";
+        
+        if (type === 'danger') {
+            titleEl.style.color = "#ef4444";
+            wrapper.style.backgroundColor = "#fee2e2";
+            wrapper.style.color = "#ef4444";
+            icon.className = "fa-solid fa-triangle-exclamation";
+            btn.style.backgroundColor = "#ef4444";
+            btn.style.borderColor = "#ef4444";
+            btn.style.boxShadow = "0 4px 10px rgba(239, 68, 68, 0.2)";
+        } else if (type === 'warning') {
+            titleEl.style.color = "#F59E0B";
+            wrapper.style.backgroundColor = "#fef3c7";
+            wrapper.style.color = "#F59E0B";
+            icon.className = "fa-solid fa-circle-exclamation";
+            btn.style.backgroundColor = "#F59E0B";
+            btn.style.borderColor = "#F59E0B";
+            btn.style.boxShadow = "0 4px 10px rgba(245, 158, 11, 0.2)";
+        } else {
+            titleEl.style.color = "#10b981";
+            wrapper.style.backgroundColor = "#d1fae5";
+            wrapper.style.color = "#10b981";
+            icon.className = "fa-solid fa-circle-check";
+            btn.style.backgroundColor = "#10b981";
+            btn.style.borderColor = "#10b981";
+            btn.style.boxShadow = "0 4px 10px rgba(16, 185, 129, 0.2)";
+        }
+        
+        wrapper.style.animation = 'none';
+        wrapper.offsetHeight; 
+        wrapper.style.animation = null;
+
+        modal.classList.add('show');
+    }
+
+    document.getElementById('alertOkBtn').addEventListener('click', () => {
+        document.getElementById('systemAlertModal').classList.remove('show');
+    });
+
+    // --- UI SETUP ---
     function updateDateTime() {
         const dt = document.getElementById('current-date-time');
         if(dt) dt.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -27,7 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (adminLink) adminLink.classList.remove('hidden');
     }
 
-    // Standard Sidebar Logout
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
@@ -38,7 +88,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // New Mobile-Only Logout
     const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
     if (mobileLogoutBtn) {
         mobileLogoutBtn.addEventListener('click', async (e) => {
@@ -120,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     loadUserProfile();
 
-    // --- IMAGE UPLOAD FIX ---
+    // --- IMAGE UPLOAD ---
     const pfpTrigger = document.getElementById('pfp-trigger');
     const pfpInput = document.getElementById('pfp-upload-input');
     const pfpImg = document.getElementById('profile-picture-img'); 
@@ -151,7 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             pfpImg.style.opacity = '1';
 
         } catch (error) {
-            alert("Profile picture upload failed: " + error.message);
+            showAlert("Upload Failed", "Profile picture upload failed: " + error.message, "danger");
             pfpImg.style.opacity = '1';
             loadUserProfile(); 
         }
@@ -184,15 +233,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { error } = await window.supabase.from('users').update(updates).eq('id', userId);
         if (!error) {
             document.getElementById('edit-profile-modal').classList.remove('show');
+            showAlert("Profile Updated", "Your profile details have been successfully saved.", "success");
             loadUserProfile(); 
         } else {
-            alert("Error updating profile: " + error.message);
+            showAlert("Update Failed", "Error updating profile: " + error.message, "danger");
         }
         btn.innerHTML = 'Save Changes';
         btn.disabled = false;
     });
 
-    // --- SECURITY MODAL (OLD PASSWORD CHECK INCLUDED) ---
+    // --- SECURITY MODAL ---
     document.getElementById('change-pwd-btn').addEventListener('click', () => {
         document.getElementById('change-pwd-form').reset();
         document.getElementById('change-pwd-modal').classList.add('show');
@@ -205,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const confirmPwd = document.getElementById('confirm-pwd').value;
 
         if (newPwd !== confirmPwd) { 
-            alert("New passwords do not match!"); 
+            showAlert("Validation Error", "New passwords do not match!", "warning"); 
             return; 
         }
         
@@ -213,26 +263,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
         btn.disabled = true;
 
-        // 1. Verify the Current Password first by signing in behind the scenes
+        // Verify the Current Password first
         const { error: signInError } = await window.supabase.auth.signInWithPassword({ 
             email: currentUserData.email, 
             password: currentPwd 
         });
 
         if (signInError) {
-            alert("Incorrect Current Password!");
+            showAlert("Verification Failed", "Incorrect Current Password!", "danger");
             btn.innerHTML = 'Update Password';
             btn.disabled = false;
             return;
         }
 
-        // 2. If current password matches, proceed to update the password
+        // Proceed to update password
         const { error } = await window.supabase.auth.updateUser({ password: newPwd });
         if (!error) {
-            alert("Password successfully secured!");
             document.getElementById('change-pwd-modal').classList.remove('show');
+            showAlert("Security Updated", "Your password has been successfully secured.", "success");
         } else {
-            alert("Failed to update password: " + error.message);
+            showAlert("Update Failed", "Failed to update password: " + error.message, "danger");
         }
         
         btn.innerHTML = 'Update Password';
@@ -253,15 +303,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Clear Notifications Button Logic
     if (clearNotifsBtn) {
         clearNotifsBtn.addEventListener('click', async () => {
             const originalText = clearNotifsBtn.innerHTML;
             clearNotifsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Clearing...';
-            
-            // This actually deletes notifications from the database to clear them out
             await window.supabase.from('notifications').delete().eq('user_id', userId);
-            
             await loadNotifications();
             clearNotifsBtn.innerHTML = originalText;
         });
@@ -276,11 +322,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!notifs || notifs.length === 0) {
                 notifList.innerHTML = '<div style="text-align:center; padding: 40px; color: #475569;"><i class="fa-regular fa-bell-slash" style="font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5;"></i><br>No new notifications.</div>';
-                clearNotifsBtn.style.display = 'none'; // Hide clear button if empty
+                clearNotifsBtn.style.display = 'none';
                 return;
             }
 
-            clearNotifsBtn.style.display = 'flex'; // Show clear button if there are notifications
+            clearNotifsBtn.style.display = 'flex';
             sessionStorage.setItem('lastReadNotifTime', new Date().toISOString());
 
             notifList.innerHTML = notifs.map(n => {
@@ -380,8 +426,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // MATCHED HOMEPAGE MODAL FUNCTION
-    window.viewHistoryDetails = function(reportId) {
+    // MATCHED HOMEPAGE MODAL FUNCTION WITH REJECT REASON
+    window.viewHistoryDetails = async function(reportId) {
         const report = userHistoryData.find(r => String(r.report_id) === String(reportId));
         if (!report) return;
 
@@ -400,6 +446,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             : report.item_description;
         document.getElementById('hist-modal-description').textContent = actualDescription || 'No description provided.';
         
+        // Match Block
         const matchBlock = document.getElementById('hist-match-details');
         if (report.report_status === 'matched') {
             const label = report.report_type === 'lost' ? 'Found and Returned By:' : 'Claimed By True Owner:';
@@ -412,9 +459,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             matchBlock.style.display = 'none';
         }
 
+        // --- REJECT REASON BLOCK ---
+        const rejectBlock = document.getElementById('hist-reject-details');
+        if (report.report_status === 'rejected') {
+            let reasonText = "Declined by Administrator. Please check notifications for more details.";
+            
+            // Attempt to fetch the rejection reason from the latest notification if it exists in the system
+            try {
+                const { data: notifData } = await window.supabase
+                    .from('notifications')
+                    .select('message')
+                    .eq('user_id', userId)
+                    .ilike('message', `%${report.item_name_specific}%`)
+                    .ilike('message', '%declined%')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (notifData && notifData.length > 0) {
+                    const msg = notifData[0].message;
+                    if (msg.includes("Reason:")) {
+                        reasonText = msg.split("Reason:")[1].trim();
+                    }
+                }
+            } catch(e) { console.error("Could not fetch reject reason", e); }
+
+            document.getElementById('hist-reject-reason').textContent = reasonText;
+            rejectBlock.style.display = 'flex';
+        } else {
+            rejectBlock.style.display = 'none';
+        }
+
+        // Status Badge
         const statusBadge = document.getElementById('hist-modal-status');
         statusBadge.textContent = report.report_status;
-        
         statusBadge.className = 'badge'; 
         if (report.report_status === 'approved') statusBadge.classList.add('status-approved');
         else if (report.report_status === 'matched') statusBadge.classList.add('status-matched');
@@ -422,6 +499,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (report.report_status === 'archived') statusBadge.classList.add('status-archived');
         else statusBadge.classList.add('status-pending');
 
+        // Image Handling
         const imgEl = document.getElementById('hist-modal-image');
         const noImgEl = document.getElementById('hist-no-image');
 
@@ -488,7 +566,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { error } = await window.supabase.from('chat_messages').delete().eq('user_id', userId);
         
         if (error) {
-            alert("Failed to clear chat: " + error.message);
+            showAlert("Error", "Failed to clear chat: " + error.message, "danger");
             if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Yes, resolved';
         } else {
             await loadMessenger(true);
@@ -602,7 +680,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await loadMessenger(true); 
 
         } catch (err) {
-            alert("Failed to dispatch message: " + err.message);
+            showAlert("Message Error", "Failed to dispatch message: " + err.message, "danger");
         } finally {
             chatInput.disabled = false;
             userAttachBtn.disabled = false;

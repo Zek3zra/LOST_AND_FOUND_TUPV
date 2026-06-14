@@ -283,27 +283,10 @@
 #notifications-list::-webkit-scrollbar-track { background: transparent; }
 #notifications-list::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 
-/* CLEARED NOTIFICATIONS BUTTON STYLE */
 #clear-notifs-btn {
-    background-color: #f1f5f9;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px;
 }
-
-#clear-notifs-btn:hover {
-    background-color: #fee2e2;
-    color: #ef4444;
-    border-color: #fca5a5;
-}
+#clear-notifs-btn:hover { background-color: #fee2e2; color: #ef4444; border-color: #fca5a5; }
 
 /* --- COMPACT RESOLUTION BUBBLE --- */
 .user-resolve-bubble { background-color: #ffffff; border: 1px solid #10b981; padding: 16px; border-radius: 12px; text-align: center; color: #0f172a; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1); width: 100%; max-width: 320px; margin: 0 auto; }
@@ -405,6 +388,13 @@
 /* Contact Cards Specifics */
 .contact-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; }
 .contact-card i { font-size: 1.5rem; color: #1E3A8A; width: 30px; text-align: center; }
+
+/* --- CUSTOM SUCCESS / ALERT ANIMATION --- */
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
 
 /* Responsive adjustments */
 @media (min-width: 640px) {

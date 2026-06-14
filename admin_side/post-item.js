@@ -15,12 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     if (hamburger && sidebar) hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
 
-    function escapeQuote(str) {
-        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    }
-
     // ===================================
-    // GLOBAL SUCCESS UI HANDLER (Dynamic Colors)
+    // GLOBAL SUCCESS/DANGER UI HANDLER
     // ===================================
     function showSuccess(title, message, type = "success") {
         const modal = document.getElementById('successModal');
@@ -32,18 +28,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         titleEl.textContent = title;
         document.getElementById('success-message').textContent = message;
         
-        // Reset classes
         btn.className = "modal-btn confirm-btn";
         wrapper.style.backgroundColor = "";
         wrapper.style.color = "";
         
-        // Apply Dynamic Styling
         if (type === 'danger') {
             titleEl.style.color = "var(--danger-red)";
             wrapper.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
             wrapper.style.color = "var(--danger-red)";
             icon.className = "fa-solid fa-trash-can";
-            btn.classList.add('danger-override');
+            btn.classList.add('danger-solid');
         } else {
             titleEl.style.color = "var(--success-green)";
             wrapper.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
@@ -52,7 +46,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.classList.add('success-override');
         }
         
-        // Retrigger animation
         wrapper.style.animation = 'none';
         wrapper.offsetHeight; 
         wrapper.style.animation = null;
@@ -150,30 +143,52 @@ document.addEventListener('DOMContentLoaded', async () => {
     const publishConfirmBtn = document.getElementById('publishConfirmBtn');
     const rejectReasonModal = document.getElementById('rejectReasonModal');
 
-    // Image Upload Logic for Review
+    // Image Upload & Removal Logic
     const reviewImageWrapper = document.getElementById('reviewImageWrapper');
     const reviewNewImageInput = document.getElementById('reviewNewImageInput');
     const reviewImage = document.getElementById('reviewImage');
+    const reviewNoImage = document.getElementById('review-no-image');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    
     let replacementImageFile = null;
+    let removeImageFlag = false;
 
     reviewImageWrapper.addEventListener('click', () => reviewNewImageInput.click());
 
     reviewNewImageInput.addEventListener('change', (e) => {
         replacementImageFile = e.target.files[0];
         if (replacementImageFile) {
+            removeImageFlag = false; // Reset removal flag
             const reader = new FileReader();
             reader.onload = (event) => {
                 reviewImage.src = event.target.result;
                 reviewImage.style.display = 'block';
+                reviewNoImage.style.display = 'none';
+                removeImageBtn.style.display = 'flex'; // Show remove button
             };
             reader.readAsDataURL(replacementImageFile);
         }
+    });
+
+    // Handle Image Removal click
+    removeImageBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Stop wrapper click event
+        replacementImageFile = null;
+        removeImageFlag = true;
+        reviewImage.src = '';
+        reviewImage.style.display = 'none';
+        reviewNoImage.style.display = 'flex';
+        reviewNewImageInput.value = '';
+        removeImageBtn.style.display = 'none';
     });
 
     window.openReviewModal = function(encodedReport) {
         const report = JSON.parse(decodeURIComponent(encodedReport));
         
         replacementImageFile = null; 
+        removeImageFlag = false;
+        reviewNewImageInput.value = '';
+
         document.getElementById('reviewReportId').value = report.report_id;
         document.getElementById('reviewUserId').value = report.user_id;
         document.getElementById('reviewOriginalImage').value = report.image_path || '';
@@ -188,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const descriptionInput = document.getElementById('reviewDescription');
         
         if (isFound) {
-            descriptionLabel.innerHTML = 'Secret Identifiers <span style="color: var(--danger-red); font-size: 0.75rem; font-weight: 400;">(Only Admin can see this)</span>';
+            descriptionLabel.innerHTML = 'Secret Identifiers <span style="color: var(--danger-red); font-size: 0.65rem; font-weight: 500; margin-left: 6px;">(Only Admin sees this)</span>';
             descriptionInput.value = report.admin_specific_details || '';
         } else {
             descriptionLabel.innerHTML = 'Public Description';
@@ -210,9 +225,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (report.image_path) {
             reviewImage.src = report.image_path;
             reviewImage.style.display = 'block';
+            reviewNoImage.style.display = 'none';
+            removeImageBtn.style.display = 'flex';
         } else {
             reviewImage.src = '';
             reviewImage.style.display = 'none';
+            reviewNoImage.style.display = 'flex';
+            removeImageBtn.style.display = 'none';
         }
 
         publishModal.classList.add('show');
@@ -243,7 +262,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             let finalImageUrl = document.getElementById('reviewOriginalImage').value;
-            if (replacementImageFile) {
+            
+            // Check if admin removed the image or uploaded a new one
+            if (removeImageFlag) {
+                finalImageUrl = null;
+            } else if (replacementImageFile) {
                 const fileExt = replacementImageFile.name.split('.').pop();
                 const fileName = `edited_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                 const { error: uploadError } = await window.supabase.storage.from('item-images').upload(fileName, replacementImageFile);
@@ -261,6 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 image_path: finalImageUrl
             };
 
+            // Set details correctly based on report type
             if (reportType === 'found') {
                 updatePayload.admin_specific_details = updatedDescValue;
                 updatePayload.item_description = "Hidden for security purposes."; 
@@ -275,19 +299,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (dbError) throw new Error("Database Error: " + dbError.message);
 
-            if (ownerId && ownerId !== 'null') {
+            // Trigger Notification to User
+            if (ownerId && ownerId !== 'null' && ownerId !== 'undefined') {
                 await window.supabase.from('notifications').insert([{
                     user_id: ownerId,
-                    report_id: reportId,
-                    message: `Your ${reportType.toUpperCase()} item report for "${itemName}" has been approved and published.`
+                    message: `Your ${reportType.toUpperCase()} item report for "${itemName}" has been reviewed, approved, and is now active.`
                 }]);
             }
 
             publishModal.classList.remove('show');
-            
-            // Trigger dynamic success popup
-            showSuccess("Published!", "The item is now live on the public feed.", "success");
-            
+            showSuccess("Published!", "The item has been approved and is now live on the public feed.", "success");
             loadPendingReports(); 
 
         } catch (error) {
@@ -299,7 +320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ===================================
-    // REJECT REPORT (WITH REASON)
+    // REJECT REPORT & NOTIFY
     // ===================================
     document.getElementById('rejectInitBtn').addEventListener('click', () => {
         publishModal.classList.remove('show');
@@ -312,7 +333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const rejectConfirmBtn = document.getElementById('rejectConfirmBtn');
         const originalText = rejectConfirmBtn.innerHTML;
         rejectConfirmBtn.disabled = true;
-        rejectConfirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Rejecting...';
+        rejectConfirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
 
         const reportId = document.getElementById('reviewReportId').value;
         const ownerId = document.getElementById('reviewUserId').value;
@@ -326,19 +347,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             .eq('report_id', reportId);
 
         if (!dbError) {
-            if (ownerId && ownerId !== 'null') {
+            // Trigger Rejection Notification to User
+            if (ownerId && ownerId !== 'null' && ownerId !== 'undefined') {
                 await window.supabase.from('notifications').insert([{
                     user_id: ownerId,
-                    report_id: reportId,
                     message: `Your ${reportType} item report for "${itemName}" was declined by the administrator. Reason: ${reasonText}`
                 }]);
             }
 
             rejectReasonModal.classList.remove('show');
-            
-            // Trigger dynamic Danger/Reject popup
             showSuccess("Report Rejected", "The report has been removed and the user has been notified of the reason.", "danger");
-            
             loadPendingReports(); 
         } else {
             alert("Error rejecting report: " + dbError.message);
