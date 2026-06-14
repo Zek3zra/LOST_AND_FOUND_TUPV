@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Retrieve TUPV | Admin Dashboard</title>
     
+    <link rel="icon" type="image/png" href="../images/logo.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="overview.css"> 
 </head>
@@ -41,32 +42,60 @@
                 <h2>Dashboard Overview</h2>
                 <p>Welcome back! Here's a snapshot of the TUPV Retrieve system.</p>
             </div>
-            <button class="modal-btn confirm-btn" id="openExportBtn" style="display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-file-csv"></i> Export Logs</button>
+            <button class="modal-btn confirm-btn" style="background-color: var(--success-green); width: auto;" id="openExportBtn"><i class="fa-solid fa-file-csv"></i> Export Logs</button>
         </div>
 
+        <h3 class="stats-section-title">System Statistics</h3>
+        
         <div class="dashboard-stats">
             <div class="stat-card">
-                <div class="stat-icon total"><i class="fa-solid fa-clipboard-list"></i></div>
-                <div class="stat-info"><h3>Active Reports</h3><p id="stat-active">0</p></div>
+                <div class="stat-header">
+                    <span class="stat-title">Registered Users</span>
+                    <i class="fa-solid fa-users stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-users">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon lost"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="stat-info"><h3>Lost Items</h3><p id="stat-lost">0</p></div>
+                <div class="stat-header">
+                    <span class="stat-title">Pending Reports</span>
+                    <i class="fa-solid fa-clock-rotate-left stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-pending">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon found"><i class="fa-solid fa-hand-holding-heart"></i></div>
-                <div class="stat-info"><h3>Found Items</h3><p id="stat-found">0</p></div>
+                <div class="stat-header">
+                    <span class="stat-title">Active Reports</span>
+                    <i class="fa-solid fa-bullhorn stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-active">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon matched"><i class="fa-solid fa-check-double"></i></div>
-                <div class="stat-info"><h3>Items Reclaimed</h3><p id="stat-reclaimed">0</p></div>
+                <div class="stat-header">
+                    <span class="stat-title">Items Reclaimed</span>
+                    <i class="fa-solid fa-handshake-angle stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-reclaimed">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Total Lost Items</span>
+                    <i class="fa-solid fa-magnifying-glass stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-lost">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">Total Found Items</span>
+                    <i class="fa-solid fa-hand-holding-heart stat-icon"></i>
+                </div>
+                <div class="stat-value" id="stat-found">0</div>
             </div>
         </div>
 
         <div class="table-container">
             <div class="table-header">
                 <h3>Recently Approved Reports</h3>
-                <a href="reports.html" style="color: var(--primary-blue); font-size: 0.9rem; font-weight: 600; text-decoration: none;">View All &rarr;</a>
+                <a href="reports.html" style="color: var(--primary-blue); font-size: 0.9rem; font-weight: 500; text-decoration: none;">View All &rarr;</a>
             </div>
             <div style="overflow-x: auto;">
                 <table class="admin-table">
@@ -88,86 +117,146 @@
         </div>
     </main>
 
-    <div id="viewDetailsModal" class="modal-overlay">
-         <div class="modal-content">
-            <button class="close-modal" data-close>&times;</button>
-            <h3>Report Details</h3>
-            <div style="margin-bottom: 24px;">
-                <p style="margin-bottom: 8px;"><strong>Status:</strong> <span class="badge" id="modal-status" style="margin-left:8px;"></span></p>
-                <p style="margin-bottom: 8px;"><strong>Item:</strong> <span id="modal-item"></span></p>
-                <p style="margin-bottom: 8px;"><strong>Category:</strong> <span id="modal-category"></span></p>
-                <p style="margin-bottom: 8px;"><strong>Location:</strong> <span id="modal-location"></span></p>
-                <p style="margin-bottom: 8px;"><strong>Date & Time:</strong> <span id="modal-datetime"></span></p>
-                <p style="margin-bottom: 8px;"><strong>Description:</strong></p>
-                <p id="modal-description" style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light); font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5;"></p>
-                
-                <div style="margin-top: 16px; text-align: center;">
-                    <img id="modal-image" src="" alt="Reference Image" style="max-width: 100%; max-height: 200px; border-radius: 8px; display: none;">
+    <div id="viewDetailsModal" class="modal-overlay" style="z-index: 1050;">
+        <div class="modal-content modal-lg" style="padding: 0; overflow: hidden;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-light); padding: 20px 24px;">
+                <h2><i class="fa-solid fa-file-lines" style="color: var(--primary-blue);"></i> Report Details</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div class="hist-modal-layout">
+                    
+                    <div class="modal-item-header" id="modal-header-container">
+                        <span class="badge" id="modal-item-status" style="color:white; font-size: 0.75rem; padding: 6px 12px; font-weight: 700; display: inline-block; margin-bottom: 12px;"></span>
+                        <h4 id="modal-item-name" style="font-size: 1.6rem; color: #0f172a; margin-bottom: 4px; font-weight: 800; line-height: 1.2;"></h4>
+                        <p style="color: var(--primary-blue); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
+                            <span id="modal-item-category"></span>
+                        </p>
+                    </div>
+
+                    <div class="hist-modal-image-container" id="modal-image-container">
+                        <img id="modal-item-image" src="" alt="Item Photo" style="display: none;">
+                        <div id="modal-no-image" class="gallery-no-image" style="display: none;">
+                            <i class="fa-regular fa-image"></i>
+                            <span>NO PHOTO</span>
+                        </div>
+                    </div>
+
+                    <div class="hist-modal-right item-details-list">
+                        
+                        <div class="detail-block">
+                            <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div class="detail-content">
+                                <label id="modal-location-label">Last Seen At</label>
+                                <span id="modal-item-location"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-block">
+                            <div class="detail-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div class="detail-content">
+                                <label id="modal-date-label">Lost On</label>
+                                <span id="modal-item-datetime"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-block">
+                            <div class="detail-icon"><i class="fa-solid fa-align-left"></i></div>
+                            <div class="detail-content">
+                                <label>Description</label>
+                                <div id="modal-item-description" class="desc-text"></div>
+                            </div>
+                        </div>
+
+                        <div class="detail-block admin-secret-block" id="admin-details-container" style="display: none; background-color: #fef2f2; border-color: #fca5a5;">
+                            <div class="detail-icon" style="background-color: var(--danger-red); color: white; border: none;"><i class="fa-solid fa-lock"></i></div>
+                            <div class="detail-content">
+                                <label style="color: var(--danger-red);">Admin Hidden Details</label>
+                                <div id="modal-admin-details" class="desc-text" style="color: #991b1b; font-weight: 500;"></div>
+                            </div>
+                        </div>
+
+                        <div class="detail-block reporter-block" style="background-color: #f1f5f9; border-color: #cbd5e1;">
+                            <div class="detail-icon" style="background-color: var(--primary-blue); color: white; border: none;"><i class="fa-solid fa-user-circle"></i></div>
+                            <div class="detail-content">
+                                <label>Reported By</label>
+                                <span id="modal-reporter-name" style="font-weight: 700; color: #0f172a;"></span>
+                                <span id="modal-reporter-contact" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;"></span>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
-             </div>
-            <div class="modal-actions">
-                <button class="modal-btn confirm-btn" data-close>Close</button>
             </div>
         </div>
     </div>
     
     <div id="deleteConfirmationModal" class="modal-overlay">
-         <div class="modal-content" style="text-align: center;">
-            <button class="close-modal" data-close>&times;</button>
-            <div style="font-size: 3rem; color: var(--danger-red); margin-bottom: 16px;"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <h3>Confirm Deletion</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 24px;">Are you sure you want to archive this post? It will be removed from the public feed.</p>
-             <div class="modal-actions" style="justify-content: center;">
-                <button class="modal-btn cancel-btn" data-close>Cancel</button>
-                <button class="modal-btn delete-btn" id="confirm-delete-btn">Yes, Archive</button>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-triangle-exclamation" style="color: var(--danger-red);"></i> Confirm Deletion</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Are you sure you want to archive this post? It will be removed from the public feed.</p>
+                <div class="modal-actions">
+                    <button class="modal-btn cancel-btn" data-close>Cancel</button>
+                    <button class="modal-btn delete-btn" id="confirm-delete-btn">Yes, Archive</button>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="exportModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal" data-close>&times;</button>
-            <h3>Export System Logs</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Download a CSV spreadsheet of the item reports based on your selected criteria.</p>
-            
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label>Quick Select Date Range</label>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" class="badge-btn" onclick="setExportDates(7)">Last 7 Days</button>
-                    <button type="button" class="badge-btn" onclick="setExportDates(30)">Last 30 Days</button>
-                    <button type="button" class="badge-btn" onclick="setExportDates('thisMonth')">This Month</button>
-                    <button type="button" class="badge-btn" onclick="setExportDates(365)">Past Year</button>
-                </div>
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-download" style="color: var(--success-green);"></i> Export System Logs</h2>
+                <button class="close-modal" data-close>&times;</button>
             </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">Download a CSV spreadsheet of the item reports based on your selected criteria.</p>
 
-            <form id="exportForm" class="modal-form">
-                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 150px;">
-                        <label>Custom Start Date</label>
-                        <input type="date" id="exportStart" class="form-input" required>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Quick Select Date Range</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="badge-btn" onclick="setExportDates(7)">Last 7 Days</button>
+                        <button type="button" class="badge-btn" onclick="setExportDates(30)">Last 30 Days</button>
+                        <button type="button" class="badge-btn" onclick="setExportDates('thisMonth')">This Month</button>
+                        <button type="button" class="badge-btn" onclick="setExportDates(365)">Past Year</button>
                     </div>
-                    <div class="form-group" style="flex: 1; min-width: 150px;">
-                        <label>Custom End Date</label>
-                        <input type="date" id="exportEnd" class="form-input" required>
+                </div>
+
+                <form id="exportForm" class="modal-form" style="margin-top: 0;">
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 1; min-width: 150px;">
+                            <label>Custom Start Date</label>
+                            <input type="date" id="exportStart" class="form-input" required>
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 150px;">
+                            <label>Custom End Date</label>
+                            <input type="date" id="exportEnd" class="form-input" required>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-group" style="margin-top: 8px;">
-                    <label>Filter by Report Status</label>
-                    <select id="exportStatus" class="form-input">
-                        <option value="all">All Reports</option>
-                        <option value="approved">Active / Published Only</option>
-                        <option value="pending">Pending Approval Only</option>
-                        <option value="matched">Successfully Matched / Claimed</option>
-                        <option value="rejected">Rejected Reports</option>
-                    </select>
-                </div>
+                    <div class="form-group" style="margin-top: 8px;">
+                        <label>Filter by Report Type/Status</label>
+                        <select id="exportStatus" class="form-input">
+                            <option value="all">All Reports (Total)</option>
+                            <option value="lost">Total Lost Items Only</option>
+                            <option value="found">Total Found Items Only</option>
+                            <option value="approved">Active / Published Only</option>
+                            <option value="pending">Pending Approval Only</option>
+                            <option value="matched">Successfully Matched / Claimed</option>
+                            <option value="rejected">Rejected Reports</option>
+                        </select>
+                    </div>
 
-                <div class="modal-actions" style="margin-top: 24px;">
-                    <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
-                    <button type="submit" class="modal-btn confirm-btn success-override" id="downloadCsvBtn" style="display: flex; align-items: center; gap: 8px; background-color: var(--success-green);"><i class="fa-solid fa-download"></i> Download CSV</button>
-                </div>
-            </form>
+                    <div class="modal-actions" style="margin-top: 24px;">
+                        <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
+                        <button type="submit" class="modal-btn confirm-btn" style="background-color: var(--success-green);" id="downloadCsvBtn"><i class="fa-solid fa-file-csv"></i> Download CSV</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

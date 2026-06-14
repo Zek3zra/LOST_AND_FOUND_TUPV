@@ -30,15 +30,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 4. FETCH STATISTICS ---
     async function loadStatistics() {
         try {
+            // Count queries
+            const { count: totalUsers } = await window.supabase.from('users').select('*', { count: 'exact', head: true });
+            const { count: totalPending } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_status', 'pending');
             const { count: totalActive } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_status', 'approved');
-            const { count: totalLost } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_status', 'approved').eq('report_type', 'lost');
-            const { count: totalFound } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_status', 'approved').eq('report_type', 'found');
+            const { count: totalLost } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_type', 'lost');
+            const { count: totalFound } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_type', 'found');
             const { count: totalMatched } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_status', 'matched');
 
+            document.getElementById('stat-users').textContent = totalUsers || 0;
+            document.getElementById('stat-pending').textContent = totalPending || 0;
             document.getElementById('stat-active').textContent = totalActive || 0;
             document.getElementById('stat-lost').textContent = totalLost || 0;
             document.getElementById('stat-found').textContent = totalFound || 0;
             document.getElementById('stat-reclaimed').textContent = totalMatched || 0;
+
         } catch (error) {
             console.error("Error loading stats:", error);
         }
@@ -50,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const { data: posts, error } = await window.supabase
             .from('item_reports')
-            .select('*')
+            .select('*, users(first_name, last_name, email, contact_number)')
             .eq('report_status', 'approved')
             .order('created_at', { ascending: false })
             .limit(5);
@@ -73,12 +79,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? `<img src="${post.image_path}" alt="Item" class="table-img">`
                 : `<div class="table-img" style="display:flex; justify-content:center; align-items:center; color:#94a3b8; font-size:0.8rem;">N/A</div>`;
             
-            const badgeClass = post.report_type.toLowerCase();
+            const badgeClass = post.report_type.toLowerCase() === 'lost' ? 'badge-lost' : 'badge-found';
             const reportTypeDisplay = post.report_type.charAt(0).toUpperCase() + post.report_type.slice(1);
             const postJSON = encodeURIComponent(JSON.stringify(post));
 
+            // Clickable row redirects to reports.html
             return `
-                <tr>
+                <tr class="clickable-row" onclick="window.location.href='reports.html'">
                     <td>${imgHtml}</td>
                     <td><span class="badge ${badgeClass}">${reportTypeDisplay}</span></td>
                     <td>
@@ -87,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </td>
                     <td>${post.item_location}</td>
                     <td>${dateStr}</td>
-                    <td>
+                    <td onclick="event.stopPropagation();">
                         <div class="action-buttons">
                             <button class="action-btn view-btn" title="View Details" onclick="viewDetails('${postJSON}')"><i class="fa-solid fa-eye"></i></button>
                             <button class="action-btn delete-btn" title="Archive Post" onclick="confirmDelete('${post.report_id}')"><i class="fa-solid fa-trash-can"></i></button>
@@ -134,7 +141,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const statusFilter = document.getElementById('exportStatus').value;
 
         try {
-            // Fetches all the data including contact number from the related user table
             let query = window.supabase
                 .from('item_reports')
                 .select('*, users(first_name, last_name, email, course_section, contact_number)')
@@ -142,7 +148,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .lte('created_at', end + 'T23:59:59.999Z')
                 .order('created_at', { ascending: false });
 
-            if (statusFilter !== 'all') {
+            // Apply specific filtering logic
+            if (statusFilter === 'lost') {
+                query = query.eq('report_type', 'lost');
+            } else if (statusFilter === 'found') {
+                query = query.eq('report_type', 'found');
+            } else if (statusFilter !== 'all') {
                 query = query.eq('report_status', statusFilter);
             }
 
@@ -156,14 +167,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Headers updated with explicit Dates & Roles
             const headers = [
                 'Date Posted (System)', 
                 'Date Occurred (Lost/Found)',
                 'Report Type', 
                 'Category', 
                 'Specific Item Name', 
-                'Description', 
+                'Description (Public)', 
+                'Admin Specific Details',
                 'Location', 
                 'Status', 
                 'Original Reporter', 
@@ -175,11 +186,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             ];
 
             const rows = data.map(item => {
-                // Formatting specific explicit dates
                 const datePosted = new Date(item.created_at).toLocaleString('en-US');
                 const dateOccurred = new Date(item.item_datetime).toLocaleString('en-US');
                 
-                // Smart Name/Contact resolution (Walk-in vs Registered)
                 let reporterName = 'Admin Account';
                 if (item.reporter_name_manual) {
                     reporterName = item.reporter_name_manual + ' (Walk-in)';
@@ -206,6 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     escapeCsv(item.item_category),
                     escapeCsv(item.item_name_specific),
                     escapeCsv(item.item_description),
+                    escapeCsv(item.admin_specific_details), 
                     escapeCsv(item.item_location),
                     escapeCsv(item.report_status.toUpperCase()),
                     escapeCsv(reporterName),
@@ -246,29 +256,77 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Make inline handlers available globally
+    // 1:1 HOMEPAGE VIEW DETAILS
     window.viewDetails = function(encodedReport) {
-        const report = JSON.parse(decodeURIComponent(encodedReport));
+        const item = JSON.parse(decodeURIComponent(encodedReport));
         
-        const statusBadge = document.getElementById('modal-status');
-        statusBadge.textContent = report.report_type.charAt(0).toUpperCase() + report.report_type.slice(1);
-        statusBadge.className = 'badge ' + report.report_type.toLowerCase();
+        // Exact targeting based on homepage.js
+        const statusBadge = document.getElementById('modal-item-status');
         
-        document.getElementById('modal-item').textContent = report.item_name_specific || 'N/A';
-        document.getElementById('modal-category').textContent = report.item_category;
-        document.getElementById('modal-location').textContent = report.item_location;
-        
-        const dateObj = new Date(report.item_datetime);
-        document.getElementById('modal-datetime').textContent = dateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
-        
-        document.getElementById('modal-description').textContent = report.item_description;
-        
-        const imgEl = document.getElementById('modal-image');
-        if (report.image_path) {
-            imgEl.src = report.image_path;
-            imgEl.style.display = 'inline-block';
+        if (item.report_type === 'lost') {
+            statusBadge.textContent = 'LOST ITEM';
+            statusBadge.style.backgroundColor = 'var(--accent-amber)';
+            document.getElementById('modal-location-label').textContent = 'Last Seen At';
+            document.getElementById('modal-date-label').textContent = 'Lost On';
         } else {
-            imgEl.style.display = 'none';
+            statusBadge.textContent = 'FOUND ITEM';
+            statusBadge.style.backgroundColor = 'var(--primary-blue)';
+            document.getElementById('modal-location-label').textContent = 'Found At';
+            document.getElementById('modal-date-label').textContent = 'Found On';
+        }
+
+        document.getElementById('modal-item-name').textContent = item.item_name_specific || item.item_category;
+        document.getElementById('modal-item-category').textContent = item.item_category;
+        document.getElementById('modal-item-location').textContent = item.item_location || 'Not Specified';
+        
+        const dt = new Date(item.item_datetime);
+        document.getElementById('modal-item-datetime').textContent = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+        
+        const reporterNameEl = document.getElementById('modal-reporter-name');
+        const reporterContactEl = document.getElementById('modal-reporter-contact');
+        
+        if (item.users) {
+            reporterNameEl.textContent = `${item.users.first_name} ${item.users.last_name}`;
+            reporterContactEl.textContent = item.users.contact_number || item.users.email || 'No contact provided';
+        } else if (item.reporter_name_manual) {
+            reporterNameEl.textContent = `${item.reporter_name_manual} (Posted by Admin)`;
+            reporterContactEl.textContent = item.reporter_contact_manual || 'No contact provided';
+        } else {
+            reporterNameEl.textContent = 'Anonymous / Unknown';
+            reporterContactEl.textContent = '';
+        }
+
+        // Description
+        if (item.item_description === 'Hidden for security purposes.') {
+            document.getElementById('modal-item-description').innerHTML = '<em style="color: #94a3b8;">(Hidden from public view)</em>';
+        } else {
+            document.getElementById('modal-item-description').textContent = item.item_description || 'No description provided.';
+        }
+
+        // Admin Details Block
+        const adminDetailsContainer = document.getElementById('admin-details-container');
+        if (item.admin_specific_details) {
+            document.getElementById('modal-admin-details').textContent = item.admin_specific_details;
+            adminDetailsContainer.style.display = 'flex';
+        } else {
+            adminDetailsContainer.style.display = 'none';
+        }
+
+        // Image Handling
+        const imgContainer = document.getElementById('modal-image-container');
+        const itemImg = document.getElementById('modal-item-image');
+        const noImg = document.getElementById('modal-no-image');
+
+        if (item.image_path) {
+            itemImg.src = item.image_path;
+            itemImg.style.display = 'block';
+            noImg.style.display = 'none';
+            imgContainer.style.display = 'block';
+        } else {
+            itemImg.src = '';
+            itemImg.style.display = 'none';
+            noImg.style.display = 'flex';
+            imgContainer.style.display = 'block'; 
         }
 
         document.getElementById('viewDetailsModal').classList.add('show');
