@@ -107,13 +107,18 @@
                             <button type="button" id="removeImageBtn" class="remove-img-btn" style="display: none;">
                                 <i class="fa-solid fa-trash-can"></i> Remove Image
                             </button>
+
+                            <div id="imageRemovalReasonContainer" style="display: none; margin-top: 16px; flex-direction: column; gap: 6px;">
+                                <label class="form-label">Reason for Removal <span style="color: var(--danger-red);">*</span></label>
+                                <textarea id="imageRemovalReason" class="form-input" rows="2" maxlength="50" placeholder="e.g., Image is irrelevant or inappropriate..."></textarea>
+                            </div>
                         </div>
 
                         <div class="review-right">
                             <div class="form-row">
                                 <div class="form-group flex-2">
                                     <label class="form-label">Item Name / Title</label>
-                                    <input type="text" id="reviewItemName" class="form-input" required>
+                                    <input type="text" id="reviewItemName" class="form-input" maxlength="30" required>
                                 </div>
                                 <div class="form-group flex-1">
                                     <label class="form-label">Category</label>
@@ -140,12 +145,12 @@
 
                             <div class="form-group">
                                 <label class="form-label">Location</label>
-                                <input type="text" id="reviewLocation" class="form-input" required>
+                                <input type="text" id="reviewLocation" class="form-input" maxlength="50" required>
                             </div>
 
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label class="form-label" id="reviewDescriptionLabel">Description</label>
-                                <textarea id="reviewDescription" class="form-input" rows="4" required></textarea>
+                                <textarea id="reviewDescription" class="form-input" rows="4" maxlength="80" required></textarea>
                             </div>
                         </div>
                     </div>
@@ -174,7 +179,7 @@
                     <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 16px; line-height: 1.5;">Please provide a reason. This will be sent directly to the student's notification bell.</p>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Reason for Rejection <span style="color: var(--danger-red);">*</span></label>
-                        <textarea id="rejectReasonText" class="form-input" rows="4" placeholder="e.g., The image is inappropriate, or the description is too vague..." required></textarea>
+                        <textarea id="rejectReasonText" class="form-input" rows="4" maxlength="50" placeholder="e.g., The image is inappropriate, or the description is too vague..." required></textarea>
                     </div>
                 </div>
 

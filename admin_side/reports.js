@@ -21,6 +21,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ===================================
+    // GLOBAL SYSTEM ALERTS
+    // ===================================
+    function showSuccess(title, message, type = "success") {
+        const modal = document.getElementById('systemAlertModal');
+        const icon = document.getElementById('alert-icon');
+        const wrapper = document.getElementById('alert-icon-wrapper');
+        const titleEl = document.getElementById('alert-title');
+        const btn = document.getElementById('alertOkBtn');
+        
+        titleEl.textContent = title;
+        document.getElementById('alert-message').textContent = message;
+        
+        btn.className = "modal-btn confirm-btn";
+        wrapper.style.backgroundColor = ""; wrapper.style.color = "";
+        
+        if (type === 'danger') {
+            titleEl.style.color = "var(--danger-red)";
+            wrapper.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+            wrapper.style.color = "var(--danger-red)";
+            icon.className = "fa-solid fa-trash-can";
+            btn.classList.add('danger-override');
+        } else if (type === 'warning') {
+            titleEl.style.color = "var(--text-secondary)";
+            wrapper.style.backgroundColor = "rgba(71, 85, 105, 0.1)";
+            wrapper.style.color = "var(--text-secondary)";
+            icon.className = "fa-solid fa-box-archive";
+            btn.style.backgroundColor = "var(--text-secondary)";
+            btn.style.borderColor = "var(--text-secondary)";
+        } else {
+            titleEl.style.color = "var(--success-green)";
+            wrapper.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
+            wrapper.style.color = "var(--success-green)";
+            icon.className = "fa-solid fa-circle-check";
+            btn.classList.add('success-override');
+        }
+        
+        wrapper.style.animation = 'none'; wrapper.offsetHeight; wrapper.style.animation = null;
+        modal.classList.add('show');
+    }
+
+    document.getElementById('alertOkBtn').addEventListener('click', () => {
+        document.getElementById('systemAlertModal').classList.remove('show');
+    });
+
+    // Close Modals
+    document.querySelectorAll('[data-close]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.modal-overlay').classList.remove('show');
+        });
+    });
+
+    // ===================================
     // FETCH & RENDER LIVE POSTS
     // ===================================
     const itemsContainer = document.getElementById('itemsContainer');
@@ -34,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             .order('created_at', { ascending: false });
 
         if (error) {
-            itemsContainer.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center; padding:40px;">Error loading posts.</td></tr>`;
+            itemsContainer.innerHTML = `<tr><td colspan="5" style="color:var(--danger-red); text-align:center; padding:40px;">Error loading posts.</td></tr>`;
             return;
         }
 
@@ -68,16 +120,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const safeItemName = escapeQuote(post.item_name_specific);
+            const encodedPost = encodeURIComponent(JSON.stringify(post));
 
+            // Description completely removed from the table view!
             return `
-                <tr>
+                <tr class="clickable-row" onclick="openViewDetails('${encodedPost}')">
                     <td>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             ${imgHtml}
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary);">${post.item_name_specific}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeQuote(post.item_description)}">${post.item_description || 'No public description.'}</div>
-                            </div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${post.item_name_specific || post.item_category}</div>
                         </div>
                     </td>
                     <td>
@@ -85,24 +136,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div style="font-size: 0.8rem; color: var(--text-secondary);">${rContact}</div>
                     </td>
                     <td>
-                        <span class="card-type-badge ${badgeClass}" style="position: static; box-shadow: none;">${post.report_type}</span>
+                        <span class="card-type-badge ${badgeClass}">${post.report_type}</span>
                         <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${post.item_category}</div>
                     </td>
                     <td>
                         <div style="font-size: 0.9rem;"><i class="fa-solid fa-location-dot" style="width:16px; color:var(--text-secondary);"></i> ${post.item_location}</div>
                         <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;"><i class="fa-solid fa-clock" style="width:16px;"></i> ${dateStr}</div>
                     </td>
-                    <td style="text-align: right; white-space: nowrap;">
-                        <button class="action-icon-btn success" title="Mark as Resolved (Match)" onclick="openMatchModal('${post.report_id}', '${post.user_id}', '${safeItemName}', '${post.report_type}')"><i class="fa-solid fa-handshake"></i></button>
-                        <button class="action-icon-btn warning" title="Archive Post" onclick="archivePost('${post.report_id}')"><i class="fa-solid fa-folder-minus"></i></button>
-                        <button class="action-icon-btn danger" title="Delete Post" onclick="openDeleteModal('${post.report_id}', '${post.user_id}', '${safeItemName}', '${post.report_type}')"><i class="fa-solid fa-trash-can"></i></button>
+                    <td class="actions-col" onclick="event.stopPropagation();">
+                        <div class="table-actions">
+                            <button class="action-icon-btn success" title="Mark as Resolved (Match)" onclick="openMatchModal('${post.report_id}', '${post.user_id}', '${safeItemName}', '${post.report_type}')"><i class="fa-solid fa-handshake"></i></button>
+                            <button class="action-icon-btn warning" title="Archive Post" onclick="openArchiveModal('${post.report_id}')"><i class="fa-solid fa-box-archive"></i></button>
+                            <button class="action-icon-btn danger" title="Delete Post" onclick="openDeleteModal('${post.report_id}', '${post.user_id}', '${safeItemName}', '${post.report_type}')"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                     </td>
                 </tr>
             `;
         }).join('');
     }
-
-    loadActivePosts();
 
     // ===================================
     // FILTERING & SEARCH
@@ -130,77 +181,116 @@ document.addEventListener('DOMContentLoaded', async () => {
     typeFilter.addEventListener('change', filterPosts);
     categoryFilter.addEventListener('change', filterPosts);
 
-
     // ===================================
-    // GLOBAL MODAL HELPERS
+    // VIEW DETAILS MODAL
     // ===================================
-    document.querySelectorAll('[data-close]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            this.closest('.modal-overlay').classList.remove('show');
-        });
-    });
-
-    function showSuccess(title, message, type = "success") {
-        const modal = document.getElementById('successModal');
-        const icon = document.getElementById('success-icon');
-        const titleEl = document.getElementById('success-title');
+    window.openViewDetails = function(encodedReport) {
+        const report = JSON.parse(decodeURIComponent(encodedReport));
         
-        titleEl.textContent = title;
-        document.getElementById('success-message').textContent = message;
+        const statusBadge = document.getElementById('modal-item-status');
         
-        if (type === 'danger') {
-            titleEl.style.color = "var(--danger-red)";
-            icon.className = "fa-solid fa-trash-can";
-            icon.parentElement.style.color = "var(--danger-red)";
-        } else if (type === 'warning') {
-            titleEl.style.color = "var(--text-secondary)";
-            icon.className = "fa-solid fa-folder-minus";
-            icon.parentElement.style.color = "var(--text-secondary)";
+        if (report.report_type === 'lost') {
+            statusBadge.textContent = 'LOST ITEM';
+            statusBadge.style.backgroundColor = 'var(--danger-red)';
+            document.getElementById('modal-location-label').textContent = 'Last Seen At';
+            document.getElementById('modal-date-label').textContent = 'Lost On';
         } else {
-            titleEl.style.color = "var(--success-green)";
-            icon.className = "fa-solid fa-handshake";
-            icon.parentElement.style.color = "var(--success-green)";
+            statusBadge.textContent = 'FOUND ITEM';
+            statusBadge.style.backgroundColor = 'var(--primary-blue)';
+            document.getElementById('modal-location-label').textContent = 'Found At';
+            document.getElementById('modal-date-label').textContent = 'Found On';
         }
+
+        document.getElementById('modal-item-name').textContent = report.item_name_specific || report.item_category;
+        document.getElementById('modal-item-category').textContent = report.item_category;
+        document.getElementById('modal-item-location').textContent = report.item_location || 'Not Specified';
         
-        modal.classList.add('show');
-    }
-
-    document.getElementById('successOkBtn').addEventListener('click', () => {
-        document.getElementById('successModal').classList.remove('show');
-    });
-
-
-    // ===================================
-    // DIRECT ACTIONS (RESOLVE, ARCHIVE, DELETE)
-    // ===================================
-
-    // 1. OPEN MATCH (RESOLVE) MODAL
-    window.openMatchModal = function(id, userId, itemName, type) {
-        document.getElementById('matchReportId').value = id;
-        document.getElementById('matchUserId').value = userId;
-        document.getElementById('matchItemName').value = itemName;
-        document.getElementById('matchReportType').value = type;
+        const dt = new Date(report.item_datetime);
+        document.getElementById('modal-item-datetime').textContent = dt.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
         
-        document.getElementById('matchSearchInput').value = '';
-        document.getElementById('matchSelectedUserId').value = '';
-        document.getElementById('matchSuggestions').style.display = 'none';
+        const reporterNameEl = document.getElementById('modal-reporter-name');
+        const reporterContactEl = document.getElementById('modal-reporter-contact');
         
-        document.getElementById('matchReportModal').classList.add('show');
+        if (report.users) {
+            reporterNameEl.textContent = `${report.users.first_name} ${report.users.last_name}`;
+            reporterContactEl.textContent = report.users.contact_number || report.users.email || 'No contact provided';
+        } else if (report.reporter_name_manual) {
+            reporterNameEl.textContent = `${report.reporter_name_manual} (Posted by Admin)`;
+            reporterContactEl.textContent = report.reporter_contact_manual || 'No contact provided';
+        } else {
+            reporterNameEl.textContent = 'Anonymous / Unknown';
+            reporterContactEl.textContent = '';
+        }
+
+        const publicDescBlock = document.getElementById('public-desc-block');
+        if (report.item_description === 'Hidden for security purposes.') {
+            publicDescBlock.style.display = 'none';
+        } else {
+            publicDescBlock.style.display = 'flex';
+            document.getElementById('modal-item-description').textContent = report.item_description || 'No description provided.';
+        }
+
+        const adminDetailsContainer = document.getElementById('admin-details-container');
+        if (report.admin_specific_details) {
+            document.getElementById('modal-admin-details').textContent = report.admin_specific_details;
+            adminDetailsContainer.style.display = 'flex';
+        } else {
+            adminDetailsContainer.style.display = 'none';
+        }
+
+        const imgContainer = document.getElementById('modal-image-container');
+        const itemImg = document.getElementById('modal-item-image');
+        const noImg = document.getElementById('modal-no-image');
+
+        if (report.image_path) {
+            itemImg.src = report.image_path;
+            itemImg.style.display = 'block';
+            noImg.style.display = 'none';
+            imgContainer.style.display = 'flex';
+        } else {
+            itemImg.src = '';
+            itemImg.style.display = 'none';
+            noImg.style.display = 'flex';
+            imgContainer.style.display = 'flex'; 
+        }
+
+        document.getElementById('viewDetailsModal').classList.add('show');
     };
 
-    // 2. ARCHIVE POST (1-CLICK)
-    window.archivePost = async function(reportId) {
-        if (!confirm("Are you sure you want to instantly archive this post?")) return;
-        const { error } = await window.supabase.from('item_reports').update({ report_status: 'archived' }).eq('report_id', reportId);
+    // ===================================
+    // ARCHIVE POST MODAL
+    // ===================================
+    let archiveTargetId = null;
+    const archiveConfirmationModal = document.getElementById('archiveConfirmationModal');
+    
+    window.openArchiveModal = function(id) {
+        archiveTargetId = id;
+        archiveConfirmationModal.classList.add('show');
+    };
+
+    document.getElementById('executeArchiveBtn').addEventListener('click', async function() {
+        if (!archiveTargetId) return;
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archiving...';
+
+        const { error } = await window.supabase.from('item_reports').update({ report_status: 'archived' }).eq('report_id', archiveTargetId);
+        
         if (!error) {
+            archiveConfirmationModal.classList.remove('show');
             showSuccess("Post Archived", "The item has been successfully moved to Completed Records.", "warning");
             loadActivePosts();
         } else {
-            alert("Error archiving post: " + error.message);
+            showAlert("Archive Failed", error.message, "danger");
         }
-    };
+        
+        this.disabled = false;
+        this.innerHTML = originalText;
+    });
 
-    // 3. OPEN DELETE REASON MODAL
+    // ===================================
+    // DELETE POST MODAL
+    // ===================================
     window.openDeleteModal = function(id, userId, itemName, type) {
         document.getElementById('deleteReportId').value = id;
         document.getElementById('deleteUserId').value = userId;
@@ -210,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('deleteReasonModal').classList.add('show');
     };
 
-    // SUBMIT DELETE REASON
     document.getElementById('deleteReasonForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('deleteConfirmBtn');
@@ -224,14 +313,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const reportType = document.getElementById('deleteReportType').value.toUpperCase();
         const reason = document.getElementById('deleteReasonText').value.trim();
 
-        // Delete from DB completely
         const { error } = await window.supabase.from('item_reports').delete().eq('report_id', reportId);
 
         if (!error) {
-            if (ownerId && ownerId !== 'null') {
+            if (ownerId && ownerId !== 'null' && ownerId !== 'undefined') {
                 await window.supabase.from('notifications').insert([{
                     user_id: ownerId,
-                    report_id: reportId,
                     message: `Your active ${reportType} post for "${itemName}" was removed by the administrator. Reason: ${reason}`
                 }]);
             }
@@ -246,20 +333,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = false;
     });
 
-
     // ===================================
-    // AUTOCOMPLETE MATCHING SYSTEM LOGIC
+    // MATCH / RESOLVE LOGIC (WITH AVATAR & DOUBLE NOTIF)
     // ===================================
     const matchSearchInput = document.getElementById('matchSearchInput');
     const matchSuggestions = document.getElementById('matchSuggestions');
     const matchSelectedUserId = document.getElementById('matchSelectedUserId');
     const matchConfirmBtn = document.getElementById('matchConfirmBtn');
 
+    window.openMatchModal = function(id, userId, itemName, type) {
+        document.getElementById('matchReportId').value = id;
+        document.getElementById('matchOriginalReporterId').value = userId; 
+        document.getElementById('matchItemName').value = itemName;
+        document.getElementById('matchReportType').value = type;
+        
+        matchSearchInput.value = '';
+        matchSelectedUserId.value = '';
+        matchSuggestions.style.display = 'none';
+        
+        document.getElementById('matchReportModal').classList.add('show');
+    };
+
     let debounceTimer;
     matchSearchInput.addEventListener('input', (e) => {
         clearTimeout(debounceTimer);
-        const val = e.target.value.trim();
         matchSelectedUserId.value = ''; 
+        const val = e.target.value.trim();
         
         if (val.length < 2) {
             matchSuggestions.style.display = 'none';
@@ -269,32 +368,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         debounceTimer = setTimeout(async () => {
             const { data, error } = await window.supabase
                 .from('users')
-                .select('id, first_name, last_name, email')
+                .select('id, first_name, last_name, email, profile_picture_path')
                 .or(`first_name.ilike.%${val}%,last_name.ilike.%${val}%,email.ilike.%${val}%`)
                 .limit(5);
 
             if (data && data.length > 0) {
-                matchSuggestions.innerHTML = data.map(u => `
-                    <div class="suggestion-item" data-id="${u.id}" data-name="${u.first_name} ${u.last_name}">
-                        <div style="font-weight: 600;">${u.first_name} ${u.last_name}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">${u.email}</div>
+                matchSuggestions.innerHTML = data.map(u => {
+                    const avatar = u.profile_picture_path || '../images/default-avatar.png';
+                    return `
+                    <div class="suggestion-item" onclick="selectMatchUser('${u.id}', '${escapeQuote(u.first_name)} ${escapeQuote(u.last_name)}')">
+                        <img src="${avatar}" class="suggestion-avatar" alt="Avatar">
+                        <div>
+                            <div style="font-weight: 600;">${u.first_name} ${u.last_name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${u.email}</div>
+                        </div>
                     </div>
-                `).join('');
+                `}).join('');
                 matchSuggestions.style.display = 'block';
             } else {
-                matchSuggestions.style.display = 'none';
+                matchSuggestions.innerHTML = `<div style="padding: 10px 14px; font-size: 0.85rem; color: var(--text-secondary);">No registered users found. You can still save this manually.</div>`;
+                matchSuggestions.style.display = 'block';
             }
         }, 300);
     });
 
-    matchSuggestions.addEventListener('click', (e) => {
-        const item = e.target.closest('.suggestion-item');
-        if (item) {
-            matchSearchInput.value = item.dataset.name;
-            matchSelectedUserId.value = item.dataset.id;
-            matchSuggestions.style.display = 'none';
-        }
-    });
+    window.selectMatchUser = function(id, name) {
+        matchSearchInput.value = name;
+        matchSelectedUserId.value = id;
+        matchSuggestions.style.display = 'none';
+    };
 
     document.addEventListener('click', (e) => {
         if (!e.target.closest('#matchSearchInput') && !e.target.closest('#matchSuggestions')) {
@@ -302,7 +404,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Submit Match Update to Database
     document.getElementById('matchReportForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const originalText = matchConfirmBtn.innerHTML;
@@ -310,7 +411,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         matchConfirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Matching...';
 
         const reportId = document.getElementById('matchReportId').value;
-        const ownerId = document.getElementById('matchUserId').value;
+        const originalReporterId = document.getElementById('matchOriginalReporterId').value;
         const itemName = document.getElementById('matchItemName').value;
         const reportType = document.getElementById('matchReportType').value.toUpperCase(); 
         const personName = matchSearchInput.value.trim();
@@ -326,10 +427,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!dbError) {
             // Notify Original Reporter
-            if (ownerId && ownerId !== 'null') {
+            if (originalReporterId && originalReporterId !== 'null' && originalReporterId !== 'undefined') {
                 await window.supabase.from('notifications').insert([{
-                    user_id: ownerId,
-                    report_id: reportId,
+                    user_id: originalReporterId,
                     message: `Your ${reportType} item report for "${itemName}" has been successfully MATCHED and marked as resolved!`
                 }]);
             }
@@ -342,7 +442,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 await window.supabase.from('notifications').insert([{
                     user_id: matchedUserId,
-                    report_id: reportId,
                     message: matchMsg
                 }]);
             }
@@ -359,35 +458,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ===================================
-    // CREATE MANUAL POST
+    // CREATE MANUAL POST (NEW 2-COLUMN LAYOUT)
     // ===================================
     const createPostModal = document.getElementById('createPostModal');
     const openCreatePostBtn = document.getElementById('openCreatePostBtn');
     const createPostForm = document.getElementById('createPostForm');
     const submitNewPostBtn = document.getElementById('submitNewPostBtn');
 
-    const newPhotoPreview = document.getElementById('newPhotoPreview');
+    const newImageWrapper = document.getElementById('newImageWrapper');
+    const newPhotoPreview = document.getElementById('newImagePreview');
     const newPhotoInput = document.getElementById('newPhotoInput');
+    const newNoImage = document.getElementById('new-no-image');
+    const newRemoveImageBtn = document.getElementById('newRemoveImageBtn');
+    
     let newPostImageFile = null;
 
     openCreatePostBtn.addEventListener('click', () => {
         createPostForm.reset();
         newPostImageFile = null;
-        newPhotoPreview.innerHTML = '<span><i class="fa-solid fa-camera"></i> Click to upload</span>';
+        newPhotoPreview.src = '';
+        newPhotoPreview.style.display = 'none';
+        newNoImage.style.display = 'flex';
+        newRemoveImageBtn.style.display = 'none';
         createPostModal.classList.add('show');
     });
 
-    newPhotoPreview.addEventListener('click', () => newPhotoInput.click());
+    newImageWrapper.addEventListener('click', () => newPhotoInput.click());
 
     newPhotoInput.addEventListener('change', (e) => {
-        newPostImageFile = e.target.files[0];
-        if (newPostImageFile) {
+        const file = e.target.files[0];
+        if (file) {
+            newPostImageFile = file;
             const reader = new FileReader();
             reader.onload = (event) => {
-                newPhotoPreview.innerHTML = `<img src="${event.target.result}" style="width:100%; height:100%; object-fit:cover;">`;
+                newPhotoPreview.src = event.target.result;
+                newPhotoPreview.style.display = 'block';
+                newNoImage.style.display = 'none';
+                newRemoveImageBtn.style.display = 'flex';
             };
-            reader.readAsDataURL(newPostImageFile);
+            reader.readAsDataURL(file);
         }
+    });
+
+    newRemoveImageBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        newPostImageFile = null;
+        newPhotoInput.value = '';
+        newPhotoPreview.src = '';
+        newPhotoPreview.style.display = 'none';
+        newNoImage.style.display = 'flex';
+        newRemoveImageBtn.style.display = 'none';
     });
 
     createPostForm.addEventListener('submit', async (e) => {
@@ -399,38 +519,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             let publicImageUrl = null;
             if (newPostImageFile) {
-                const fileExt = newPostImageFile.name.split('.').pop();
+                const fileExt = newPostImageFile.name.split('.').pop() || 'png';
                 const fileName = `manual_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                 const { error: uploadError } = await window.supabase.storage.from('item-images').upload(fileName, newPostImageFile);
                 if (uploadError) throw new Error('Image Upload Failed: ' + uploadError.message);
-                const { data: publicUrlData } = window.supabase.storage.from('item-images').getPublicUrl(fileName);
-                publicImageUrl = publicUrlData.publicUrl;
+                const { data } = window.supabase.storage.from('item-images').getPublicUrl(fileName);
+                publicImageUrl = data.publicUrl;
             }
 
             const adminId = sessionStorage.getItem('user_id'); 
-            const { error: dbError } = await window.supabase.from('item_reports').insert([{
-                    user_id: adminId, 
-                    reporter_name_manual: document.getElementById('newReporterName').value.trim(),
-                    reporter_contact_manual: document.getElementById('newReporterContact').value.trim(),
-                    report_type: document.getElementById('newType').value,
-                    item_category: document.getElementById('newCategory').value,
-                    item_name_specific: document.getElementById('newName').value,
-                    item_description: document.getElementById('newDescription').value,
-                    item_datetime: `${document.getElementById('newDate').value} ${document.getElementById('newTime').value}:00`,
-                    item_location: document.getElementById('newLocation').value,
-                    image_path: publicImageUrl,
-                    report_status: 'approved'
-                }]);
+            const isFound = document.getElementById('newType').value === 'found';
+            const rawDescription = document.getElementById('newDescription').value;
+
+            const payload = {
+                user_id: adminId, 
+                reporter_name_manual: document.getElementById('newReporterName').value.trim(),
+                reporter_contact_manual: document.getElementById('newReporterContact').value.trim(),
+                report_type: document.getElementById('newType').value,
+                item_category: document.getElementById('newCategory').value,
+                item_name_specific: document.getElementById('newName').value,
+                item_datetime: `${document.getElementById('newDate').value}T${document.getElementById('newTime').value}:00`,
+                item_location: document.getElementById('newLocation').value,
+                image_path: publicImageUrl,
+                report_status: 'approved'
+            };
+
+            // Smart description handling for manual posts (matches post-item review logic)
+            if (isFound) {
+                payload.item_description = "Hidden for security purposes.";
+                payload.admin_specific_details = rawDescription;
+            } else {
+                payload.item_description = rawDescription;
+            }
+
+            const { error: dbError } = await window.supabase.from('item_reports').insert([payload]);
 
             if (dbError) throw new Error('Database Error: ' + dbError.message);
+            
             createPostModal.classList.remove('show');
-            showSuccess("Post Created", "The manual post has been published to the live feed.");
+            showSuccess("Post Created", "The manual post has been published directly to the live feed.");
             loadActivePosts();
+            
         } catch (error) {
-            alert(error.message);
+            showAlert("Creation Failed", error.message, "danger");
         } finally {
             submitNewPostBtn.disabled = false;
             submitNewPostBtn.innerHTML = originalText;
         }
     });
+
+    // Initialize the active posts feed on page load
+    loadActivePosts();
 });

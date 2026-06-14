@@ -275,8 +275,11 @@
 .notif-item { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; gap: 16px; align-items: flex-start; transition: box-shadow 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 .notif-item:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
 .notif-icon { color: #1E3A8A; font-size: 1.25rem; margin-top: 2px; flex-shrink: 0; }
-.notif-content { flex: 1; }
-.notif-text { font-size: 0.95rem; color: #0f172a; line-height: 1.5; margin-bottom: 6px; }
+
+/* FIX: Added min-width to allow the flex container to shrink, and word-wrap to prevent text from overflowing */
+.notif-content { flex: 1; min-width: 0; }
+.notif-text { font-size: 0.95rem; color: #0f172a; line-height: 1.5; margin-bottom: 6px; word-wrap: break-word; overflow-wrap: break-word; }
+
 .notif-time { font-size: 0.75rem; color: #475569; font-weight: 500; }
 
 #notifications-list::-webkit-scrollbar { width: 6px; }

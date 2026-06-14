@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     if (hamburger && sidebar) hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
 
+    function escapeQuote(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
     // ===================================
     // GLOBAL SUCCESS/DANGER UI HANDLER
     // ===================================
@@ -150,6 +154,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const reviewNoImage = document.getElementById('review-no-image');
     const removeImageBtn = document.getElementById('removeImageBtn');
     
+    // Image Removal Reason Elements
+    const imageRemovalReasonContainer = document.getElementById('imageRemovalReasonContainer');
+    const imageRemovalReason = document.getElementById('imageRemovalReason');
+    
     let replacementImageFile = null;
     let removeImageFlag = false;
 
@@ -158,13 +166,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     reviewNewImageInput.addEventListener('change', (e) => {
         replacementImageFile = e.target.files[0];
         if (replacementImageFile) {
-            removeImageFlag = false; // Reset removal flag
+            removeImageFlag = false; 
+            imageRemovalReasonContainer.style.display = 'none';
+            imageRemovalReason.required = false;
+            imageRemovalReason.value = '';
+
             const reader = new FileReader();
             reader.onload = (event) => {
                 reviewImage.src = event.target.result;
                 reviewImage.style.display = 'block';
                 reviewNoImage.style.display = 'none';
-                removeImageBtn.style.display = 'flex'; // Show remove button
+                removeImageBtn.style.display = 'flex'; 
             };
             reader.readAsDataURL(replacementImageFile);
         }
@@ -172,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle Image Removal click
     removeImageBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); // Stop wrapper click event
+        e.stopPropagation(); 
         replacementImageFile = null;
         removeImageFlag = true;
         reviewImage.src = '';
@@ -180,6 +192,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         reviewNoImage.style.display = 'flex';
         reviewNewImageInput.value = '';
         removeImageBtn.style.display = 'none';
+
+        // Prompt for reason
+        imageRemovalReasonContainer.style.display = 'flex';
+        imageRemovalReason.required = true;
     });
 
     window.openReviewModal = function(encodedReport) {
@@ -188,6 +204,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         replacementImageFile = null; 
         removeImageFlag = false;
         reviewNewImageInput.value = '';
+
+        // Reset removal reason box
+        imageRemovalReasonContainer.style.display = 'none';
+        imageRemovalReason.required = false;
+        imageRemovalReason.value = '';
 
         document.getElementById('reviewReportId').value = report.report_id;
         document.getElementById('reviewUserId').value = report.user_id;
@@ -299,11 +320,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (dbError) throw new Error("Database Error: " + dbError.message);
 
-            // Trigger Notification to User
+            // Trigger Notification to User with potential image removal reason
             if (ownerId && ownerId !== 'null' && ownerId !== 'undefined') {
+                let notificationMsg = `Your ${reportType.toUpperCase()} item report for "${itemName}" has been reviewed, approved, and is now active.`;
+                
+                if (removeImageFlag) {
+                    const reason = imageRemovalReason.value.trim();
+                    if (reason) {
+                        notificationMsg += ` Note: Your attached image was removed by the administrator. Reason: ${reason}`;
+                    }
+                }
+
                 await window.supabase.from('notifications').insert([{
                     user_id: ownerId,
-                    message: `Your ${reportType.toUpperCase()} item report for "${itemName}" has been reviewed, approved, and is now active.`
+                    message: notificationMsg
                 }]);
             }
 
