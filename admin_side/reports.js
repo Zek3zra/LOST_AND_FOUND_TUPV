@@ -15,18 +15,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     if (hamburger && sidebar) hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
 
-    // Helper Function to escape quotes for HTML strings
     function escapeQuote(str) {
         return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
+
+    // Generic fallback Facebook-style gray silhouette avatar
+    const DEFAULT_AVATAR = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e";
 
     // ===================================
     // GLOBAL SYSTEM ALERTS
     // ===================================
     function showSuccess(title, message, type = "success") {
         const modal = document.getElementById('systemAlertModal');
-        const icon = document.getElementById('alert-icon');
-        const wrapper = document.getElementById('alert-icon-wrapper');
         const titleEl = document.getElementById('alert-title');
         const btn = document.getElementById('alertOkBtn');
         
@@ -34,30 +34,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('alert-message').textContent = message;
         
         btn.className = "modal-btn confirm-btn";
-        wrapper.style.backgroundColor = ""; wrapper.style.color = "";
         
         if (type === 'danger') {
             titleEl.style.color = "var(--danger-red)";
-            wrapper.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
-            wrapper.style.color = "var(--danger-red)";
-            icon.className = "fa-solid fa-trash-can";
             btn.classList.add('danger-override');
         } else if (type === 'warning') {
             titleEl.style.color = "var(--text-secondary)";
-            wrapper.style.backgroundColor = "rgba(71, 85, 105, 0.1)";
-            wrapper.style.color = "var(--text-secondary)";
-            icon.className = "fa-solid fa-box-archive";
             btn.style.backgroundColor = "var(--text-secondary)";
             btn.style.borderColor = "var(--text-secondary)";
         } else {
             titleEl.style.color = "var(--success-green)";
-            wrapper.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
-            wrapper.style.color = "var(--success-green)";
-            icon.className = "fa-solid fa-circle-check";
             btn.classList.add('success-override');
         }
         
-        wrapper.style.animation = 'none'; wrapper.offsetHeight; wrapper.style.animation = null;
         modal.classList.add('show');
     }
 
@@ -65,7 +54,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('systemAlertModal').classList.remove('show');
     });
 
-    // Close Modals
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.modal-overlay').classList.remove('show');
@@ -112,17 +100,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let rName = 'Manual Post';
             let rContact = post.reporter_contact_manual || '';
-            if (post.users) {
+            if (post.reporter_name_manual) {
+                rName = post.reporter_name_manual;
+            } else if (post.users) {
                 rName = `${post.users.first_name} ${post.users.last_name}`;
                 rContact = post.users.email || '';
-            } else if (post.reporter_name_manual) {
-                rName = post.reporter_name_manual;
             }
 
             const safeItemName = escapeQuote(post.item_name_specific);
             const encodedPost = encodeURIComponent(JSON.stringify(post));
 
-            // Description completely removed from the table view!
             return `
                 <tr class="clickable-row" onclick="openViewDetails('${encodedPost}')">
                     <td>
@@ -210,16 +197,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const reporterNameEl = document.getElementById('modal-reporter-name');
         const reporterContactEl = document.getElementById('modal-reporter-contact');
+        const reporterAcadEl = document.getElementById('modal-reporter-acad');
         
-        if (report.users) {
-            reporterNameEl.textContent = `${report.users.first_name} ${report.users.last_name}`;
-            reporterContactEl.textContent = report.users.contact_number || report.users.email || 'No contact provided';
-        } else if (report.reporter_name_manual) {
-            reporterNameEl.textContent = `${report.reporter_name_manual} (Posted by Admin)`;
+        if (report.reporter_name_manual) {
+            reporterNameEl.textContent = `${report.reporter_name_manual} (Walk-in)`;
             reporterContactEl.textContent = report.reporter_contact_manual || 'No contact provided';
+            document.getElementById('modal-reporter-avatar').src = DEFAULT_AVATAR;
+            
+            if (report.reporter_program_manual) {
+                reporterAcadEl.textContent = report.reporter_program_manual;
+                reporterAcadEl.style.display = 'block';
+            } else {
+                reporterAcadEl.style.display = 'none';
+            }
+        } else if (report.users) {
+            reporterNameEl.textContent = `${report.users.first_name} ${report.users.last_name}`;
+            reporterContactEl.textContent = report.users.email || report.users.contact_number || 'No contact provided'; // Email Prioritized
+            document.getElementById('modal-reporter-avatar').src = report.users.profile_picture_path || DEFAULT_AVATAR;
+            reporterAcadEl.style.display = 'none'; 
         } else {
             reporterNameEl.textContent = 'Anonymous / Unknown';
             reporterContactEl.textContent = '';
+            document.getElementById('modal-reporter-avatar').src = DEFAULT_AVATAR;
+            reporterAcadEl.style.display = 'none';
         }
 
         const publicDescBlock = document.getElementById('public-desc-block');
@@ -274,14 +274,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         this.disabled = true;
         this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archiving...';
 
-        const { error } = await window.supabase.from('item_reports').update({ report_status: 'archived' }).eq('report_id', archiveTargetId);
+        const { error } = await window.supabase.from('item_reports').update({ 
+            report_status: 'archived',
+            resolved_date: new Date().toISOString()
+        }).eq('report_id', archiveTargetId);
         
         if (!error) {
             archiveConfirmationModal.classList.remove('show');
             showSuccess("Post Archived", "The item has been successfully moved to Completed Records.", "warning");
             loadActivePosts();
         } else {
-            showAlert("Archive Failed", error.message, "danger");
+            alert("Archive Failed: " + error.message);
         }
         
         this.disabled = false;
@@ -334,12 +337,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ===================================
-    // MATCH / RESOLVE LOGIC (WITH AVATAR & DOUBLE NOTIF)
+    // MATCH / RESOLVE LOGIC
     // ===================================
     const matchSearchInput = document.getElementById('matchSearchInput');
     const matchSuggestions = document.getElementById('matchSuggestions');
     const matchSelectedUserId = document.getElementById('matchSelectedUserId');
     const matchConfirmBtn = document.getElementById('matchConfirmBtn');
+    
+    let isManualMatch = false;
+
+    document.getElementById('toggleManualMatchBtn').addEventListener('click', (e) => {
+        isManualMatch = !isManualMatch;
+        const input = document.getElementById('matchSearchInput');
+        const label = document.getElementById('matchInputLabel');
+        const btn = e.target;
+        const extraFields = document.getElementById('manualMatchExtraFields');
+        
+        if (isManualMatch) {
+            input.placeholder = "Enter full name of the walk-in student...";
+            label.innerHTML = 'Walk-in Student Name <span style="color: var(--danger-red);">*</span>';
+            btn.textContent = "Search Registered Users instead";
+            matchSuggestions.style.display = 'none';
+            matchSelectedUserId.value = '';
+            extraFields.style.display = 'block';
+        } else {
+            input.placeholder = "Type a name or email to search registered users...";
+            label.innerHTML = 'Claimed By / Matched To <span style="color: var(--danger-red);">*</span>';
+            btn.textContent = "Enter Walk-in / Unregistered Student";
+            extraFields.style.display = 'none';
+        }
+        input.value = '';
+        document.getElementById('matchManualContact').value = '';
+        document.getElementById('matchManualAcad').value = '';
+    });
 
     window.openMatchModal = function(id, userId, itemName, type) {
         document.getElementById('matchReportId').value = id;
@@ -347,8 +377,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('matchItemName').value = itemName;
         document.getElementById('matchReportType').value = type;
         
+        isManualMatch = false;
+        document.getElementById('matchInputLabel').innerHTML = 'Claimed By / Matched To <span style="color: var(--danger-red);">*</span>';
+        matchSearchInput.placeholder = "Type a name or email to search registered users...";
+        document.getElementById('toggleManualMatchBtn').textContent = "Enter Walk-in / Unregistered Student";
+        document.getElementById('manualMatchExtraFields').style.display = 'none';
+        
         matchSearchInput.value = '';
         matchSelectedUserId.value = '';
+        document.getElementById('matchManualContact').value = '';
+        document.getElementById('matchManualAcad').value = '';
         matchSuggestions.style.display = 'none';
         
         document.getElementById('matchReportModal').classList.add('show');
@@ -356,6 +394,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let debounceTimer;
     matchSearchInput.addEventListener('input', (e) => {
+        if (isManualMatch) return; 
+        
         clearTimeout(debounceTimer);
         matchSelectedUserId.value = ''; 
         const val = e.target.value.trim();
@@ -374,7 +414,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (data && data.length > 0) {
                 matchSuggestions.innerHTML = data.map(u => {
-                    const avatar = u.profile_picture_path || '../images/default-avatar.png';
+                    const avatar = u.profile_picture_path || DEFAULT_AVATAR;
                     return `
                     <div class="suggestion-item" onclick="selectMatchUser('${u.id}', '${escapeQuote(u.first_name)} ${escapeQuote(u.last_name)}')">
                         <img src="${avatar}" class="suggestion-avatar" alt="Avatar">
@@ -386,7 +426,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `}).join('');
                 matchSuggestions.style.display = 'block';
             } else {
-                matchSuggestions.innerHTML = `<div style="padding: 10px 14px; font-size: 0.85rem; color: var(--text-secondary);">No registered users found. You can still save this manually.</div>`;
+                matchSuggestions.innerHTML = `<div style="padding: 10px 14px; font-size: 0.85rem; color: var(--text-secondary);">No registered users found. Click the button below to enter manually.</div>`;
                 matchSuggestions.style.display = 'block';
             }
         }, 300);
@@ -417,16 +457,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         const personName = matchSearchInput.value.trim();
         const matchedUserId = matchSelectedUserId.value;
 
+        const updatePayload = { 
+            report_status: 'matched',
+            matched_person_name: personName,
+            resolved_date: new Date().toISOString()
+        };
+
+        if (isManualMatch) {
+            updatePayload.matched_person_contact = document.getElementById('matchManualContact').value.trim();
+            updatePayload.matched_person_acad = document.getElementById('matchManualAcad').value.trim();
+        }
+
         const { error: dbError } = await window.supabase
             .from('item_reports')
-            .update({ 
-                report_status: 'matched',
-                matched_person_name: personName 
-            })
+            .update(updatePayload)
             .eq('report_id', reportId);
 
         if (!dbError) {
-            // Notify Original Reporter
             if (originalReporterId && originalReporterId !== 'null' && originalReporterId !== 'undefined') {
                 await window.supabase.from('notifications').insert([{
                     user_id: originalReporterId,
@@ -434,8 +481,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }]);
             }
 
-            // Notify Auto-Completed Matched User
-            if (matchedUserId) {
+            if (!isManualMatch && matchedUserId) {
                 let matchMsg = reportType === 'LOST' 
                     ? `You have been recorded as finding/returning the LOST item: "${itemName}". Thank you for your honesty!`
                     : `You have successfully claimed your FOUND item: "${itemName}".`;
@@ -458,7 +504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ===================================
-    // CREATE MANUAL POST (NEW 2-COLUMN LAYOUT)
+    // CREATE MANUAL POST
     // ===================================
     const createPostModal = document.getElementById('createPostModal');
     const openCreatePostBtn = document.getElementById('openCreatePostBtn');
@@ -535,6 +581,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 user_id: adminId, 
                 reporter_name_manual: document.getElementById('newReporterName').value.trim(),
                 reporter_contact_manual: document.getElementById('newReporterContact').value.trim(),
+                reporter_program_manual: document.getElementById('newReporterProgram').value.trim(),
                 report_type: document.getElementById('newType').value,
                 item_category: document.getElementById('newCategory').value,
                 item_name_specific: document.getElementById('newName').value,
@@ -544,7 +591,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 report_status: 'approved'
             };
 
-            // Smart description handling for manual posts (matches post-item review logic)
             if (isFound) {
                 payload.item_description = "Hidden for security purposes.";
                 payload.admin_specific_details = rawDescription;
@@ -568,6 +614,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Initialize the active posts feed on page load
     loadActivePosts();
 });

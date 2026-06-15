@@ -16,6 +16,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     if (hamburger && sidebar) hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
 
+    // Helper Function
+    function escapeQuote(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
     let allMessages = [];
     let currentActiveUserId = null; 
     let contactMap = new Map(); 
@@ -25,6 +30,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
     const resolveTicketBtn = document.getElementById('resolveTicketBtn'); 
+    
+    const contactSearch = document.getElementById('contactSearch');
+    const newChatSuggestions = document.getElementById('newChatSuggestions');
+    let searchDebounceTimer;
     
     const chatImageInput = document.getElementById('chatImageInput');
     const attachBtn = document.getElementById('attachBtn');
@@ -77,6 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         else await loadChatData(true);
     });
 
+    // --- LOAD AND MAP MESSAGES ---
     async function loadChatData(isSilent = false) {
         if (!isSilent) {
             chatMessagesEl.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-secondary);"><i class="fa-solid fa-circle-notch fa-spin"></i></div>';
@@ -179,8 +189,75 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).join('');
     }
 
-    document.getElementById('contactSearch').addEventListener('input', (e) => renderContactsUI(e.target.value));
+    // --- SEARCH / START NEW CHAT LOGIC ---
+    contactSearch.addEventListener('input', (e) => {
+        clearTimeout(searchDebounceTimer);
+        const val = e.target.value.trim();
+        
+        // Always filter the existing contact list locally
+        renderContactsUI(val); 
 
+        // If typing is sufficient, search database for all users
+        if (val.length < 2) {
+            newChatSuggestions.style.display = 'none';
+            return;
+        }
+
+        searchDebounceTimer = setTimeout(async () => {
+            const { data, error } = await window.supabase
+                .from('users')
+                .select('id, first_name, last_name, email, profile_picture_path')
+                .or(`first_name.ilike.%${val}%,last_name.ilike.%${val}%,email.ilike.%${val}%`)
+                .limit(6);
+
+            if (data && data.length > 0) {
+                newChatSuggestions.innerHTML = '<div style="padding: 8px 14px; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 1px solid var(--border-light); text-transform: uppercase; letter-spacing: 0.05em;">Start New Chat</div>' + 
+                data.map(u => {
+                    const avatar = u.profile_picture_path || '../images/default-avatar.png';
+                    return `
+                    <div class="suggestion-item" onclick="startNewChat('${u.id}', '${escapeQuote(u.first_name)}', '${escapeQuote(u.last_name)}', '${escapeQuote(avatar)}')">
+                        <img src="${avatar}" class="suggestion-avatar" alt="Avatar">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${u.first_name} ${u.last_name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${u.email}</div>
+                        </div>
+                    </div>
+                `}).join('');
+                newChatSuggestions.style.display = 'block';
+            } else {
+                newChatSuggestions.style.display = 'none';
+            }
+        }, 300);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-box')) {
+            newChatSuggestions.style.display = 'none';
+        }
+    });
+
+    window.startNewChat = function(id, firstName, lastName, avatar) {
+        newChatSuggestions.style.display = 'none';
+        contactSearch.value = ''; 
+        
+        const strId = String(id);
+        
+        // Add user to local view instantly if they aren't there
+        if (!contactMap.has(strId)) {
+            contactMap.set(strId, {
+                user_id: strId,
+                name: `${firstName} ${lastName}`,
+                avatar: avatar,
+                latestMessage: "Start a new conversation...",
+                timestamp: new Date() // Forces it to the very top
+            });
+        }
+        
+        renderContactsUI(''); 
+        window.openChat(strId);
+    };
+
+    // --- CHAT INTERACTION LOGIC ---
     window.openChat = function(userId) {
         currentActiveUserId = String(userId); 
         const contactData = contactMap.get(currentActiveUserId);
@@ -198,14 +275,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         resolveTicketBtn.style.display = 'flex';
         
-        renderContactsUI(document.getElementById('contactSearch').value);
+        renderContactsUI(contactSearch.value);
         renderChatHistory(currentActiveUserId);
 
         // Slide the chat window into view on mobile devices
         document.getElementById('messengerWrapper').classList.add('show-chat');
     };
 
-    // --- MOBILE BACK BUTTON LOGIC ---
     document.getElementById('mobileBackBtn').addEventListener('click', () => {
         document.getElementById('messengerWrapper').classList.remove('show-chat');
         currentActiveUserId = null;
@@ -217,7 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const userMessages = allMessages.filter(msg => String(msg.user_id) === strId);
         
         if (userMessages.length === 0) {
-            chatMessagesEl.innerHTML = `<div style="text-align:center; color: var(--text-secondary); margin-top: 20px;">No message history found.</div>`;
+            chatMessagesEl.innerHTML = `<div style="text-align:center; color: var(--text-secondary); margin-top: 20px;">No message history found. Type below to start the conversation!</div>`;
             return;
         }
 

@@ -12,6 +12,7 @@
     --text-secondary: #475569;
     --border-light: #e2e8f0;
     --danger-red: #ef4444;
+    --accent-amber: #F59E0B;
     
     --sidebar-width: 260px;
     --header-height: 70px;
@@ -59,6 +60,13 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .search-box input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--border-light); border-radius: 8px; outline: none; font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s; }
 .search-box input:focus { border-color: var(--primary-blue); }
 
+/* --- AUTOCOMPLETE DROPDOWN STYLES (NEW CHAT) --- */
+.autocomplete-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); z-index: 1000; max-height: 300px; overflow-y: auto; margin-top: 4px; }
+.suggestion-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border-light); transition: background-color 0.2s; display: flex; align-items: center; gap: 12px; }
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:hover { background-color: #f1f5f9; }
+.suggestion-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-light); flex-shrink: 0; }
+
 .contacts-list { flex: 1; overflow-y: auto; }
 .contact-item { padding: 16px; border-bottom: 1px solid var(--border-light); display: flex; gap: 12px; cursor: pointer; transition: background-color 0.15s ease; }
 .contact-item:hover { background-color: #f1f5f9; }
@@ -95,9 +103,9 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .send-btn:hover { background-color: var(--primary-blue-hover); transform: translateY(-1px); }
 
 /* Custom scrollbars */
-.contacts-list::-webkit-scrollbar, .chat-messages::-webkit-scrollbar { width: 6px; }
-.contacts-list::-webkit-scrollbar-track, .chat-messages::-webkit-scrollbar-track { background: transparent; }
-.contacts-list::-webkit-scrollbar-thumb, .chat-messages::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+.contacts-list::-webkit-scrollbar, .chat-messages::-webkit-scrollbar, .autocomplete-suggestions::-webkit-scrollbar { width: 6px; }
+.contacts-list::-webkit-scrollbar-track, .chat-messages::-webkit-scrollbar-track, .autocomplete-suggestions::-webkit-scrollbar-track { background: transparent; }
+.contacts-list::-webkit-scrollbar-thumb, .chat-messages::-webkit-scrollbar-thumb, .autocomplete-suggestions::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
 
 /* --- CHAT IMAGE ATTACHMENT STYLES --- */
 .attach-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-light); background-color: var(--bg-surface); color: var(--text-secondary); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }

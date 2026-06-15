@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Retrieve TUPV | Completed Records</title>
+    
+    <link rel="icon" type="image/png" href="../images/logo.png">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="records.css" />
 </head>
@@ -37,7 +40,7 @@
     <main class="main-content">
         <div class="page-header">
             <h2>Completed & Archived Records</h2>
-            <p>View the historical log of items that have been successfully resolved or manually archived. No images are shown here to keep logs clean and fast.</p>
+            <p>View the historical log of items that have been successfully resolved or manually archived.</p>
         </div>
 
         <div class="controls-container">
@@ -71,7 +74,7 @@
                             <th>Item Details</th>
                             <th>Original Reporter</th>
                             <th>Resolution Details</th>
-                            <th style="text-align: right;">Actions</th>
+                            <th class="actions-col">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="recordsTableBody">
@@ -83,55 +86,115 @@
     </main>
 
     <div id="viewDetailsModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal" data-close>&times;</button>
-            <h3>Historical Record Details</h3>
-            
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img id="modal-image" src="" style="max-width: 100%; max-height: 250px; border-radius: 8px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div class="modal-content modal-lg no-padding">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-file-lines" style="color: var(--primary-blue);"></i> Historical Record</h2>
+                <button class="close-modal" data-close style="position: static; top: auto; right: auto;">&times;</button>
             </div>
             
-            <div class="details-grid">
-                <div class="details-label">Status:</div>
-                <div class="details-value"><span class="badge" id="modal-status" style="color:white;"></span></div>
-                
-                <div class="details-label">Item:</div>
-                <div class="details-value" id="modal-item"></div>
-                <div class="details-label">Category:</div>
-                <div class="details-value" id="modal-category"></div>
-                <div class="details-label">Location:</div>
-                <div class="details-value" id="modal-location"></div>
-                
-                <div class="details-label">Date Posted:</div>
-                <div class="details-value" id="modal-posted-date"></div>
-                
-                <div class="details-label" id="modal-datetime-label">Date Occurred:</div>
-                <div class="details-value" id="modal-datetime"></div>
-                
-                <div class="details-label">Reporter:</div>
-                <div class="details-value" id="modal-reporter" style="font-weight: 700;"></div>
-                <div class="details-label" id="modal-contact-label" style="display: none;">Contact #:</div>
-                <div class="details-value" id="modal-contact" style="display: none;"></div>
+            <div class="modal-body">
+                <div class="hist-modal-layout">
+                    
+                    <div class="modal-item-header" id="modal-header-container">
+                        <span class="badge" id="modal-status" style="margin-bottom: 12px;"></span>
+                        <h4 id="modal-item" style="font-size: 1.6rem; color: #0f172a; margin-bottom: 4px; font-weight: 800; line-height: 1.2;"></h4>
+                        <p style="color: var(--primary-blue); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
+                            <span id="modal-category"></span>
+                        </p>
+                    </div>
 
-                <div class="details-label" id="modal-found-by-label" style="display: none; color: var(--success-green);">Found By:</div>
-                <div class="details-value" id="modal-found-by" style="display: none; color: var(--text-primary); font-weight: 700;"></div>
+                    <div class="modal-left-column" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div class="hist-modal-image-container" id="modal-image-container">
+                            <img id="modal-image" src="" alt="Item Photo" style="display: none;">
+                            <div id="modal-no-image" class="gallery-no-image" style="display: none;">
+                                <i class="fa-regular fa-image"></i>
+                                <span>NO PHOTO</span>
+                            </div>
+                        </div>
 
-                <div class="details-label" id="modal-received-by-label" style="display: none; color: var(--primary-blue);">Received By:</div>
-                <div class="details-value" id="modal-received-by" style="display: none; color: var(--text-primary); font-weight: 700;"></div>
-            </div>
+                        <div id="modal-resolved-container" style="display: none; padding: 14px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">
+                                <i class="fa-solid fa-check-circle" style="margin-right: 4px;"></i> <span id="modal-resolved-label">Resolved On</span>
+                            </div>
+                            <span id="modal-resolved-date" style="font-weight: 600; font-size: 1rem;"></span>
+                        </div>
+                    </div>
 
-            <div style="margin-top: 16px;">
-                <div class="details-label" style="margin-bottom: 6px;">Original Description:</div>
-                <div id="modal-description" style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light); font-size: 0.95rem; line-height: 1.5;"></div>
-            </div>
+                    <div class="hist-modal-right item-details-list">
+                        
+                        <div class="detail-block">
+                            <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div class="detail-content">
+                                <label>Location</label>
+                                <span id="modal-location"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-block">
+                            <div class="detail-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div class="detail-content" style="width: 100%;">
+                                <label>Timeline Dates</label>
+                                <div class="timeline-entry">
+                                    <span class="timeline-label">Posted On:</span>
+                                    <span id="modal-posted-date" class="timeline-value"></span>
+                                </div>
+                                <div class="timeline-entry">
+                                    <span id="modal-datetime-label" class="timeline-label">Date Occurred:</span>
+                                    <span id="modal-datetime" class="timeline-value"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-block">
+                            <div class="detail-icon"><i class="fa-solid fa-align-left"></i></div>
+                            <div class="detail-content">
+                                <label>Original Description</label>
+                                <div id="modal-description" class="desc-text"></div>
+                            </div>
+                        </div>
 
-            <div class="modal-actions justify-center">
-                <button class="modal-btn confirm-btn" data-close>Close Window</button>
+                        <div class="detail-block reporter-block">
+                            <img id="modal-reporter-avatar" src="" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-light); flex-shrink: 0;">
+                            <div class="detail-content">
+                                <label id="modal-reporter-role" style="color: var(--text-secondary);">Original Reporter</label>
+                                <span id="modal-reporter" style="font-weight: 700; color: #0f172a;"></span>
+                                <span id="modal-reporter-acad" style="font-size: 0.8rem; font-weight: 600; color: var(--primary-blue); margin-top: 2px;"></span>
+                                <span id="modal-contact" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;"></span>
+                            </div>
+                        </div>
+
+                        <div class="detail-block reporter-block" id="modal-matched-block" style="display: none; background-color: #f0fdf4; border-color: #bbf7d0;">
+                            <img id="modal-matched-avatar" src="" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid #bbf7d0; flex-shrink: 0;">
+                            <div class="detail-content">
+                                <label id="modal-matched-role" style="color: var(--success-green);">Matched / Handled By</label>
+                                <span id="modal-matched-name" style="font-weight: 700; color: #0f172a;"></span>
+                                <span id="modal-matched-acad" style="font-size: 0.8rem; font-weight: 600; color: var(--success-green); margin-top: 2px;"></span>
+                                <span id="modal-matched-contact" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;"></span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="clearRecordsModal" class="modal-overlay">
+    <div id="restoreConfirmationModal" class="modal-overlay" style="z-index: 1100;">
+        <div class="modal-content modal-md" style="text-align: center; padding: 0;">
+            <div class="modal-body" style="padding: 40px 32px;">
+                <button class="close-modal" data-close>&times;</button>
+                <div style="font-size: 3rem; color: var(--accent-amber); margin-bottom: 16px;"><i class="fa-solid fa-rotate-left"></i></div>
+                <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 700;">Restore Active Post?</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">This item will be moved back to the Active Posts feed and its status will be set to pending/active. Proceed?</p>
+                <div class="modal-actions" style="justify-content: center; border-top: none; padding: 0;">
+                    <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
+                    <button type="button" class="modal-btn confirm-btn" style="background-color: var(--accent-amber);" id="executeRestoreBtn">Yes, Restore</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="clearRecordsModal" class="modal-overlay" style="z-index: 1100;">
         <div class="modal-content">
             <button class="close-modal" data-close>&times;</button>
             <h3>Clear Historical Records</h3>
@@ -158,11 +221,19 @@
                     </select>
                 </div>
 
-                <div class="modal-actions" style="margin-top: 24px;">
+                <div class="modal-actions" style="margin-top: 24px; padding-top: 20px;">
                     <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
                     <button type="submit" class="modal-btn confirm-btn danger-override" id="confirmClearBtn"><i class="fa-solid fa-trash-can"></i> Permanently Delete</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="systemAlertModal" class="modal-overlay" style="z-index: 1200;">
+        <div class="modal-content" style="text-align: center; max-width: 420px; padding: 40px 32px;">
+            <h3 id="alert-title" style="font-size: 1.6rem; margin-bottom: 12px; font-weight: 700; color: var(--text-primary);">Success!</h3>
+            <p id="alert-message" style="color: var(--text-secondary); margin-bottom: 32px; font-size: 0.95rem; line-height: 1.6;"></p>
+            <button class="modal-btn confirm-btn" id="alertOkBtn" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem;">Continue</button>
         </div>
     </div>
 

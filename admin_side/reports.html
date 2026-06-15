@@ -99,7 +99,6 @@
             </div>
             <div class="modal-body">
                 <div class="hist-modal-layout">
-                    
                     <div class="modal-item-header" id="modal-header-container">
                         <span class="badge" id="modal-item-status" style="margin-bottom: 12px;"></span>
                         <h4 id="modal-item-name" style="font-size: 1.6rem; color: #0f172a; margin-bottom: 4px; font-weight: 800; line-height: 1.2;"></h4>
@@ -117,7 +116,6 @@
                     </div>
 
                     <div class="hist-modal-right item-details-list">
-                        
                         <div class="detail-block">
                             <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
                             <div class="detail-content">
@@ -125,7 +123,6 @@
                                 <span id="modal-item-location"></span>
                             </div>
                         </div>
-                        
                         <div class="detail-block">
                             <div class="detail-icon"><i class="fa-solid fa-clock"></i></div>
                             <div class="detail-content">
@@ -133,7 +130,6 @@
                                 <span id="modal-item-datetime"></span>
                             </div>
                         </div>
-                        
                         <div class="detail-block" id="public-desc-block">
                             <div class="detail-icon"><i class="fa-solid fa-align-left"></i></div>
                             <div class="detail-content">
@@ -141,7 +137,6 @@
                                 <div id="modal-item-description" class="desc-text"></div>
                             </div>
                         </div>
-
                         <div class="detail-block admin-secret-block" id="admin-details-container" style="display: none;">
                             <div class="detail-icon" style="background-color: var(--danger-red); color: white; border: none;"><i class="fa-solid fa-lock"></i></div>
                             <div class="detail-content">
@@ -149,20 +144,18 @@
                                 <div id="modal-admin-details" class="desc-text" style="color: #991b1b; font-weight: 500;"></div>
                             </div>
                         </div>
-
                         <div class="detail-block reporter-block">
                             <div class="detail-icon" style="background-color: var(--primary-blue); color: white; border: none;"><i class="fa-solid fa-user-circle"></i></div>
                             <div class="detail-content">
                                 <label>Reported By</label>
                                 <span id="modal-reporter-name" style="font-weight: 700; color: #0f172a;"></span>
+                                <span id="modal-reporter-acad" style="font-size: 0.8rem; font-weight: 600; color: var(--primary-blue); margin-top: 2px;"></span>
                                 <span id="modal-reporter-contact" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;"></span>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
-           
         </div>
     </div>
 
@@ -172,7 +165,6 @@
                 <h2><i class="fa-solid fa-handshake-angle" style="color: var(--success-green);"></i> Mark as Resolved</h2>
                 <button class="close-modal" data-close style="position: static; top: auto; right: auto;">&times;</button>
             </div>
-            
             <form id="matchReportForm" style="display: flex; flex-direction: column;">
                 <div class="modal-body" style="overflow: visible;">
                     <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 24px; line-height: 1.5;">The item will be removed from the public feed and marked as matched. A notification will be sent to the user if you select them from the list.</p>
@@ -183,10 +175,25 @@
                     <input type="hidden" id="matchOriginalReporterId">
 
                     <div class="form-group" style="position: relative; margin-bottom: 0;">
-                        <label class="form-label">Claimed By / Matched To <span style="color: var(--danger-red);">*</span></label>
+                        <label class="form-label" id="matchInputLabel">Claimed By / Matched To <span style="color: var(--danger-red);">*</span></label>
                         <input type="text" id="matchSearchInput" class="form-input" placeholder="Type a name or email to search registered users..." autocomplete="off" required>
                         <input type="hidden" id="matchSelectedUserId">
                         <div id="matchSuggestions" class="autocomplete-suggestions" style="display: none;"></div>
+                        
+                        <div id="manualMatchExtraFields" style="display: none; margin-top: 12px;">
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label class="form-label">Contact Number / Email</label>
+                                <input type="text" id="matchManualContact" class="form-input" placeholder="e.g., 09123456789 or email@tup.edu.ph">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Program & Section</label>
+                                <input type="text" id="matchManualAcad" class="form-input" placeholder="e.g., BS CPE - 4A">
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 10px; text-align: right;">
+                            <button type="button" id="toggleManualMatchBtn" style="background:none; border:none; color:var(--primary-blue); font-size:0.85rem; font-weight:600; cursor:pointer; text-decoration:underline;">Enter Walk-in / Unregistered Student</button>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-actions footer-style" style="border-radius: 0 0 12px 12px;">
@@ -218,22 +225,18 @@
                 <h2><i class="fa-solid fa-triangle-exclamation" style="color: var(--danger-red);"></i> Delete Post</h2>
                 <button class="close-modal" data-close style="position: static; top: auto; right: auto;">&times;</button>
             </div>
-            
             <form id="deleteReasonForm" style="display: flex; flex-direction: column;">
                 <div class="modal-body">
                     <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 20px; line-height: 1.5;">Please provide a reason for deleting this active post. The original reporter will receive this as a notification.</p>
-                    
                     <input type="hidden" id="deleteReportId">
                     <input type="hidden" id="deleteUserId">
                     <input type="hidden" id="deleteItemName">
                     <input type="hidden" id="deleteReportType">
-                    
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Reason for Deletion <span style="color: var(--danger-red);">*</span></label>
                         <textarea id="deleteReasonText" class="form-input" rows="4" placeholder="e.g., This post violates our guidelines, or is a duplicate..." required></textarea>
                     </div>
                 </div>
-
                 <div class="modal-actions footer-style">
                     <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
                     <button type="submit" class="modal-btn confirm-btn danger-override" id="deleteConfirmBtn"><i class="fa-solid fa-trash-can"></i> Delete & Notify</button>
@@ -243,19 +246,20 @@
     </div>
 
     <div id="createPostModal" class="modal-overlay">
-        <div class="modal-content modal-lg no-padding">
+        <div class="modal-content modal-lg no-padding" style="max-width: 850px;">
             <div class="modal-header">
                 <h2><i class="fa-solid fa-pen-to-square" style="color: var(--primary-blue);"></i> Create Manual Post</h2>
                 <button class="close-modal" data-close style="position: static; top: auto; right: auto;">&times;</button>
             </div>
             
-            <form id="createPostForm" style="display: flex; flex-direction: column; flex-grow: 1; overflow: hidden;">
-                <div class="modal-body">
-                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 24px;">Manually log an item that was surrendered directly to the office by a walk-in student or staff member.</p>
+            <form id="createPostForm" style="display: flex; flex-direction: column; flex-grow: 1; min-height: 0;">
+                <div class="modal-body" style="padding: 24px 32px 32px 32px;">
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">Manually log an item that was surrendered directly to the office by a walk-in student or staff member.</p>
                     
                     <div class="review-layout">
-                        <div class="review-left">
-                            <label class="form-label">Item Image</label>
+                        <div class="review-left" style="display: flex; flex-direction: column;">
+                            <label class="form-label" style="margin-bottom: 8px;">Item Image</label>
+                            
                             <div class="image-upload-wrapper" id="newImageWrapper">
                                 <img id="newImagePreview" src="" alt="Preview" style="display: none;">
                                 <div id="new-no-image" class="gallery-no-image">
@@ -271,7 +275,7 @@
                             </button>
                         </div>
 
-                        <div class="review-right">
+                        <div class="review-right" style="display: flex; flex-direction: column; gap: 12px;">
                             <div class="form-row">
                                 <div class="form-group flex-1">
                                     <label class="form-label">Report Type</label>
@@ -315,26 +319,29 @@
 
                             <div class="form-group">
                                 <label class="form-label">Description / Secret Identifiers</label>
-                                <textarea id="newDescription" class="form-input" rows="3" maxlength="80" placeholder="Details about the item..." required></textarea>
+                                <textarea id="newDescription" class="form-input" rows="2" maxlength="80" placeholder="Details about the item..." required></textarea>
                             </div>
                             
-                            <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 16px 0;">
-                            
-                            <div class="form-row">
+                            <div class="form-row" style="margin-top: 4px;">
                                 <div class="form-group flex-1">
                                     <label class="form-label">Reporter Name (Walk-in)</label>
                                     <input type="text" id="newReporterName" class="form-input" placeholder="e.g., John Doe" required>
                                 </div>
                                 <div class="form-group flex-1">
                                     <label class="form-label">Reporter Contact</label>
-                                    <input type="text" id="newReporterContact" class="form-input" placeholder="Phone or Section">
+                                    <input type="text" id="newReporterContact" class="form-input" placeholder="Phone or Email">
                                 </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Program & Section</label>
+                                <input type="text" id="newReporterProgram" class="form-input" placeholder="e.g., BS CPE - 4A">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-actions footer-style">
+               <div class="modal-actions footer-style" style="flex-shrink: 0; margin-top: 0;">
                     <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
                     <button type="submit" class="modal-btn confirm-btn success-override" id="submitNewPostBtn"><i class="fa-solid fa-paper-plane"></i> Publish Live Post</button>
                 </div>
@@ -344,9 +351,6 @@
 
     <div id="systemAlertModal" class="modal-overlay" style="z-index: 1200;">
         <div class="modal-content" style="text-align: center; max-width: 420px; padding: 40px 32px;">
-            <div id="alert-icon-wrapper">
-                <i class="fa-solid fa-circle-check" id="alert-icon"></i>
-            </div>
             <h3 id="alert-title" style="font-size: 1.6rem; margin-bottom: 12px; font-weight: 700; color: var(--text-primary);">Success!</h3>
             <p id="alert-message" style="color: var(--text-secondary); margin-bottom: 32px; font-size: 0.95rem; line-height: 1.6;"></p>
             <button class="modal-btn confirm-btn" id="alertOkBtn" style="width: 100%; justify-content: center; padding: 14px; font-size: 1rem;">Continue</button>

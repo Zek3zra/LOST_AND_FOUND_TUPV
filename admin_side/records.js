@@ -15,6 +15,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     const sidebar = document.getElementById('sidebar');
     if (hamburger && sidebar) hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
 
+    function escapeQuote(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    // Generic fallback Facebook-style gray silhouette avatar
+    const DEFAULT_AVATAR = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e";
+
+    // ===================================
+    // GLOBAL SYSTEM ALERTS
+    // ===================================
+    function showSuccess(title, message, type = "success") {
+        const modal = document.getElementById('systemAlertModal');
+        const titleEl = document.getElementById('alert-title');
+        const btn = document.getElementById('alertOkBtn');
+        
+        titleEl.textContent = title;
+        document.getElementById('alert-message').textContent = message;
+        
+        btn.className = "modal-btn confirm-btn";
+        
+        if (type === 'danger') {
+            titleEl.style.color = "var(--danger-red)";
+            btn.classList.add('danger-override');
+        } else if (type === 'warning') {
+            titleEl.style.color = "var(--text-secondary)";
+            btn.style.backgroundColor = "var(--text-secondary)";
+            btn.style.borderColor = "var(--text-secondary)";
+        } else {
+            titleEl.style.color = "var(--success-green)";
+            btn.classList.add('success-override');
+        }
+        
+        modal.classList.add('show');
+    }
+
+    document.getElementById('alertOkBtn').addEventListener('click', () => {
+        document.getElementById('systemAlertModal').classList.remove('show');
+    });
+
     // ===================================
     // FETCH & RENDER LINE-TYPE TABLE
     // ===================================
@@ -24,12 +63,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadRecords() {
         const { data: posts, error } = await window.supabase
             .from('item_reports')
-            .select('*, users(first_name, last_name, contact_number)')
+            .select('*, users(first_name, last_name, contact_number, profile_picture_path, email)')
             .in('report_status', ['matched', 'archived'])
             .order('created_at', { ascending: false });
 
         if (error) {
-            recordsTableBody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Error loading records.</td></tr>`;
+            recordsTableBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger-red); text-align:center;">Error loading records.</td></tr>`;
             return;
         }
 
@@ -45,11 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         recordsTableBody.innerHTML = allRecordsData.map(post => {
             
-            // --- STRICT DATE SEPARATION ---
-            // 1. When it was actually posted to the system
             const postedDate = new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            
-            // 2. When the item was actually lost or found by the user
             const occurredDate = new Date(post.item_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const occurredLabel = post.report_type === 'lost' ? 'Lost:' : 'Found:';
 
@@ -84,10 +119,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `;
                     resolutionDisplay = `
                         <div style="color: var(--text-primary); font-size: 0.9rem; line-height: 1.5;">
-                            <span style="color: var(--text-secondary); font-size: 0.8rem;">Found By (Finder):</span><br>
-                            <strong>${post.finder_name || 'Not specified'}</strong><br>
-                            <span style="color: var(--text-secondary); font-size: 0.8rem; margin-top:4px; display:block;">Returned To (Owner):</span>
-                            <strong style="color: var(--primary-blue);">${post.receiver_name || 'Not specified'}</strong>
+                            <span style="color: var(--text-secondary); font-size: 0.8rem;">Matched / Found By:</span><br>
+                            <strong>${post.matched_person_name || post.finder_name || 'Not specified'}</strong>
                         </div>`;
                 
                 } else if (post.report_type === 'found') {
@@ -98,17 +131,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `;
                     resolutionDisplay = `
                         <div style="color: var(--text-primary); font-size: 0.9rem; line-height: 1.5;">
-                            <span style="color: var(--text-secondary); font-size: 0.8rem;">Turned Over By (Finder):</span><br>
-                            <strong>${post.finder_name || 'Not specified'}</strong><br>
-                            <span style="color: var(--text-secondary); font-size: 0.8rem; margin-top:4px; display:block;">Claimed By (Owner):</span>
-                            <strong style="color: var(--primary-blue);">${post.receiver_name || 'Not specified'}</strong>
+                            <span style="color: var(--text-secondary); font-size: 0.8rem;">Matched / Claimed By:</span><br>
+                            <strong>${post.matched_person_name || post.receiver_name || 'Not specified'}</strong>
                         </div>`;
                 }
             }
 
             const postJSON = encodeURIComponent(JSON.stringify(post));
-            const reporterJSON = encodeURIComponent(reporterName);
-            const restoreBtn = `<button style="background:none; border:none; cursor:pointer; color: var(--text-secondary); padding: 6px; font-size: 0.9rem; font-weight: 600; display:flex; align-items:center; gap:6px; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-blue)'" onmouseout="this.style.color='var(--text-secondary)'" onclick="restorePost('${post.report_id}')" title="Move back to Active Posts feed"><i class="fa-solid fa-rotate-left"></i> Restore</button>`;
+            
+            const viewBtn = `<button class="action-icon-btn primary" onclick="viewDetails('${postJSON}')" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
+            const restoreBtn = `<button class="action-icon-btn warning" onclick="openRestoreModal('${post.report_id}')" title="Restore to Active"><i class="fa-solid fa-rotate-left"></i></button>`;
+            const deleteBtn = `<button class="action-icon-btn danger" onclick="deleteRecord('${post.report_id}')" title="Permanently Delete"><i class="fa-solid fa-trash-can"></i></button>`;
 
             return `
                 <tr class="record-row" data-category="${post.report_status}" data-date="${post.created_at}">
@@ -122,10 +155,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </td>
                     <td>${reportTypeDisplay}</td>
                     <td>${resolutionDisplay}</td>
-                    <td style="text-align: right;">
-                        <div style="display: flex; flex-direction:column; justify-content: flex-end; align-items: flex-end; gap: 8px;">
-                            <button class="modal-btn cancel-btn" style="padding: 6px 12px; font-size: 0.8rem;" onclick="viewDetails('${postJSON}', '${reporterJSON}')">View Details</button>
+                    <td class="actions-col" onclick="event.stopPropagation();">
+                        <div class="table-actions">
+                            ${viewBtn}
                             ${restoreBtn}
+                            ${deleteBtn}
                         </div>
                     </td>
                 </tr>
@@ -134,8 +168,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         applyFilters();
     }
-
-    loadRecords();
 
     // ===================================
     // FILTERING, SEARCHING, SORTING
@@ -180,18 +212,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     sortSelect.addEventListener('change', applyFilters);
 
     // ===================================
-    // RESTORE LOGIC
+    // TABLE ACTIONS (RESTORE & DELETE)
     // ===================================
-    window.restorePost = async function(reportId) {
-        if (!confirm("Are you sure you want to restore this item back to the Active Posts feed?")) return;
+    let restoreTargetId = null;
+    const restoreConfirmationModal = document.getElementById('restoreConfirmationModal');
 
-        const { error } = await window.supabase.from('item_reports').update({ report_status: 'approved' }).eq('report_id', reportId);
-        if (error) alert("Error restoring: " + error.message);
-        else loadRecords(); 
+    window.openRestoreModal = function(reportId) {
+        restoreTargetId = reportId;
+        restoreConfirmationModal.classList.add('show');
     };
 
+    document.getElementById('executeRestoreBtn').addEventListener('click', async function() {
+        if (!restoreTargetId) return;
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restoring...';
+
+        const { error } = await window.supabase.from('item_reports').update({ report_status: 'approved' }).eq('report_id', restoreTargetId);
+        
+        this.disabled = false;
+        this.innerHTML = originalText;
+
+        if (error) {
+            alert("Error restoring: " + error.message);
+        } else {
+            restoreConfirmationModal.classList.remove('show');
+            showSuccess("Post Restored", "The item has been moved back to the Active Posts feed.");
+            loadRecords(); 
+        }
+    });
+
+    window.deleteRecord = async function(reportId) {
+        if (!confirm("WARNING: Are you sure you want to PERMANENTLY delete this record? This action cannot be undone.")) return;
+        const { error } = await window.supabase.from('item_reports').delete().eq('report_id', reportId);
+        if (error) alert("Error deleting record: " + error.message);
+        else loadRecords();
+    }
+
     // ===================================
-    // CLEAR RECORDS DATABASE LOGIC
+    // CLEAR BULK RECORDS
     // ===================================
     const clearRecordsModal = document.getElementById('clearRecordsModal');
     const clearRecordsForm = document.getElementById('clearRecordsForm');
@@ -241,38 +300,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ===================================
     // VIEW DETAILS MODAL
     // ===================================
-    window.viewDetails = function(encodedReport, encodedReporter) {
+    window.viewDetails = async function(encodedReport) {
         const report = JSON.parse(decodeURIComponent(encodedReport));
-        const reporter = decodeURIComponent(encodedReporter);
         
         const isLost = report.report_type === 'lost';
         const isMatched = report.report_status === 'matched';
 
+        // 1. Status & Headers
         const statusBadge = document.getElementById('modal-status');
-        statusBadge.textContent = isMatched ? 'MATCHED / RESOLVED' : 'ARCHIVED';
-        statusBadge.style.backgroundColor = isMatched ? 'var(--accent-amber)' : 'var(--text-secondary)';
+        statusBadge.textContent = isMatched ? 'MATCHED / RESOLVED' : 'ARCHIVED RECORD';
+        statusBadge.style.backgroundColor = isMatched ? 'var(--success-green)' : 'var(--text-secondary)';
+        statusBadge.style.color = 'white';
         
-        document.getElementById('modal-item').textContent = report.item_name_specific || 'N/A';
+        document.getElementById('modal-item').textContent = report.item_name_specific || report.item_category;
         document.getElementById('modal-category').textContent = report.item_category;
-        document.getElementById('modal-location').textContent = report.item_location;
-        
-        const roleTag = isLost ? '(Owner)' : '(Finder)';
-        document.getElementById('modal-reporter').textContent = `${reporter} ${roleTag}`;
-        
-        const contactLabel = document.getElementById('modal-contact-label');
-        const contactText = document.getElementById('modal-contact');
-        const contactNumber = report.reporter_contact_manual || (report.users ? report.users.contact_number : null);
+        document.getElementById('modal-location').textContent = report.item_location || 'Not Specified';
 
-        if (contactNumber) {
-            contactLabel.style.display = 'block';
-            contactText.style.display = 'block';
-            contactText.textContent = contactNumber;
-        } else {
-            contactLabel.style.display = 'none';
-            contactText.style.display = 'none';
-        }
-
-        // STRICT SEPARATION OF POSTED VS OCCURRED
+        // 2. Timelines
         const postedDateObj = new Date(report.created_at);
         document.getElementById('modal-posted-date').textContent = postedDateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -280,40 +324,120 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('modal-datetime-label').textContent = isLost ? 'Date Lost:' : 'Date Found:';
         document.getElementById('modal-datetime').textContent = occurredDateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
         
-        document.getElementById('modal-description').textContent = report.item_description;
+        const resolvedContainer = document.getElementById('modal-resolved-container');
+        const resolvedDateValue = report.resolved_date || report.updated_at; 
         
+        if (resolvedDateValue) {
+            const resolvedDateObj = new Date(resolvedDateValue);
+            document.getElementById('modal-resolved-date').textContent = resolvedDateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+            resolvedContainer.style.display = 'block';
+            
+            const resolvedLabel = document.getElementById('modal-resolved-label');
+            if (isMatched) {
+                resolvedLabel.textContent = 'Resolved On:';
+                resolvedContainer.style.backgroundColor = '#f0fdf4';
+                resolvedContainer.style.borderColor = '#bbf7d0';
+                resolvedContainer.style.color = 'var(--success-green)';
+                document.getElementById('modal-resolved-date').style.color = '#166534';
+            } else {
+                resolvedLabel.textContent = 'Archived On:';
+                resolvedContainer.style.backgroundColor = '#f8fafc';
+                resolvedContainer.style.borderColor = '#e2e8f0';
+                resolvedContainer.style.color = 'var(--text-secondary)';
+                document.getElementById('modal-resolved-date').style.color = 'var(--text-primary)';
+            }
+        } else {
+            resolvedContainer.style.display = 'none';
+        }
+
+        const finalDescription = report.admin_specific_details || report.item_description || 'No description provided.';
+        document.getElementById('modal-description').textContent = finalDescription;
+        
+        // 3. Image Handling
+        const imgContainer = document.getElementById('modal-image-container');
         const imgEl = document.getElementById('modal-image');
+        const noImg = document.getElementById('modal-no-image');
+
         if (report.image_path) {
             imgEl.src = report.image_path;
-            imgEl.style.display = 'inline-block';
+            imgEl.style.display = 'block';
+            noImg.style.display = 'none';
         } else {
+            imgEl.src = '';
             imgEl.style.display = 'none';
+            noImg.style.display = 'flex';
         }
 
-        const finderLabel = document.getElementById('modal-found-by-label');
-        const finderText = document.getElementById('modal-found-by');
-        const receiverLabel = document.getElementById('modal-received-by-label');
-        const receiverText = document.getElementById('modal-received-by');
+        // 4. Original Reporter Profile Block
+        const reporterRole = isLost ? 'Original Reporter (Owner)' : 'Original Reporter (Finder)';
+        document.getElementById('modal-reporter-role').textContent = reporterRole;
+        
+        const reporterAcadEl = document.getElementById('modal-reporter-acad');
 
-        finderLabel.textContent = isLost ? 'Found By (Finder):' : 'Turned Over By (Finder):';
-        receiverLabel.textContent = isLost ? 'Returned To (Owner):' : 'Claimed By (Owner):';
-
-        if (report.finder_name) {
-            finderLabel.style.display = 'block';
-            finderText.style.display = 'block';
-            finderText.textContent = report.finder_name;
+        if (report.reporter_name_manual) {
+            document.getElementById('modal-reporter').textContent = `${report.reporter_name_manual} (Walk-in)`;
+            document.getElementById('modal-contact').textContent = report.reporter_contact_manual || 'No contact provided';
+            document.getElementById('modal-reporter-avatar').src = DEFAULT_AVATAR;
+            
+            if (report.reporter_program_manual) {
+                reporterAcadEl.textContent = report.reporter_program_manual;
+                reporterAcadEl.style.display = 'block';
+            } else {
+                reporterAcadEl.style.display = 'none';
+            }
+        } else if (report.users) {
+            document.getElementById('modal-reporter').textContent = `${report.users.first_name} ${report.users.last_name}`;
+            document.getElementById('modal-contact').textContent = report.users.email || report.users.contact_number || 'No contact provided'; // Email priority
+            document.getElementById('modal-reporter-avatar').src = report.users.profile_picture_path || DEFAULT_AVATAR;
+            reporterAcadEl.style.display = 'none';
         } else {
-            finderLabel.style.display = 'none';
-            finderText.style.display = 'none';
+            document.getElementById('modal-reporter').textContent = 'Anonymous Admin Post';
+            document.getElementById('modal-contact').textContent = '';
+            document.getElementById('modal-reporter-avatar').src = DEFAULT_AVATAR;
+            reporterAcadEl.style.display = 'none';
         }
 
-        if (report.receiver_name) {
-            receiverLabel.style.display = 'block';
-            receiverText.style.display = 'block';
-            receiverText.textContent = report.receiver_name;
+        // 5. Matched User Profile Block (New Update to Support Manual Matched Fields)
+        const matchedBlock = document.getElementById('modal-matched-block');
+        const matchedNameStr = report.matched_person_name || report.receiver_name || report.finder_name;
+        const matchedAcadEl = document.getElementById('modal-matched-acad');
+
+        if (isMatched && matchedNameStr) {
+            matchedBlock.style.display = 'flex';
+            document.getElementById('modal-matched-role').textContent = isLost ? 'Found / Handled By' : 'Claimed By (Owner)';
+            document.getElementById('modal-matched-name').textContent = matchedNameStr;
+            
+            if (report.matched_person_contact || report.matched_person_acad) {
+                document.getElementById('modal-matched-avatar').src = DEFAULT_AVATAR;
+                
+                if (report.matched_person_acad) {
+                    matchedAcadEl.textContent = report.matched_person_acad;
+                    matchedAcadEl.style.display = 'block';
+                } else {
+                    matchedAcadEl.style.display = 'none';
+                }
+                
+                document.getElementById('modal-matched-contact').textContent = report.matched_person_contact || 'Walk-in / Unregistered';
+            } else {
+                matchedAcadEl.style.display = 'none';
+                const firstN = matchedNameStr.split(' ')[0];
+                const { data: matchedData } = await window.supabase
+                    .from('users')
+                    .select('profile_picture_path, email, contact_number')
+                    .ilike('first_name', `%${firstN}%`)
+                    .limit(1);
+
+                if (matchedData && matchedData.length > 0) {
+                    document.getElementById('modal-matched-avatar').src = matchedData[0].profile_picture_path || DEFAULT_AVATAR;
+                    // Email priority for matched user
+                    document.getElementById('modal-matched-contact').textContent = matchedData[0].email || matchedData[0].contact_number || 'Registered User';
+                } else {
+                    document.getElementById('modal-matched-avatar').src = DEFAULT_AVATAR;
+                    document.getElementById('modal-matched-contact').textContent = 'Walk-in / Unregistered';
+                }
+            }
         } else {
-            receiverLabel.style.display = 'none';
-            receiverText.style.display = 'none';
+            matchedBlock.style.display = 'none';
         }
 
         document.getElementById('viewDetailsModal').classList.add('show');
@@ -324,4 +448,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.closest('.modal-overlay').classList.remove('show');
         });
     });
+
+    loadRecords();
 });
