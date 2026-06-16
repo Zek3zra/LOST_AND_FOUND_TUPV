@@ -22,6 +22,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
     }
 
+    // Unified Missing Avatar Configuration
+    const DEFAULT_AVATAR = "../images/no_profile.png";
+
+    // --- GLOBAL ALERTS ---
+    function showAlert(title, message, type = "success") {
+        const modal = document.getElementById('systemAlertModal');
+        const titleEl = document.getElementById('alert-title');
+        const btn = document.getElementById('alertOkBtn');
+        
+        titleEl.textContent = title;
+        document.getElementById('alert-message').textContent = message;
+        
+        btn.className = "modal-btn confirm-btn";
+        
+        if (type === 'danger') {
+            titleEl.style.color = "var(--danger-red)";
+            btn.classList.add('danger-override');
+        } else if (type === 'warning') {
+            titleEl.style.color = "#f97316"; // Orange for Bans/Warnings
+            btn.style.backgroundColor = "#f97316";
+            btn.style.borderColor = "#f97316";
+        } else {
+            titleEl.style.color = "var(--success-green)";
+            btn.style.backgroundColor = "var(--success-green)";
+            btn.style.borderColor = "var(--success-green)";
+        }
+        
+        modal.classList.add('show');
+    }
+
+    document.getElementById('alertOkBtn').addEventListener('click', () => {
+        document.getElementById('systemAlertModal').classList.remove('show');
+    });
+
+    // Helper Function
+    function escapeQuote(str) {
+        return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+
     // --- 2. FETCH AND RENDER USERS ---
     const userTableBody = document.getElementById('userTableBody');
     let allUsers = [];
@@ -29,11 +69,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadUsers() {
         const { data: users, error } = await window.supabase
             .from('users')
-            .select('id, first_name, last_name, email, role, is_verified, profile_picture_path')
+            .select('id, first_name, last_name, email, role, is_verified, profile_picture_path, contact_number, course_section, address, created_at')
             .order('created_at', { ascending: false });
 
         if (error) {
-            userTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--danger-red);">Error loading users: ${error.message}</td></tr>`;
+            userTableBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger-red); text-align:center;">Failed to load users.</td></tr>`;
             return;
         }
 
@@ -43,32 +83,58 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderUsers(usersToRender) {
         if (usersToRender.length === 0) {
-            userTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: var(--text-secondary); padding: 40px;">No users found.</td></tr>';
+            userTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">No users found.</td></tr>`;
             return;
         }
 
         userTableBody.innerHTML = usersToRender.map(user => {
-            const avatar = user.profile_picture_path || '../images/default-avatar.png';
-            const statusClass = user.is_verified ? 'success-green' : 'accent-amber';
-            const statusText = user.is_verified ? 'Verified' : 'Pending';
+            const avatar = user.profile_picture_path || DEFAULT_AVATAR;
+            
+            let roleBadge = '';
+            if (user.role === 'admin') roleBadge = `<span class="badge" style="background-color: var(--primary-blue);">Admin</span>`;
+            else if (user.role === 'banned') roleBadge = `<span class="badge" style="background-color: #f97316;">Banned</span>`;
+            else roleBadge = `<span class="badge" style="background-color: var(--text-secondary);">User</span>`;
+
+            const verifBadge = user.is_verified 
+                ? `<span class="badge" style="background-color: var(--success-green);"><i class="fa-solid fa-check"></i> Verified</span>`
+                : `<span class="badge" style="background-color: var(--danger-red);"><i class="fa-solid fa-xmark"></i> Unverified</span>`;
+
+            const encodedUser = encodeURIComponent(JSON.stringify(user)).replace(/'/g, "%27");
+
+            // Build action buttons conditionally based on role
+            let banBtn = '';
+            if (user.role !== 'admin' && user.role !== 'banned') {
+                banBtn = `<button class="action-icon-btn warning" onclick="confirmBanUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Ban User"><i class="fa-solid fa-ban"></i></button>`;
+            }
 
             return `
-                <tr data-user-id="${user.id}">
+                <tr>
                     <td>
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <img src="${avatar}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border: 1px solid var(--border-light);">
-                            <span style="font-weight:600; color: var(--text-primary);">${user.first_name} ${user.last_name}</span>
+                            <img src="${avatar}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-light);">
+                            <div style="font-weight: 600; color: var(--text-primary);">${user.first_name} ${user.last_name}</div>
                         </div>
                     </td>
-                    <td style="color: var(--text-secondary);">${user.email}</td>
-                    <td><span style="background-color: var(--${statusClass}); color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 500;">${statusText}</span></td>
-                    <td style="text-transform: capitalize; font-weight: 500;">${user.role}</td>
-                    <td style="text-align: right;">
-                        <div style="display:flex; gap:8px; justify-content:flex-end;">
-                            <button class="badge-btn" title="View Full Details" onclick="viewUserDetails('${user.id}')"><i class="fa-solid fa-eye"></i></button>
-                            <button class="badge-btn" title="Open Support Chat" onclick="openSupportChat('${user.id}')"><i class="fa-solid fa-comment-dots"></i></button>
-                            <button class="badge-btn" title="Edit Role" onclick="openEditModal('${user.id}', '${user.role}', '${user.first_name}')"><i class="fa-solid fa-user-shield"></i></button>
-                            <button class="badge-btn" style="color: var(--danger-red); border-color: #fca5a5;" title="Delete User" onclick="confirmDeleteUser('${user.id}', '${user.first_name} ${user.last_name}')"><i class="fa-solid fa-trash-can"></i></button>
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                            ${roleBadge}
+                            ${verifBadge}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.9rem;">${user.email}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${user.contact_number || 'No number'}</div>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.9rem;">${user.course_section || 'N/A'}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${user.address || 'N/A'}</div>
+                    </td>
+                    <td class="actions-col">
+                        <div class="table-actions">
+                            <button class="action-icon-btn primary" onclick="viewUser('${encodedUser}')" title="View Full Profile"><i class="fa-solid fa-eye"></i></button>
+                            <button class="action-icon-btn primary" style="background-color: var(--text-secondary);" onclick="editUserRole('${user.id}', '${user.role}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Edit Role"><i class="fa-solid fa-pen-to-square"></i></button>
+                            ${banBtn}
+                            <button class="action-icon-btn danger" onclick="confirmDeleteUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Permanently Delete"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -76,136 +142,128 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).join('');
     }
 
-    // --- 3. SEARCH LISTENER ---
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = allUsers.filter(u => 
-            `${u.first_name} ${u.last_name}`.toLowerCase().includes(term) ||
-            u.email.toLowerCase().includes(term) ||
-            u.role.toLowerCase().includes(term)
-        );
+    // --- 3. FILTERING AND SEARCH ---
+    const searchInput = document.getElementById('searchUserInput');
+    const roleFilter = document.getElementById('roleFilter');
+    const statusFilter = document.getElementById('statusFilter');
+
+    function applyFilters() {
+        const term = searchInput.value.toLowerCase();
+        const role = roleFilter.value;
+        const status = statusFilter.value;
+
+        const filtered = allUsers.filter(u => {
+            const matchSearch = (u.first_name + ' ' + u.last_name).toLowerCase().includes(term) || u.email.toLowerCase().includes(term);
+            const matchRole = role === 'all' || u.role === role;
+            
+            let matchStatus = true;
+            if (status === 'verified') matchStatus = u.is_verified === true;
+            if (status === 'unverified') matchStatus = u.is_verified === false || u.is_verified === null;
+
+            return matchSearch && matchRole && matchStatus;
+        });
+
         renderUsers(filtered);
-    });
+    }
 
-    // --- 4. VIEW COMPREHENSIVE USER DETAILS ---
-    window.viewUserDetails = async function(userId) {
-        const detailsContainer = document.getElementById('modal-user-details');
-        detailsContainer.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-notch fa-spin"></i> Fetching profile & records...</div>';
-        document.getElementById('viewUserModal').classList.add('show');
+    searchInput.addEventListener('input', applyFilters);
+    roleFilter.addEventListener('change', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
 
-        try {
-            // 1. Fetch User Data
-            const { data: user, error: userErr } = await window.supabase.from('users').select('*').eq('id', userId).single();
-            if (userErr) throw userErr;
+    // --- 4. VIEW USER DETAILS ---
+    window.viewUser = function(encodedUser) {
+        const user = JSON.parse(decodeURIComponent(encodedUser));
+        
+        document.getElementById('detail-avatar').src = user.profile_picture_path || DEFAULT_AVATAR;
+        document.getElementById('detail-name').textContent = `${user.first_name} ${user.last_name}`;
+        
+        const roleBadge = document.getElementById('detail-role');
+        roleBadge.textContent = user.role.toUpperCase();
+        if(user.role === 'admin') roleBadge.style.backgroundColor = 'var(--primary-blue)';
+        else if(user.role === 'banned') roleBadge.style.backgroundColor = '#f97316';
+        else roleBadge.style.backgroundColor = 'var(--text-secondary)';
 
-            // 2. Fetch User's Latest Record from item_reports
-            const { data: reports, error: repErr } = await window.supabase.from('item_reports')
-                .select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
-            
-            let reportHtml = '<p style="color: var(--text-secondary); font-size: 0.9rem; font-style: italic;">No items reported by this user yet.</p>';
-            
-            if (reports && reports.length > 0) {
-                const r = reports[0];
-                const rDate = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                
-                // Color code the status badge dynamically
-                let statusColor = 'var(--accent-amber)';
-                if (r.report_status === 'approved') statusColor = 'var(--primary-blue)';
-                if (r.report_status === 'matched' || r.report_status === 'archived') statusColor = 'var(--success-green)';
-
-                reportHtml = `
-                    <div style="background: var(--bg-body); padding: 16px; border-radius: 12px; border: 1px solid var(--border-light); margin-top: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                            <strong style="color: var(--text-primary); font-size: 1.05rem;">${r.item_name_specific}</strong>
-                            <span style="background: ${statusColor}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase;">${r.report_status}</span>
-                        </div>
-                        <p style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-secondary);"><strong>Type:</strong> <span style="text-transform: capitalize;">${r.report_type} Item</span></p>
-                        <p style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-secondary);"><strong>Category:</strong> ${r.item_category}</p>
-                        <p style="margin-bottom: 0; font-size: 0.9rem; color: var(--text-secondary);"><strong>Submitted:</strong> ${rDate}</p>
-                    </div>
-                `;
-            }
-
-            // Build Comprehensive Layout
-            const joinDate = new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            const avatar = user.profile_picture_path || '../images/default-avatar.png';
-            
-            detailsContainer.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);">
-                    <img src="${avatar}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-light); box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <div>
-                        <h4 style="font-size: 1.25rem; color: var(--text-primary); margin-bottom: 4px;">${user.first_name} ${user.last_name}</h4>
-                        <span style="font-size: 0.8rem; background: var(--primary-blue); color: white; padding: 3px 10px; border-radius: 12px; text-transform: capitalize; font-weight: 500;">${user.role} Account</span>
-                    </div>
-                </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; font-size: 0.95rem;">
-                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Email Address</strong><br>
-                        <span style="color: var(--text-primary); font-weight: 500;">${user.email}</span>
-                    </div>
-                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Contact #</strong><br>
-                        <span style="color: var(--text-primary); font-weight: 500;">${user.contact_number || 'Not Provided'}</span>
-                    </div>
-                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Course / Section</strong><br>
-                        <span style="color: var(--text-primary); font-weight: 500;">${user.course_section || 'Not Provided'}</span>
-                    </div>
-                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Home Address</strong><br>
-                        <span style="color: var(--text-primary); font-weight: 500;">${user.address || 'Not Provided'}</span>
-                    </div>
-                    <div style="grid-column: 1 / -1; background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <strong style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Member Since</strong><br>
-                        <span style="color: var(--text-primary); font-weight: 500;">${joinDate}</span>
-                    </div>
-                </div>
-                
-                <h5 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px;">Most Recent Report</h5>
-                ${reportHtml}
-            `;
-
-        } catch (error) {
-            detailsContainer.innerHTML = `<div style="color: var(--danger-red); text-align: center; padding: 20px;">Failed to load user records: ${error.message}</div>`;
+        const verifBadge = document.getElementById('detail-verification');
+        if (user.is_verified) {
+            verifBadge.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
+            verifBadge.style.backgroundColor = 'var(--success-green)';
+            verifBadge.style.color = 'white';
+        } else {
+            verifBadge.innerHTML = '<i class="fa-solid fa-xmark"></i> Unverified';
+            verifBadge.style.backgroundColor = 'var(--bg-body)';
+            verifBadge.style.color = 'var(--danger-red)';
+            verifBadge.style.border = '1px solid var(--danger-red)';
         }
+
+        document.getElementById('detail-email').textContent = user.email;
+        document.getElementById('detail-contact').textContent = user.contact_number || 'Not Provided';
+        document.getElementById('detail-course').textContent = user.course_section || 'Not Provided';
+        document.getElementById('detail-address').textContent = user.address || 'Not Provided';
+        
+        const d = new Date(user.created_at);
+        document.getElementById('detail-joined').textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        document.getElementById('viewUserModal').classList.add('show');
     };
 
-    // --- 5. REDIRECT TO MESSENGER ---
-    window.openSupportChat = function(userId) {
-        // We drop a pin in sessionStorage so messages.html knows exactly who to open
-        sessionStorage.setItem('targetChatUserId', userId);
-        window.location.href = 'messages.html';
-    };
-
-    // --- 6. SIMPLIFIED EDIT ROLE ---
-    window.openEditModal = function(userId, currentRole, firstName) {
+    // --- 5. EDIT USER ROLE ---
+    window.editUserRole = function(userId, currentRole, userName) {
         document.getElementById('editUserId').value = userId;
-        document.getElementById('editRole').value = currentRole;
-        document.getElementById('editUserName').textContent = firstName;
+        document.getElementById('editUserRole').value = currentRole;
+        document.getElementById('editUserNameDisplay').textContent = userName;
         document.getElementById('editUserModal').classList.add('show');
     };
 
     document.getElementById('editUserForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const uId = document.getElementById('editUserId').value;
-        const newRole = document.getElementById('editRole').value;
-        
         const btn = document.getElementById('saveEditBtn');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; 
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
         btn.disabled = true;
 
-        // ONLY updates the role, ignores verification status entirely
-        const { error } = await window.supabase.from('users').update({ role: newRole }).eq('id', uId);
-        
-        if(!error) {
+        const userId = document.getElementById('editUserId').value;
+        const newRole = document.getElementById('editUserRole').value;
+
+        const { error } = await window.supabase.from('users').update({ role: newRole }).eq('id', userId);
+
+        if (!error) {
             document.getElementById('editUserModal').classList.remove('show');
-            loadUsers(); // Refresh table
+            showAlert("Role Updated", "The user's permissions have been changed.", "success");
+            loadUsers(); 
         } else {
-            alert("Update failed: " + error.message);
+            showAlert("Update Failed", error.message, "danger");
         }
         btn.innerHTML = 'Save Changes'; 
         btn.disabled = false;
+    });
+
+    // --- 6. BAN USER ---
+    let currentUserIdToBan = null;
+
+    window.confirmBanUser = function(userId, userName) {
+        currentUserIdToBan = userId;
+        document.getElementById('banUserName').textContent = userName;
+        document.getElementById('banUserModal').classList.add('show');
+    };
+
+    document.getElementById('confirm-ban-btn').addEventListener('click', async function() {
+        if (!currentUserIdToBan) return;
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Banning...';
+
+        const { error } = await window.supabase.from('users').update({ role: 'banned' }).eq('id', currentUserIdToBan);
+
+        if (!error) {
+            document.getElementById('banUserModal').classList.remove('show');
+            showAlert("User Banned", "The user's access has been completely revoked.", "warning");
+            loadUsers(); 
+        } else {
+            showAlert("Ban Failed", error.message, "danger");
+        }
+
+        this.disabled = false;
+        this.innerHTML = originalText;
+        currentUserIdToBan = null;
     });
 
     // --- 7. DELETE USER ---
@@ -227,9 +285,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!error) {
             document.getElementById('deleteUserModal').classList.remove('show');
-            loadUsers(); // Refresh table
+            showAlert("User Deleted", "The account and its data were permanently removed.", "danger");
+            loadUsers();
         } else {
-            alert('Error: Could not delete user. ' + error.message);
+            showAlert("Deletion Failed", error.message, "danger");
         }
 
         this.disabled = false;
@@ -244,6 +303,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Initialize
     loadUsers();
 });
