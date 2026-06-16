@@ -37,12 +37,9 @@
     </aside>
 
     <main class="main-content">
-        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;">
-            <div>
-                <h2>Dashboard Overview</h2>
-                <p>Welcome back! Here's a snapshot of the TUPV Retrieve system.</p>
-            </div>
-            <button class="modal-btn confirm-btn" style="background-color: var(--success-green); width: auto;" id="openExportBtn"><i class="fa-solid fa-file-csv"></i> Export Logs</button>
+        <div class="page-header">
+            <h2>Dashboard Overview</h2>
+            <p>Welcome back! Here's a snapshot of the TUPV Retrieve system.</p>
         </div>
 
         <h3 class="stats-section-title">System Statistics</h3>
@@ -203,59 +200,6 @@
                     <button class="modal-btn cancel-btn" data-close>Cancel</button>
                     <button class="modal-btn delete-btn" id="confirm-delete-btn">Yes, Archive</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="exportModal" class="modal-overlay">
-        <div class="modal-content modal-md">
-            <div class="modal-header">
-                <h2><i class="fa-solid fa-download" style="color: var(--success-green);"></i> Export System Logs</h2>
-                <button class="close-modal" data-close>&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">Download a CSV spreadsheet of the item reports based on your selected criteria.</p>
-
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Quick Select Date Range</label>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button type="button" class="badge-btn" onclick="setExportDates(7)">Last 7 Days</button>
-                        <button type="button" class="badge-btn" onclick="setExportDates(30)">Last 30 Days</button>
-                        <button type="button" class="badge-btn" onclick="setExportDates('thisMonth')">This Month</button>
-                        <button type="button" class="badge-btn" onclick="setExportDates(365)">Past Year</button>
-                    </div>
-                </div>
-
-                <form id="exportForm" class="modal-form" style="margin-top: 0;">
-                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                        <div class="form-group" style="flex: 1; min-width: 150px;">
-                            <label>Custom Start Date</label>
-                            <input type="date" id="exportStart" class="form-input" required>
-                        </div>
-                        <div class="form-group" style="flex: 1; min-width: 150px;">
-                            <label>Custom End Date</label>
-                            <input type="date" id="exportEnd" class="form-input" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 8px;">
-                        <label>Filter by Report Type/Status</label>
-                        <select id="exportStatus" class="form-input">
-                            <option value="all">All Reports (Total)</option>
-                            <option value="lost">Total Lost Items Only</option>
-                            <option value="found">Total Found Items Only</option>
-                            <option value="approved">Active / Published Only</option>
-                            <option value="pending">Pending Approval Only</option>
-                            <option value="matched">Successfully Matched / Claimed</option>
-                            <option value="rejected">Rejected Reports</option>
-                        </select>
-                    </div>
-
-                    <div class="modal-actions" style="margin-top: 24px;">
-                        <button type="button" class="modal-btn cancel-btn" data-close>Cancel</button>
-                        <button type="submit" class="modal-btn confirm-btn" style="background-color: var(--success-green);" id="downloadCsvBtn"><i class="fa-solid fa-file-csv"></i> Download CSV</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>

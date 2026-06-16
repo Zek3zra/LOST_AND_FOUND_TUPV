@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
+    const DEFAULT_AVATAR = "../images/no_profile.png";
+
     let allMessages = [];
     let currentActiveUserId = null; 
     let contactMap = new Map(); 
@@ -117,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     contactMap.set(targetId, {
                         user_id: targetId,
                         name: `${uData.first_name} ${uData.last_name}`,
-                        avatar: uData.profile_picture_path || '../images/default-avatar.png',
+                        avatar: uData.profile_picture_path || DEFAULT_AVATAR,
                         latestMessage: "Start a new conversation...",
                         timestamp: new Date()
                     });
@@ -150,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     contactMap.set(strId, {
                         user_id: strId,
                         name: `${msg.users.first_name} ${msg.users.last_name}`,
-                        avatar: msg.users.profile_picture_path || '../images/default-avatar.png',
+                        avatar: msg.users.profile_picture_path || DEFAULT_AVATAR,
                         latestMessage: latestPreview,
                         timestamp: new Date(msg.created_at) 
                     });
@@ -213,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data && data.length > 0) {
                 newChatSuggestions.innerHTML = '<div style="padding: 8px 14px; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); background: #f8fafc; border-bottom: 1px solid var(--border-light); text-transform: uppercase; letter-spacing: 0.05em;">Start New Chat</div>' + 
                 data.map(u => {
-                    const avatar = u.profile_picture_path || '../images/default-avatar.png';
+                    const avatar = u.profile_picture_path || DEFAULT_AVATAR;
                     return `
                     <div class="suggestion-item" onclick="startNewChat('${u.id}', '${escapeQuote(u.first_name)}', '${escapeQuote(u.last_name)}', '${escapeQuote(avatar)}')">
                         <img src="${avatar}" class="suggestion-avatar" alt="Avatar">
@@ -247,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             contactMap.set(strId, {
                 user_id: strId,
                 name: `${firstName} ${lastName}`,
-                avatar: avatar,
+                avatar: avatar || DEFAULT_AVATAR,
                 latestMessage: "Start a new conversation...",
                 timestamp: new Date() // Forces it to the very top
             });

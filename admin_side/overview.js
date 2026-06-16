@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 4. FETCH STATISTICS ---
     async function loadStatistics() {
         try {
-            // Count queries
             const { count: totalUsers } = await window.supabase.from('users').select('*', { count: 'exact', head: true });
             const { count: totalPending } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_status', 'pending');
             const { count: totalActive } = await window.supabase.from('item_reports').select('*', { count: 'exact', head: true }).eq('report_status', 'approved');
@@ -81,9 +80,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const badgeClass = post.report_type.toLowerCase() === 'lost' ? 'badge-lost' : 'badge-found';
             const reportTypeDisplay = post.report_type.charAt(0).toUpperCase() + post.report_type.slice(1);
-            const postJSON = encodeURIComponent(JSON.stringify(post));
+            const postJSON = encodeURIComponent(JSON.stringify(post)).replace(/'/g, "%27");
 
-            // Clickable row redirects to reports.html
             return `
                 <tr class="clickable-row" onclick="window.location.href='reports.html'">
                     <td>${imgHtml}</td>
@@ -108,159 +106,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadStatistics();
     loadRecentPosts();
 
-    // --- 6. EXPORT LOGS TO CSV ---
-    const exportModal = document.getElementById('exportModal');
-    
-    document.getElementById('openExportBtn').addEventListener('click', () => {
-        setExportDates(30); 
-        exportModal.classList.add('show');
-    });
-
-    window.setExportDates = function(days) {
-        const end = new Date();
-        let start = new Date();
-        if (days === 'thisMonth') {
-            start = new Date(end.getFullYear(), end.getMonth(), 1);
-        } else {
-            start.setDate(end.getDate() - days);
-        }
-        document.getElementById('exportEnd').value = end.toISOString().split('T')[0];
-        document.getElementById('exportStart').value = start.toISOString().split('T')[0];
-    };
-
-    document.getElementById('exportForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('downloadCsvBtn');
-        const originalText = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating...';
-        btn.disabled = true;
-
-        const start = document.getElementById('exportStart').value;
-        const end = document.getElementById('exportEnd').value;
-        const statusFilter = document.getElementById('exportStatus').value;
-
-        try {
-            let query = window.supabase
-                .from('item_reports')
-                .select('*, users(first_name, last_name, email, course_section, contact_number)')
-                .gte('created_at', start + 'T00:00:00.000Z')
-                .lte('created_at', end + 'T23:59:59.999Z')
-                .order('created_at', { ascending: false });
-
-            // Apply specific filtering logic
-            if (statusFilter === 'lost') {
-                query = query.eq('report_type', 'lost');
-            } else if (statusFilter === 'found') {
-                query = query.eq('report_type', 'found');
-            } else if (statusFilter !== 'all') {
-                query = query.eq('report_status', statusFilter);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-
-            if (!data || data.length === 0) {
-                alert('No reports found matching your date range and criteria.');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                return;
-            }
-
-            const headers = [
-                'Date Posted (System)', 
-                'Date Occurred (Lost/Found)',
-                'Report Type', 
-                'Category', 
-                'Specific Item Name', 
-                'Description (Public)', 
-                'Admin Specific Details',
-                'Location', 
-                'Status', 
-                'Original Reporter', 
-                'Reporter Contact',
-                'Reporter Email', 
-                'Reporter Course/Section',
-                'Found By (Finder)',
-                'Received By (Owner)'
-            ];
-
-            const rows = data.map(item => {
-                const datePosted = new Date(item.created_at).toLocaleString('en-US');
-                const dateOccurred = new Date(item.item_datetime).toLocaleString('en-US');
-                
-                let reporterName = 'Admin Account';
-                if (item.reporter_name_manual) {
-                    reporterName = item.reporter_name_manual + ' (Walk-in)';
-                } else if (item.users) {
-                    reporterName = `${item.users.first_name} ${item.users.last_name}`;
-                }
-
-                let reporterContact = 'N/A';
-                if (item.reporter_contact_manual) {
-                    reporterContact = item.reporter_contact_manual;
-                } else if (item.users && item.users.contact_number) {
-                    reporterContact = item.users.contact_number;
-                }
-
-                const reporterEmail = item.users ? item.users.email : 'N/A';
-                const reporterCourse = item.users && item.users.course_section ? item.users.course_section : 'N/A';
-                
-                const escapeCsv = (text) => `"${(text || 'N/A').replace(/"/g, '""')}"`;
-
-                return [
-                    escapeCsv(datePosted),
-                    escapeCsv(dateOccurred),
-                    escapeCsv(item.report_type.toUpperCase()),
-                    escapeCsv(item.item_category),
-                    escapeCsv(item.item_name_specific),
-                    escapeCsv(item.item_description),
-                    escapeCsv(item.admin_specific_details), 
-                    escapeCsv(item.item_location),
-                    escapeCsv(item.report_status.toUpperCase()),
-                    escapeCsv(reporterName),
-                    escapeCsv(reporterContact),
-                    escapeCsv(reporterEmail),
-                    escapeCsv(reporterCourse),
-                    escapeCsv(item.finder_name),
-                    escapeCsv(item.receiver_name)
-                ].join(',');
-            });
-
-            const csvContent = [headers.join(','), ...rows].join('\n');
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `TUPV_Retrieve_Export_${start}_to_${end}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            exportModal.classList.remove('show');
-            
-        } catch (err) {
-            alert('Failed to generate export: ' + err.message);
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    });
-
-    // --- 7. GENERAL MODAL CLOSING ---
+    // --- 6. GENERAL MODAL CLOSING ---
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.modal-overlay').classList.remove('show');
         });
     });
 
-    // 1:1 HOMEPAGE VIEW DETAILS
     window.viewDetails = function(encodedReport) {
         const item = JSON.parse(decodeURIComponent(encodedReport));
         
-        // Exact targeting based on homepage.js
         const statusBadge = document.getElementById('modal-item-status');
         
         if (item.report_type === 'lost') {
@@ -285,12 +140,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const reporterNameEl = document.getElementById('modal-reporter-name');
         const reporterContactEl = document.getElementById('modal-reporter-contact');
         
-        if (item.users) {
+        if (item.reporter_name_manual) {
+            reporterNameEl.textContent = `${item.reporter_name_manual} (Walk-in)`;
+            reporterContactEl.textContent = item.reporter_contact_manual || 'No contact provided';
+        } else if (item.users) {
             reporterNameEl.textContent = `${item.users.first_name} ${item.users.last_name}`;
             reporterContactEl.textContent = item.users.contact_number || item.users.email || 'No contact provided';
-        } else if (item.reporter_name_manual) {
-            reporterNameEl.textContent = `${item.reporter_name_manual} (Posted by Admin)`;
-            reporterContactEl.textContent = item.reporter_contact_manual || 'No contact provided';
         } else {
             reporterNameEl.textContent = 'Anonymous / Unknown';
             reporterContactEl.textContent = '';
@@ -303,7 +158,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('modal-item-description').textContent = item.item_description || 'No description provided.';
         }
 
-        // Admin Details Block
         const adminDetailsContainer = document.getElementById('admin-details-container');
         if (item.admin_specific_details) {
             document.getElementById('modal-admin-details').textContent = item.admin_specific_details;
@@ -312,7 +166,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             adminDetailsContainer.style.display = 'none';
         }
 
-        // Image Handling
         const imgContainer = document.getElementById('modal-image-container');
         const itemImg = document.getElementById('modal-item-image');
         const noImg = document.getElementById('modal-no-image');

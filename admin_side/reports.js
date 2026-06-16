@@ -19,13 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
-    // Generic fallback Facebook-style gray silhouette avatar
-    const DEFAULT_AVATAR = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e";
+    const DEFAULT_AVATAR = "../images/no_profile.png";
 
     // ===================================
-    // GLOBAL SYSTEM ALERTS
+    // GLOBAL SYSTEM ALERTS (RENAMED TO showAlert for consistency)
     // ===================================
-    function showSuccess(title, message, type = "success") {
+    function showAlert(title, message, type = "success") {
         const modal = document.getElementById('systemAlertModal');
         const titleEl = document.getElementById('alert-title');
         const btn = document.getElementById('alertOkBtn');
@@ -108,7 +107,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const safeItemName = escapeQuote(post.item_name_specific);
-            const encodedPost = encodeURIComponent(JSON.stringify(post));
+            // FIXED: Ensure single quotes don't break the onclick string by replacing them with URL encoding %27
+            const encodedPost = encodeURIComponent(JSON.stringify(post)).replace(/'/g, "%27");
 
             return `
                 <tr class="clickable-row" onclick="openViewDetails('${encodedPost}')">
@@ -281,10 +281,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (!error) {
             archiveConfirmationModal.classList.remove('show');
-            showSuccess("Post Archived", "The item has been successfully moved to Completed Records.", "warning");
+            showAlert("Post Archived", "The item has been successfully moved to Completed Records.", "warning");
             loadActivePosts();
         } else {
-            alert("Archive Failed: " + error.message);
+            showAlert("Archive Failed", error.message, "danger");
         }
         
         this.disabled = false;
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }]);
             }
             document.getElementById('deleteReasonModal').classList.remove('show');
-            showSuccess("Post Deleted", "The post has been removed and the reporter was notified.", "danger");
+            showAlert("Post Deleted", "The post has been removed and the reporter was notified.", "danger");
             loadActivePosts();
         } else {
             alert("Delete failed: " + error.message);
@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             document.getElementById('matchReportModal').classList.remove('show');
-            showSuccess("Item Matched!", "The item has been successfully resolved and users notified.");
+            showAlert("Item Matched!", "The item has been successfully resolved and users notified.");
             loadActivePosts(); 
         } else {
             alert("Error matching report: " + dbError.message);
@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (dbError) throw new Error('Database Error: ' + dbError.message);
             
             createPostModal.classList.remove('show');
-            showSuccess("Post Created", "The manual post has been published directly to the live feed.");
+            showAlert("Post Created", "The manual post has been published directly to the live feed.");
             loadActivePosts();
             
         } catch (error) {

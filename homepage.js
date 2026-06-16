@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (adminLink) adminLink.classList.remove('hidden');
     }
 
+    // Redirect Guests from Restricted Links
+    if (guestMode) {
+        document.querySelectorAll('.restricted-link').forEach(link => {
+            link.href = 'guestprofile.html';
+        });
+    }
+
     // Sidebar Toggle
     const sidebarToggle = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('desktop-sidebar');

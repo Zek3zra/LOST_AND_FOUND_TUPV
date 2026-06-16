@@ -19,13 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
-    // Generic fallback Facebook-style gray silhouette avatar
-    const DEFAULT_AVATAR = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3e%3cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3e%3c/svg%3e";
+    const DEFAULT_AVATAR = "../images/no_profile.png";
 
     // ===================================
     // GLOBAL SYSTEM ALERTS
     // ===================================
-    function showSuccess(title, message, type = "success") {
+    function showAlert(title, message, type = "success") {
         const modal = document.getElementById('systemAlertModal');
         const titleEl = document.getElementById('alert-title');
         const btn = document.getElementById('alertOkBtn');
@@ -137,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            const postJSON = encodeURIComponent(JSON.stringify(post));
+            const postJSON = encodeURIComponent(JSON.stringify(post)).replace(/'/g, "%27");
             
             const viewBtn = `<button class="action-icon-btn primary" onclick="viewDetails('${postJSON}')" title="View Details"><i class="fa-solid fa-eye"></i></button>`;
             const restoreBtn = `<button class="action-icon-btn warning" onclick="openRestoreModal('${post.report_id}')" title="Restore to Active"><i class="fa-solid fa-rotate-left"></i></button>`;
@@ -237,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert("Error restoring: " + error.message);
         } else {
             restoreConfirmationModal.classList.remove('show');
-            showSuccess("Post Restored", "The item has been moved back to the Active Posts feed.");
+            showAlert("Post Restored", "The item has been moved back to the Active Posts feed.");
             loadRecords(); 
         }
     });
@@ -285,12 +284,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { error } = await query;
             if (error) throw error;
 
-            alert("Records successfully cleared from the database.");
+            showAlert("Records Cleared", "Records successfully cleared from the database.", "success");
             clearRecordsModal.classList.remove('show');
             loadRecords(); 
 
         } catch (error) {
-            alert("Error clearing records: " + error.message);
+            showAlert("Clear Failed", "Error clearing records: " + error.message, "danger");
         } finally {
             confirmClearBtn.disabled = false;
             confirmClearBtn.innerHTML = originalText;
@@ -306,7 +305,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isLost = report.report_type === 'lost';
         const isMatched = report.report_status === 'matched';
 
-        // 1. Status & Headers
         const statusBadge = document.getElementById('modal-status');
         statusBadge.textContent = isMatched ? 'MATCHED / RESOLVED' : 'ARCHIVED RECORD';
         statusBadge.style.backgroundColor = isMatched ? 'var(--success-green)' : 'var(--text-secondary)';
@@ -316,7 +314,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('modal-category').textContent = report.item_category;
         document.getElementById('modal-location').textContent = report.item_location || 'Not Specified';
 
-        // 2. Timelines
         const postedDateObj = new Date(report.created_at);
         document.getElementById('modal-posted-date').textContent = postedDateObj.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -353,7 +350,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const finalDescription = report.admin_specific_details || report.item_description || 'No description provided.';
         document.getElementById('modal-description').textContent = finalDescription;
         
-        // 3. Image Handling
         const imgContainer = document.getElementById('modal-image-container');
         const imgEl = document.getElementById('modal-image');
         const noImg = document.getElementById('modal-no-image');
@@ -368,7 +364,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             noImg.style.display = 'flex';
         }
 
-        // 4. Original Reporter Profile Block
         const reporterRole = isLost ? 'Original Reporter (Owner)' : 'Original Reporter (Finder)';
         document.getElementById('modal-reporter-role').textContent = reporterRole;
         
@@ -387,7 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } else if (report.users) {
             document.getElementById('modal-reporter').textContent = `${report.users.first_name} ${report.users.last_name}`;
-            document.getElementById('modal-contact').textContent = report.users.email || report.users.contact_number || 'No contact provided'; // Email priority
+            document.getElementById('modal-contact').textContent = report.users.email || report.users.contact_number || 'No contact provided'; 
             document.getElementById('modal-reporter-avatar').src = report.users.profile_picture_path || DEFAULT_AVATAR;
             reporterAcadEl.style.display = 'none';
         } else {
@@ -397,7 +392,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             reporterAcadEl.style.display = 'none';
         }
 
-        // 5. Matched User Profile Block (New Update to Support Manual Matched Fields)
         const matchedBlock = document.getElementById('modal-matched-block');
         const matchedNameStr = report.matched_person_name || report.receiver_name || report.finder_name;
         const matchedAcadEl = document.getElementById('modal-matched-acad');
@@ -429,7 +423,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (matchedData && matchedData.length > 0) {
                     document.getElementById('modal-matched-avatar').src = matchedData[0].profile_picture_path || DEFAULT_AVATAR;
-                    // Email priority for matched user
                     document.getElementById('modal-matched-contact').textContent = matchedData[0].email || matchedData[0].contact_number || 'Registered User';
                 } else {
                     document.getElementById('modal-matched-avatar').src = DEFAULT_AVATAR;
@@ -447,6 +440,169 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', function() {
             this.closest('.modal-overlay').classList.remove('show');
         });
+    });
+
+    // ===================================
+    // EXPORT RECORDS LOGIC
+    // ===================================
+    const exportModal = document.getElementById('exportModal');
+    
+    document.getElementById('openExportBtn').addEventListener('click', () => {
+        setExportDates(30); 
+        exportModal.classList.add('show');
+    });
+
+    window.setExportDates = function(days) {
+        const end = new Date();
+        let start = new Date();
+        if (days === 'thisMonth') {
+            start = new Date(end.getFullYear(), end.getMonth(), 1);
+        } else {
+            start.setDate(end.getDate() - days);
+        }
+        document.getElementById('exportEnd').value = end.toISOString().split('T')[0];
+        document.getElementById('exportStart').value = start.toISOString().split('T')[0];
+    };
+
+    document.getElementById('exportForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('downloadCsvBtn');
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Generating...';
+        btn.disabled = true;
+
+        const start = document.getElementById('exportStart').value;
+        const end = document.getElementById('exportEnd').value;
+        const statusFilter = document.getElementById('exportStatus').value;
+
+        try {
+            let query = window.supabase
+                .from('item_reports')
+                .select('*, users(first_name, last_name, email, course_section, contact_number)')
+                .gte('created_at', start + 'T00:00:00.000Z')
+                .lte('created_at', end + 'T23:59:59.999Z')
+                .order('created_at', { ascending: false });
+
+            if (statusFilter === 'completed') {
+                query = query.in('report_status', ['matched', 'archived']);
+            } else if (statusFilter === 'all_system') {
+                // Gets everything regardless of status
+            } else if (statusFilter === 'matched_lost') {
+                query = query.eq('report_status', 'matched').eq('report_type', 'lost');
+            } else if (statusFilter === 'matched_found') {
+                query = query.eq('report_status', 'matched').eq('report_type', 'found');
+            } else {
+                query = query.eq('report_status', statusFilter);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                showAlert('Export Empty', 'No records found matching your date range and criteria.', 'warning');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            const headers = [
+                'Report ID',
+                'Date Posted (System)', 
+                'Date Occurred (Lost/Found)',
+                'Date Resolved/Archived',
+                'Report Type', 
+                'Category', 
+                'Specific Item Name', 
+                'Location', 
+                'Status',
+                'Full Item Description',
+                'Original Reporter Name', 
+                'Original Reporter Contact Number',
+                'Original Reporter Email', 
+                'Original Reporter Program & Section',
+                'Resolver Name (Person who claimed or turned over the item)',
+                'Resolver Contact (Number/Email of person who claimed or turned over the item)',
+                'Resolver Program & Section'
+            ];
+
+            const rows = data.map(item => {
+                const datePosted = new Date(item.created_at).toLocaleString('en-US');
+                const dateOccurred = new Date(item.item_datetime).toLocaleString('en-US');
+                const dateResolved = item.resolved_date ? new Date(item.resolved_date).toLocaleString('en-US') : 'N/A';
+                
+                const fullDescription = item.admin_specific_details || item.item_description || 'No description provided';
+                
+                let reporterName = 'Admin Account';
+                let reporterContact = 'N/A';
+                let reporterEmail = 'N/A';
+                let reporterCourse = 'N/A';
+
+                if (item.reporter_name_manual) {
+                    reporterName = item.reporter_name_manual + ' (Walk-in)';
+                    reporterContact = item.reporter_contact_manual || 'N/A';
+                    reporterCourse = item.reporter_program_manual + (item.reporter_section_manual ? ' ' + item.reporter_section_manual : '');
+                } else if (item.users) {
+                    reporterName = `${item.users.first_name} ${item.users.last_name}`;
+                    reporterContact = item.users.contact_number || 'N/A';
+                    reporterEmail = item.users.email || 'N/A';
+                    reporterCourse = item.users.course_section || 'N/A';
+                }
+
+                let matchedName = item.matched_person_name || item.receiver_name || item.finder_name || 'N/A';
+                let matchedContact = item.matched_person_contact || 'N/A';
+                let matchedAcad = item.matched_person_acad || 'N/A';
+
+                // Change 'approved' output to 'ACTIVE' for clarity in the spreadsheet
+                let displayStatus = item.report_status.toUpperCase();
+                if (item.report_status === 'approved') {
+                    displayStatus = 'ACTIVE';
+                }
+
+                const escapeCsv = (text) => `"${String(text ?? 'N/A').replace(/"/g, '""')}"`;
+
+                return [
+                    escapeCsv(item.report_id),
+                    escapeCsv(datePosted),
+                    escapeCsv(dateOccurred),
+                    escapeCsv(dateResolved),
+                    escapeCsv(item.report_type.toUpperCase()),
+                    escapeCsv(item.item_category),
+                    escapeCsv(item.item_name_specific),
+                    escapeCsv(item.item_location),
+                    escapeCsv(displayStatus),
+                    escapeCsv(fullDescription),
+                    escapeCsv(reporterName),
+                    escapeCsv(reporterContact),
+                    escapeCsv(reporterEmail),
+                    escapeCsv(reporterCourse),
+                    escapeCsv(matchedName),
+                    escapeCsv(matchedContact),
+                    escapeCsv(matchedAcad)
+                ].join(',');
+            });
+
+            const csvContent = [headers.join(','), ...rows].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `TUPV_System_Logs_${start}_to_${end}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            exportModal.classList.remove('show');
+            showAlert('Export Successful', 'Your comprehensive CSV file has been downloaded successfully.', 'success');
+            
+        } catch (err) {
+            showAlert('Export Failed', 'Failed to generate export: ' + err.message, 'danger');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     });
 
     loadRecords();
