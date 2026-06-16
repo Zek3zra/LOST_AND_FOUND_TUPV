@@ -61,11 +61,17 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 .admin-table th { background-color: var(--bg-body); color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 16px 24px; font-weight: 600; border-bottom: 1px solid var(--border-light); }
 .admin-table td { padding: 16px 24px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); font-size: 0.95rem; vertical-align: middle; }
 
-.badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-block; }
+/* REFINED MINIMAL BADGES */
+.badge { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; border: 1px solid transparent; letter-spacing: 0.02em; }
+.badge-admin { color: var(--primary-blue); background-color: #eff6ff; border-color: #bfdbfe; }
+.badge-banned { color: var(--danger-red); background-color: #fef2f2; border-color: #fecaca; }
+.badge-user { color: var(--text-secondary); background-color: #f1f5f9; border-color: #e2e8f0; }
+.badge-verified { color: var(--success-green); background-color: #ecfdf5; border-color: #a7f3d0; }
+.badge-unverified { color: var(--text-secondary); background-color: #f8fafc; border-color: #e2e8f0; }
 
 .table-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
 
-/* NEW ENHANCED ACTION BUTTONS */
+/* ACTION BUTTONS */
 .action-icon-btn { 
     width: 36px; height: 36px; border-radius: 8px; border: none; cursor: pointer; 
     display: inline-flex; align-items: center; justify-content: center; 
@@ -74,7 +80,9 @@ body { background-color: var(--bg-body); color: var(--text-primary); display: fl
 }
 .action-icon-btn.primary { background-color: var(--primary-blue); }
 .action-icon-btn.primary:hover { background-color: var(--primary-blue-hover); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(30, 58, 138, 0.2); }
-.action-icon-btn.warning { background-color: #f97316; } /* Orange for Ban */
+.action-icon-btn.success { background-color: var(--success-green); } 
+.action-icon-btn.success:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
+.action-icon-btn.warning { background-color: #f97316; } 
 .action-icon-btn.warning:hover { background-color: #ea580c; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(249, 115, 22, 0.2); }
 .action-icon-btn.danger { background-color: var(--danger-red); }
 .action-icon-btn.danger:hover { background-color: var(--danger-red-hover); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); }

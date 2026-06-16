@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             titleEl.style.color = "var(--danger-red)";
             btn.classList.add('danger-override');
         } else if (type === 'warning') {
-            titleEl.style.color = "#f97316"; // Orange for Bans/Warnings
+            titleEl.style.color = "#f97316"; 
             btn.style.backgroundColor = "#f97316";
             btn.style.borderColor = "#f97316";
         } else {
@@ -56,11 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('systemAlertModal').classList.remove('show');
     });
 
-    // Helper Function
     function escapeQuote(str) {
         return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
-
 
     // --- 2. FETCH AND RENDER USERS ---
     const userTableBody = document.getElementById('userTableBody');
@@ -90,22 +88,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         userTableBody.innerHTML = usersToRender.map(user => {
             const avatar = user.profile_picture_path || DEFAULT_AVATAR;
             
+            // New simplified badge classes
             let roleBadge = '';
-            if (user.role === 'admin') roleBadge = `<span class="badge" style="background-color: var(--primary-blue);">Admin</span>`;
-            else if (user.role === 'banned') roleBadge = `<span class="badge" style="background-color: #f97316;">Banned</span>`;
-            else roleBadge = `<span class="badge" style="background-color: var(--text-secondary);">User</span>`;
+            if (user.role === 'admin') roleBadge = `<span class="badge badge-admin">Admin</span>`;
+            else if (user.role === 'banned') roleBadge = `<span class="badge badge-banned">Banned</span>`;
+            else roleBadge = `<span class="badge badge-user">User</span>`;
 
             const verifBadge = user.is_verified 
-                ? `<span class="badge" style="background-color: var(--success-green);"><i class="fa-solid fa-check"></i> Verified</span>`
-                : `<span class="badge" style="background-color: var(--danger-red);"><i class="fa-solid fa-xmark"></i> Unverified</span>`;
+                ? `<span class="badge badge-verified"><i class="fa-solid fa-check"></i> Verified</span>`
+                : `<span class="badge badge-unverified"><i class="fa-solid fa-xmark"></i> Unverified</span>`;
 
             const encodedUser = encodeURIComponent(JSON.stringify(user)).replace(/'/g, "%27");
 
-            // Build action buttons conditionally based on role
-            let banBtn = '';
-            if (user.role !== 'admin' && user.role !== 'banned') {
-                banBtn = `<button class="action-icon-btn warning" onclick="confirmBanUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Ban User"><i class="fa-solid fa-ban"></i></button>`;
+            // Build action buttons (Now supports UNBAN)
+            let actionBtns = ``;
+            actionBtns += `<button class="action-icon-btn primary" onclick="viewUser('${encodedUser}')" title="View Full Profile"><i class="fa-solid fa-eye"></i></button>`;
+            actionBtns += `<button class="action-icon-btn primary" style="background-color: var(--text-secondary);" onclick="editUserRole('${user.id}', '${user.role}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Edit Role"><i class="fa-solid fa-pen-to-square"></i></button>`;
+
+            if (user.role === 'banned') {
+                actionBtns += `<button class="action-icon-btn success" onclick="confirmUnbanUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Unban User"><i class="fa-solid fa-unlock"></i></button>`;
+            } else if (user.role !== 'admin') {
+                actionBtns += `<button class="action-icon-btn warning" onclick="confirmBanUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Ban User"><i class="fa-solid fa-ban"></i></button>`;
             }
+            actionBtns += `<button class="action-icon-btn danger" onclick="confirmDeleteUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Permanently Delete"><i class="fa-solid fa-trash-can"></i></button>`;
 
             return `
                 <tr>
@@ -116,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </td>
                     <td>
-                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                        <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
                             ${roleBadge}
                             ${verifBadge}
                         </div>
@@ -131,10 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </td>
                     <td class="actions-col">
                         <div class="table-actions">
-                            <button class="action-icon-btn primary" onclick="viewUser('${encodedUser}')" title="View Full Profile"><i class="fa-solid fa-eye"></i></button>
-                            <button class="action-icon-btn primary" style="background-color: var(--text-secondary);" onclick="editUserRole('${user.id}', '${user.role}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Edit Role"><i class="fa-solid fa-pen-to-square"></i></button>
-                            ${banBtn}
-                            <button class="action-icon-btn danger" onclick="confirmDeleteUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Permanently Delete"><i class="fa-solid fa-trash-can"></i></button>
+                            ${actionBtns}
                         </div>
                     </td>
                 </tr>
@@ -179,20 +181,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const roleBadge = document.getElementById('detail-role');
         roleBadge.textContent = user.role.toUpperCase();
-        if(user.role === 'admin') roleBadge.style.backgroundColor = 'var(--primary-blue)';
-        else if(user.role === 'banned') roleBadge.style.backgroundColor = '#f97316';
-        else roleBadge.style.backgroundColor = 'var(--text-secondary)';
+        if(user.role === 'admin') roleBadge.className = 'badge badge-admin';
+        else if(user.role === 'banned') roleBadge.className = 'badge badge-banned';
+        else roleBadge.className = 'badge badge-user';
 
         const verifBadge = document.getElementById('detail-verification');
         if (user.is_verified) {
             verifBadge.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
-            verifBadge.style.backgroundColor = 'var(--success-green)';
-            verifBadge.style.color = 'white';
+            verifBadge.className = 'badge badge-verified';
         } else {
             verifBadge.innerHTML = '<i class="fa-solid fa-xmark"></i> Unverified';
-            verifBadge.style.backgroundColor = 'var(--bg-body)';
-            verifBadge.style.color = 'var(--danger-red)';
-            verifBadge.style.border = '1px solid var(--danger-red)';
+            verifBadge.className = 'badge badge-unverified';
         }
 
         document.getElementById('detail-email').textContent = user.email;
@@ -236,8 +235,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = false;
     });
 
-    // --- 6. BAN USER ---
+    // --- 6. BAN / UNBAN USER ---
     let currentUserIdToBan = null;
+    let currentUserIdToUnban = null;
 
     window.confirmBanUser = function(userId, userName) {
         currentUserIdToBan = userId;
@@ -265,6 +265,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         this.innerHTML = originalText;
         currentUserIdToBan = null;
     });
+
+    // NEW: UNBAN LOGIC
+    window.confirmUnbanUser = function(userId, userName) {
+        currentUserIdToUnban = userId;
+        document.getElementById('unbanUserName').textContent = userName;
+        document.getElementById('unbanUserModal').classList.add('show');
+    };
+
+    document.getElementById('confirm-unban-btn').addEventListener('click', async function() {
+        if (!currentUserIdToUnban) return;
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restoring...';
+
+        const { error } = await window.supabase.from('users').update({ role: 'user' }).eq('id', currentUserIdToUnban);
+
+        if (!error) {
+            document.getElementById('unbanUserModal').classList.remove('show');
+            showAlert("User Restored", "The user's access has been successfully reinstated.", "success");
+            loadUsers(); 
+        } else {
+            showAlert("Restore Failed", error.message, "danger");
+        }
+
+        this.disabled = false;
+        this.innerHTML = originalText;
+        currentUserIdToUnban = null;
+    });
+
 
     // --- 7. DELETE USER ---
     let currentUserIdToDelete = null;

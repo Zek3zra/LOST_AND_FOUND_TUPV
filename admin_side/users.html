@@ -96,7 +96,7 @@
                     <img id="detail-avatar" src="" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-light);">
                     <div>
                         <h3 id="detail-name" style="font-size: 1.5rem; color: var(--text-primary); margin-bottom: 4px;"></h3>
-                        <span id="detail-role" class="badge" style="background-color: var(--primary-blue); color: white;"></span>
+                        <span id="detail-role" class="badge"></span>
                         <span id="detail-verification" class="badge"></span>
                     </div>
                 </div>
@@ -124,7 +124,7 @@
                     </div>
                 </div>
             </div>
-            </div>
+        </div>
     </div>
 
     <div id="editUserModal" class="modal-overlay">
@@ -163,6 +163,19 @@
              <div class="modal-actions" style="justify-content: center; border-top: none; padding-top: 0;">
                 <button class="modal-btn cancel-btn" data-close>Cancel</button>
                 <button class="modal-btn" style="background-color: #f97316; color: white; border: none;" id="confirm-ban-btn">Yes, Ban User</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="unbanUserModal" class="modal-overlay">
+         <div class="modal-content modal-md" style="text-align: center;">
+            <button class="close-modal" data-close style="position: absolute; right: 20px; top: 20px;">&times;</button>
+            <div style="font-size: 3rem; color: var(--success-green); margin-top: 24px; margin-bottom: 16px;"><i class="fa-solid fa-unlock-keyhole"></i></div>
+            <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 700;">Unban User Account</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Are you sure you want to restore access for <strong id="unbanUserName" style="color:var(--text-primary);">this user</strong>?</p>
+             <div class="modal-actions" style="justify-content: center; border-top: none; padding-top: 0;">
+                <button class="modal-btn cancel-btn" data-close>Cancel</button>
+                <button class="modal-btn" style="background-color: var(--success-green); color: white; border: none;" id="confirm-unban-btn">Yes, Restore Access</button>
             </div>
         </div>
     </div>
