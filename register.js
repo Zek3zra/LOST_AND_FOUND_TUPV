@@ -98,6 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const { data: authData, error: authError } = await window.supabase.auth.signUp({
                 email: email,
                 password: password,
+                options: {
+                    // NEW: Redirects user to the live Vercel login page after they click the email link
+                    emailRedirectTo: 'https://retrieve-tupv.vercel.app/login.html'
+                }
             });
 
             if (authError) throw new Error(authError.message);
