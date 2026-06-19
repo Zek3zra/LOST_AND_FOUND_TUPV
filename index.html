@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RETRIEVE | Initializing...</title>
+    
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --brand-blue: #1E3A8A;
+            --brand-light: #60A5FA;
+            --bg-dark: #0f172a;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            /* Premium deep radial gradient */
+            background: radial-gradient(circle at center, #1e293b 0%, var(--bg-dark) 100%);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Ambient background glow */
+        .ambient-glow {
+            position: absolute;
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, rgba(30, 58, 138, 0.15) 0%, transparent 70%);
+            z-index: 0;
+            animation: pulse-glow 4s ease-in-out infinite alternate;
+        }
+
+        /* Glassmorphism Card */
+        .glass-panel {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 64px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: slide-up-fade 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .loader-logo {
+            width: 120px;
+            height: auto;
+            margin-bottom: 24px;
+            /* Elegant floating animation */
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
+        }
+
+        .loader-title {
+            color: #ffffff;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .loader-subtitle {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            margin-bottom: 32px;
+        }
+
+        /* Sleek glowing progress line */
+        .progress-track {
+            width: 220px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, transparent, var(--brand-light), #ffffff, var(--brand-light), transparent);
+            border-radius: 4px;
+            /* Infinite sweeping motion */
+            animation: sweep 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        /* Keyframes */
+        @keyframes slide-up-fade {
+            0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse-glow {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @keyframes sweep {
+            0% { left: -50%; }
+            100% { left: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+
+    <div class="glass-panel">
+        <img src="images/logo.png" alt="Retrieve TUPV Logo" class="loader-logo">
+        <div class="loader-title">Retrieve TUPV</div>
+        <div class="loader-subtitle">Securing your session...</div>
+        
+        <div class="progress-track">
+            <div class="progress-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for 3 seconds to let the premium animation play out, then redirect
+            setTimeout(() => {
+                window.location.replace('landing.html');
+            }, 3000); 
+        });
+    </script>
+</body>
+</html>

@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.querySelectorAll('.close-modal, [data-close]').forEach(button => {
+    document.querySelectorAll('.close-modal').forEach(button => {
         button.addEventListener('click', function() {
             this.closest('.modal-overlay').classList.remove('show');
         });
@@ -38,59 +38,76 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LOGIN LOGIC ---
     const loginForm = document.getElementById('loginForm');
     const submitBtn = document.getElementById('login-btn');
-    
     const modal = document.getElementById('message-modal');
     const modalTitle = document.getElementById('modal-title');
     const modalMessage = document.getElementById('modal-message');
 
-    loginForm.addEventListener('submit', async (e) => {
+    loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const originalText = submitBtn.innerHTML;
         
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+        const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin" style="margin-right:8px;"></i> Logging in...';
 
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
 
+        // 1. Hardcoded Admin Check 
+        if (email === 'lostandfoundadmin@gmail.com' && password === 'admin12345') {
+            sessionStorage.setItem('role', 'admin');
+            sessionStorage.setItem('user_name', 'Site Administrator');
+            window.location.href = 'admin_side/overview.html';
+            return;
+        }
+
         try {
-            // 1. Authenticate with Supabase
+            // 2. Authenticate with Supabase Auth
             const { data: authData, error: authError } = await window.supabase.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
 
-            if (authError) throw new Error(authError.message);
+            if (authError) throw authError;
 
-            const session = authData.session;
-            if (!session) throw new Error("Authentication failed. Please try again.");
+            // --- STRICT VERIFICATION CHECK ---
+            if (authData.user && !authData.user.email_confirmed_at) {
+                await window.supabase.auth.signOut(); // Immediately block them
+                throw new Error("Email not confirmed");
+            }
 
-            // 2. Fetch User Profile & Role from the database
-            const { data: userData, error: userError } = await window.supabase
+            // --- SYNC PUBLIC DATABASE ---
+            await window.supabase.from('users').update({ is_verified: true }).eq('email', email);
+
+            // 3. Fetch user details from your public table to build their session
+            const { data: userData, error: dbError } = await window.supabase
                 .from('users')
-                .select('first_name, last_name, role')
-                .eq('id', session.user.id)
+                .select('*')
+                .eq('email', email)
                 .single();
 
-            if (userError) throw new Error("Could not retrieve user profile.");
+            if (dbError || !userData) {
+                throw new Error("Could not retrieve user profile data.");
+            }
 
-            // 3. NEW: Intercept Banned Users IMMEDIATELY
+            // --- INTERCEPT BANNED ACCOUNTS ---
             if (userData.role === 'banned') {
-                await window.supabase.auth.signOut(); // Force immediate log out
+                await window.supabase.auth.signOut(); // Immediately sign them out
                 throw new Error("BANNED_ACCOUNT");
             }
 
-            // 4. Store necessary data for regular / admin users
-            sessionStorage.setItem('user_id', session.user.id);
+            // 4. Save user session locally for homepage.js to use
+            sessionStorage.setItem('user_id', userData.id);
+            sessionStorage.setItem('user_email', userData.email);
             sessionStorage.setItem('user_name', userData.first_name + ' ' + userData.last_name);
             sessionStorage.setItem('role', userData.role);
 
             // 5. Success feedback and redirect
             modalTitle.textContent = 'Success!';
             modalTitle.style.color = 'var(--primary-blue)';
-            modalMessage.innerHTML = 'Login successful! Redirecting...';
+            modalMessage.textContent = 'Login successful! Redirecting...';
             modal.classList.add('show');
             
+            // Clear any lingering guest states
             sessionStorage.removeItem('userType'); 
 
             setTimeout(() => {
@@ -106,14 +123,15 @@ document.addEventListener('DOMContentLoaded', () => {
             modalTitle.textContent = 'Login Failed';
             modalTitle.style.color = '#dc2626'; 
             
+            // Catch our custom banned/unverified errors
             if (err.message === "BANNED_ACCOUNT") {
                 modalTitle.textContent = 'Account Suspended';
                 modalTitle.style.color = '#f97316'; // Orange warning color
                 modalMessage.innerHTML = 'Your account has been banned due to violations of campus guidelines.<br><br>If you believe this is a mistake, please proceed to the <strong>TUPV Administration Office</strong> to appeal your status.';
             } else if (err.message === "Email not confirmed") {
-                modalMessage.innerHTML = "Please verify your email address before logging in. Check your inbox for the link!";
+                modalMessage.textContent = "Please verify your email address before logging in. Check your inbox for the link!";
             } else {
-                modalMessage.innerHTML = err.message || 'Invalid email or password.';
+                modalMessage.textContent = err.message || 'Invalid email or password.';
             }
             
             modal.classList.add('show');

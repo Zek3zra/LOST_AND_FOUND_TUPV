@@ -48,7 +48,7 @@
         <div class="controls-container">
             <div class="search-box">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchUserInput" placeholder="Search by name or email...">
+                <input type="text" id="searchUserInput" placeholder="Search by name, email, or program...">
             </div>
             <div class="filter-group">
                 <select id="roleFilter" class="form-input">
@@ -58,7 +58,7 @@
                     <option value="banned">Banned Accounts</option>
                 </select>
                 <select id="statusFilter" class="form-input">
-                    <option value="all">All Verification Status</option>
+                    <option value="all">All Status</option>
                     <option value="verified">Verified Emails</option>
                     <option value="unverified">Unverified</option>
                 </select>
@@ -73,12 +73,11 @@
                             <th>User Details</th>
                             <th>Role & Status</th>
                             <th>Contact Information</th>
-                            <th>Program & Address</th>
                             <th class="actions-col">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="userTableBody">
-                        <tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading users...</td></tr>
+                        <tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading users...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -91,39 +90,8 @@
                 <h2><i class="fa-solid fa-id-card" style="color: var(--primary-blue);"></i> User Profile</h2>
                 <button class="close-modal" data-close>&times;</button>
             </div>
-            <div class="modal-body">
-                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
-                    <img id="detail-avatar" src="" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-light);">
-                    <div>
-                        <h3 id="detail-name" style="font-size: 1.5rem; color: var(--text-primary); margin-bottom: 4px;"></h3>
-                        <span id="detail-role" class="badge"></span>
-                        <span id="detail-verification" class="badge"></span>
-                    </div>
+            <div class="modal-body" id="modal-user-details">
                 </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <div style="background: var(--bg-body); padding: 16px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Email Address</label>
-                        <div id="detail-email" style="font-weight: 500;"></div>
-                    </div>
-                    <div style="background: var(--bg-body); padding: 16px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Contact Number</label>
-                        <div id="detail-contact" style="font-weight: 500;"></div>
-                    </div>
-                    <div style="background: var(--bg-body); padding: 16px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Program & Section</label>
-                        <div id="detail-course" style="font-weight: 500;"></div>
-                    </div>
-                    <div style="background: var(--bg-body); padding: 16px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Home Address</label>
-                        <div id="detail-address" style="font-weight: 500;"></div>
-                    </div>
-                    <div style="background: var(--bg-body); padding: 16px; border-radius: 8px; border: 1px solid var(--border-light);">
-                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Account Created</label>
-                        <div id="detail-joined" style="font-weight: 500;"></div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -142,7 +110,7 @@
                         <select id="editUserRole" class="form-input">
                             <option value="user">Standard User (Student/Faculty)</option>
                             <option value="admin">Administrator</option>
-                            <option value="banned">Banned</option>
+                            <option value="banned">Banned (Revoke Access)</option>
                         </select>
                     </div>
                 </div>
@@ -151,32 +119,6 @@
                     <button type="submit" class="modal-btn confirm-btn" id="saveEditBtn">Save Changes</button>
                 </div>
             </form>
-        </div>
-    </div>
-    
-    <div id="banUserModal" class="modal-overlay">
-         <div class="modal-content modal-md" style="text-align: center;">
-            <button class="close-modal" data-close style="position: absolute; right: 20px; top: 20px;">&times;</button>
-            <div style="font-size: 3rem; color: #f97316; margin-top: 24px; margin-bottom: 16px;"><i class="fa-solid fa-ban"></i></div>
-            <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 700;">Ban User Account</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 24px;">Are you sure you want to ban <strong id="banUserName" style="color:var(--text-primary);">this user</strong>? They will instantly lose all access to the system.</p>
-             <div class="modal-actions" style="justify-content: center; border-top: none; padding-top: 0;">
-                <button class="modal-btn cancel-btn" data-close>Cancel</button>
-                <button class="modal-btn" style="background-color: #f97316; color: white; border: none;" id="confirm-ban-btn">Yes, Ban User</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="unbanUserModal" class="modal-overlay">
-         <div class="modal-content modal-md" style="text-align: center;">
-            <button class="close-modal" data-close style="position: absolute; right: 20px; top: 20px;">&times;</button>
-            <div style="font-size: 3rem; color: var(--success-green); margin-top: 24px; margin-bottom: 16px;"><i class="fa-solid fa-unlock-keyhole"></i></div>
-            <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 700;">Unban User Account</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 24px;">Are you sure you want to restore access for <strong id="unbanUserName" style="color:var(--text-primary);">this user</strong>?</p>
-             <div class="modal-actions" style="justify-content: center; border-top: none; padding-top: 0;">
-                <button class="modal-btn cancel-btn" data-close>Cancel</button>
-                <button class="modal-btn" style="background-color: var(--success-green); color: white; border: none;" id="confirm-unban-btn">Yes, Restore Access</button>
-            </div>
         </div>
     </div>
 

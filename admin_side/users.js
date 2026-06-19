@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
 
+
     // --- 2. FETCH AND RENDER USERS ---
     const userTableBody = document.getElementById('userTableBody');
     let allUsers = [];
@@ -71,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             .order('created_at', { ascending: false });
 
         if (error) {
-            userTableBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger-red); text-align:center;">Failed to load users.</td></tr>`;
+            userTableBody.innerHTML = `<tr><td colspan="4" style="color:var(--danger-red); text-align:center;">Failed to load users.</td></tr>`;
             return;
         }
 
@@ -81,14 +82,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderUsers(usersToRender) {
         if (usersToRender.length === 0) {
-            userTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">No users found.</td></tr>`;
+            userTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">No users found.</td></tr>`;
             return;
         }
 
         userTableBody.innerHTML = usersToRender.map(user => {
             const avatar = user.profile_picture_path || DEFAULT_AVATAR;
             
-            // New simplified badge classes
+            // Simplified badge classes
             let roleBadge = '';
             if (user.role === 'admin') roleBadge = `<span class="badge badge-admin">Admin</span>`;
             else if (user.role === 'banned') roleBadge = `<span class="badge badge-banned">Banned</span>`;
@@ -98,18 +99,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? `<span class="badge badge-verified"><i class="fa-solid fa-check"></i> Verified</span>`
                 : `<span class="badge badge-unverified"><i class="fa-solid fa-xmark"></i> Unverified</span>`;
 
-            const encodedUser = encodeURIComponent(JSON.stringify(user)).replace(/'/g, "%27");
-
-            // Build action buttons (Now supports UNBAN)
+            // Build action buttons (Message User replaces the Ban button)
             let actionBtns = ``;
-            actionBtns += `<button class="action-icon-btn primary" onclick="viewUser('${encodedUser}')" title="View Full Profile"><i class="fa-solid fa-eye"></i></button>`;
-            actionBtns += `<button class="action-icon-btn primary" style="background-color: var(--text-secondary);" onclick="editUserRole('${user.id}', '${user.role}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Edit Role"><i class="fa-solid fa-pen-to-square"></i></button>`;
-
-            if (user.role === 'banned') {
-                actionBtns += `<button class="action-icon-btn success" onclick="confirmUnbanUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Unban User"><i class="fa-solid fa-unlock"></i></button>`;
-            } else if (user.role !== 'admin') {
-                actionBtns += `<button class="action-icon-btn warning" onclick="confirmBanUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Ban User"><i class="fa-solid fa-ban"></i></button>`;
-            }
+            actionBtns += `<button class="action-icon-btn primary" onclick="viewUserDetails('${user.id}')" title="View Full Profile"><i class="fa-solid fa-eye"></i></button>`;
+            actionBtns += `<button class="action-icon-btn success" onclick="openSupportChat('${user.id}')" title="Message User"><i class="fa-solid fa-comment-dots"></i></button>`;
+            actionBtns += `<button class="action-icon-btn primary" style="background-color: var(--text-secondary);" onclick="editUserRole('${user.id}', '${user.role}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Edit Role (Ban/Unban)"><i class="fa-solid fa-pen-to-square"></i></button>`;
             actionBtns += `<button class="action-icon-btn danger" onclick="confirmDeleteUser('${user.id}', '${escapeQuote(user.first_name)} ${escapeQuote(user.last_name)}')" title="Permanently Delete"><i class="fa-solid fa-trash-can"></i></button>`;
 
             return `
@@ -129,10 +123,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td>
                         <div style="font-size: 0.9rem;">${user.email}</div>
                         <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${user.contact_number || 'No number'}</div>
-                    </td>
-                    <td>
-                        <div style="font-size: 0.9rem;">${user.course_section || 'N/A'}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">${user.address || 'N/A'}</div>
                     </td>
                     <td class="actions-col">
                         <div class="table-actions">
@@ -155,7 +145,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const status = statusFilter.value;
 
         const filtered = allUsers.filter(u => {
-            const matchSearch = (u.first_name + ' ' + u.last_name).toLowerCase().includes(term) || u.email.toLowerCase().includes(term);
+            // Enhanced Search: Now checks Name, Email, AND Course Section seamlessly
+            const matchSearch = (u.first_name + ' ' + u.last_name).toLowerCase().includes(term) || 
+                                u.email.toLowerCase().includes(term) || 
+                                (u.course_section && u.course_section.toLowerCase().includes(term));
+            
             const matchRole = role === 'all' || u.role === role;
             
             let matchStatus = true;
@@ -172,37 +166,107 @@ document.addEventListener('DOMContentLoaded', async () => {
     roleFilter.addEventListener('change', applyFilters);
     statusFilter.addEventListener('change', applyFilters);
 
-    // --- 4. VIEW USER DETAILS ---
-    window.viewUser = function(encodedUser) {
-        const user = JSON.parse(decodeURIComponent(encodedUser));
-        
-        document.getElementById('detail-avatar').src = user.profile_picture_path || DEFAULT_AVATAR;
-        document.getElementById('detail-name').textContent = `${user.first_name} ${user.last_name}`;
-        
-        const roleBadge = document.getElementById('detail-role');
-        roleBadge.textContent = user.role.toUpperCase();
-        if(user.role === 'admin') roleBadge.className = 'badge badge-admin';
-        else if(user.role === 'banned') roleBadge.className = 'badge badge-banned';
-        else roleBadge.className = 'badge badge-user';
-
-        const verifBadge = document.getElementById('detail-verification');
-        if (user.is_verified) {
-            verifBadge.innerHTML = '<i class="fa-solid fa-check"></i> Verified';
-            verifBadge.className = 'badge badge-verified';
-        } else {
-            verifBadge.innerHTML = '<i class="fa-solid fa-xmark"></i> Unverified';
-            verifBadge.className = 'badge badge-unverified';
-        }
-
-        document.getElementById('detail-email').textContent = user.email;
-        document.getElementById('detail-contact').textContent = user.contact_number || 'Not Provided';
-        document.getElementById('detail-course').textContent = user.course_section || 'Not Provided';
-        document.getElementById('detail-address').textContent = user.address || 'Not Provided';
-        
-        const d = new Date(user.created_at);
-        document.getElementById('detail-joined').textContent = d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
+    // --- 4. VIEW COMPREHENSIVE USER DETAILS ---
+    window.viewUserDetails = async function(userId) {
+        const detailsContainer = document.getElementById('modal-user-details');
+        detailsContainer.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--text-secondary);"><i class="fa-solid fa-circle-notch fa-spin"></i> Fetching profile & records...</div>';
         document.getElementById('viewUserModal').classList.add('show');
+
+        try {
+            const { data: user, error: userErr } = await window.supabase.from('users').select('*').eq('id', userId).single();
+            if (userErr) throw userErr;
+
+            const { data: reports, error: repErr } = await window.supabase.from('item_reports')
+                .select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+            
+            let reportHtml = '<p style="color: var(--text-secondary); font-size: 0.9rem; font-style: italic; background: var(--bg-body); padding: 16px; border-radius: 8px; border: 1px solid var(--border-light); margin-top: 8px; text-align: center;">No items reported by this user yet.</p>';
+            
+            if (reports && reports.length > 0) {
+                const r = reports[0];
+                const rDate = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let statusColor = 'var(--text-secondary)';
+                let statusBg = '#f1f5f9';
+                let statusBorder = '#e2e8f0';
+                if (r.report_status === 'approved') { statusColor = 'var(--primary-blue)'; statusBg = '#eff6ff'; statusBorder = '#bfdbfe'; }
+                if (r.report_status === 'matched' || r.report_status === 'archived') { statusColor = 'var(--success-green)'; statusBg = '#ecfdf5'; statusBorder = '#a7f3d0'; }
+                if (r.report_status === 'rejected') { statusColor = 'var(--danger-red)'; statusBg = '#fef2f2'; statusBorder = '#fecaca'; }
+                if (r.report_status === 'pending') { statusColor = '#ea580c'; statusBg = '#fff7ed'; statusBorder = '#fed7aa'; }
+
+                reportHtml = `
+                    <div style="background: var(--bg-body); padding: 16px; border-radius: 12px; border: 1px solid var(--border-light); margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <strong style="color: var(--text-primary); font-size: 1.05rem;">${r.item_name_specific}</strong>
+                            <span style="color: ${statusColor}; background: ${statusBg}; border: 1px solid ${statusBorder}; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;">${r.report_status}</span>
+                        </div>
+                        <p style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-secondary);"><strong>Type:</strong> <span style="text-transform: capitalize;">${r.report_type} Item</span></p>
+                        <p style="margin-bottom: 4px; font-size: 0.9rem; color: var(--text-secondary);"><strong>Category:</strong> ${r.item_category}</p>
+                        <p style="margin-bottom: 0; font-size: 0.9rem; color: var(--text-secondary);"><strong>Submitted:</strong> ${rDate}</p>
+                    </div>
+                `;
+            }
+
+            const joinDate = new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const avatar = user.profile_picture_path || DEFAULT_AVATAR;
+
+            let roleBadge = '';
+            if (user.role === 'admin') roleBadge = `<span class="badge badge-admin">Admin</span>`;
+            else if (user.role === 'banned') roleBadge = `<span class="badge badge-banned">Banned</span>`;
+            else roleBadge = `<span class="badge badge-user">User</span>`;
+
+            const verifBadge = user.is_verified 
+                ? `<span class="badge badge-verified"><i class="fa-solid fa-check"></i> Verified</span>`
+                : `<span class="badge badge-unverified"><i class="fa-solid fa-xmark"></i> Unverified</span>`;
+
+            // Note: Message User button is deliberately removed from this bottom layout.
+            detailsContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
+                    <img src="${avatar}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-light);">
+                    <div style="flex: 1;">
+                        <h3 style="font-size: 1.5rem; color: var(--text-primary); margin-bottom: 8px;">${user.first_name} ${user.last_name}</h3>
+                        <div style="display: flex; gap: 8px;">
+                            ${roleBadge}
+                            ${verifBadge}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; font-size: 0.95rem;">
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Email Address</label>
+                        <span style="color: var(--text-primary); font-weight: 500; word-break: break-all;">${user.email}</span>
+                    </div>
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Contact Number</label>
+                        <span style="color: var(--text-primary); font-weight: 500;">${user.contact_number || 'Not Provided'}</span>
+                    </div>
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Program & Section</label>
+                        <span style="color: var(--text-primary); font-weight: 500;">${user.course_section || 'Not Provided'}</span>
+                    </div>
+                    <div style="background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Home Address</label>
+                        <span style="color: var(--text-primary); font-weight: 500;">${user.address || 'Not Provided'}</span>
+                    </div>
+                    <div style="grid-column: 1 / -1; background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border-light);">
+                        <label style="display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Account Created</label>
+                        <span style="color: var(--text-primary); font-weight: 500;">${joinDate}</span>
+                    </div>
+                </div>
+                
+                <h5 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 8px;">Most Recent Report</h5>
+                ${reportHtml}
+            `;
+
+        } catch (error) {
+            detailsContainer.innerHTML = `<div style="color: var(--danger-red); text-align: center; padding: 20px;">Failed to load user records: ${error.message}</div>`;
+        }
+    };
+
+    // --- REDIRECT TO MESSENGER ---
+    window.openSupportChat = function(userId) {
+        sessionStorage.setItem('targetChatUserId', userId);
+        window.location.href = 'messages.html';
     };
 
     // --- 5. EDIT USER ROLE ---
@@ -226,7 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!error) {
             document.getElementById('editUserModal').classList.remove('show');
-            showAlert("Role Updated", "The user's permissions have been changed.", "success");
+            showAlert("Role Updated", "The user's permissions have been successfully updated.", "success");
             loadUsers(); 
         } else {
             showAlert("Update Failed", error.message, "danger");
@@ -235,67 +299,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.disabled = false;
     });
 
-    // --- 6. BAN / UNBAN USER ---
-    let currentUserIdToBan = null;
-    let currentUserIdToUnban = null;
-
-    window.confirmBanUser = function(userId, userName) {
-        currentUserIdToBan = userId;
-        document.getElementById('banUserName').textContent = userName;
-        document.getElementById('banUserModal').classList.add('show');
-    };
-
-    document.getElementById('confirm-ban-btn').addEventListener('click', async function() {
-        if (!currentUserIdToBan) return;
-        const originalText = this.innerHTML;
-        this.disabled = true;
-        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Banning...';
-
-        const { error } = await window.supabase.from('users').update({ role: 'banned' }).eq('id', currentUserIdToBan);
-
-        if (!error) {
-            document.getElementById('banUserModal').classList.remove('show');
-            showAlert("User Banned", "The user's access has been completely revoked.", "warning");
-            loadUsers(); 
-        } else {
-            showAlert("Ban Failed", error.message, "danger");
-        }
-
-        this.disabled = false;
-        this.innerHTML = originalText;
-        currentUserIdToBan = null;
-    });
-
-    // NEW: UNBAN LOGIC
-    window.confirmUnbanUser = function(userId, userName) {
-        currentUserIdToUnban = userId;
-        document.getElementById('unbanUserName').textContent = userName;
-        document.getElementById('unbanUserModal').classList.add('show');
-    };
-
-    document.getElementById('confirm-unban-btn').addEventListener('click', async function() {
-        if (!currentUserIdToUnban) return;
-        const originalText = this.innerHTML;
-        this.disabled = true;
-        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restoring...';
-
-        const { error } = await window.supabase.from('users').update({ role: 'user' }).eq('id', currentUserIdToUnban);
-
-        if (!error) {
-            document.getElementById('unbanUserModal').classList.remove('show');
-            showAlert("User Restored", "The user's access has been successfully reinstated.", "success");
-            loadUsers(); 
-        } else {
-            showAlert("Restore Failed", error.message, "danger");
-        }
-
-        this.disabled = false;
-        this.innerHTML = originalText;
-        currentUserIdToUnban = null;
-    });
-
-
-    // --- 7. DELETE USER ---
+    // --- 6. DELETE USER ---
     let currentUserIdToDelete = null;
 
     window.confirmDeleteUser = function(userId, userName) {
@@ -325,7 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentUserIdToDelete = null;
     });
 
-    // --- 8. CLOSE MODALS ---
+    // --- 7. CLOSE MODALS ---
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', function() {
             this.closest('.modal-overlay').classList.remove('show');
