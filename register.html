@@ -51,7 +51,7 @@
 
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label for="section">Section</label>
-                        <input type="text" id="section" name="section" placeholder="e.g., BET 1 - A or T09 - A" required>
+                        <input type="text" id="section" name="section" placeholder="Select program first..." readonly disabled required>
                     </div>
 
                     <div class="form-group" style="grid-column: 1 / -1;">
@@ -131,6 +131,7 @@
 
                 <div class="program-group">
                     <h3>College of Engineering Technology (COET)</h3>
+                    <button class="program-btn" data-value="BS Engineering Technology">BS Engineering Technology</button>
                     <button class="program-btn" data-value="BS Chemistry">BS Chemistry</button>
                     <button class="program-btn" data-value="BET major in Automotive Engineering Technology">BET major in Automotive Engineering Technology</button>
                     <button class="program-btn" data-value="BET major in Computer Engineering Technology">BET major in Computer Engineering Technology</button>
@@ -150,6 +151,17 @@
                 </div>
 
             </div>
+        </div>
+    </div>
+
+    <div id="section-modal" class="modal-overlay" style="z-index: 1055;">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-users-rectangle" style="color: var(--primary-blue);"></i> Select Section</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body" id="section-modal-body">
+                </div>
         </div>
     </div>
 

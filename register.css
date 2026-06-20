@@ -6,7 +6,7 @@
     align-items: center;
     padding: 60px 20px;
     background-color: var(--bg-body);
-    min-height: calc(100vh - 200px); /* Adjusts perfectly for header padding */
+    min-height: calc(100vh - 200px);
 }
 
 .form-card {
@@ -77,12 +77,20 @@
     font-family: inherit;
 }
 
-/* Custom styling for the readonly Program input to look clickable */
-input#program[readonly] {
+/* Custom styling for the readonly Program and Section inputs to look clickable */
+input#program[readonly],
+input#section[readonly]:not(:disabled) {
     cursor: pointer;
     background-color: #ffffff;
     border: 1px solid var(--primary-blue);
     box-shadow: 0 2px 4px rgba(30, 58, 138, 0.05);
+}
+
+input#section:disabled {
+    background-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-color: #cbd5e1;
 }
 
 .form-group input:focus { 
@@ -140,7 +148,7 @@ input#program[readonly] {
     text-decoration: underline;
 }
 
-/* --- PROGRAM MODAL STYLES --- */
+/* --- MODAL STYLES --- */
 .program-group {
     margin-bottom: 24px;
 }
@@ -176,6 +184,82 @@ input#program[readonly] {
     border-color: var(--primary-blue);
     color: var(--primary-blue);
     transform: translateX(4px);
+}
+
+/* --- SECTION MODAL SPECIFIC STYLES --- */
+.section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.section-btn {
+    padding: 12px 8px;
+    background: #f8fafc;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: center;
+}
+
+.section-btn:hover {
+    background: #eff6ff;
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(30, 58, 138, 0.05);
+}
+
+.section-btn.btn-other {
+    background: #f1f5f9;
+    border-style: dashed;
+    color: var(--text-secondary);
+}
+
+.section-btn.btn-other:hover {
+    background: #e2e8f0;
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.other-section-container {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-light);
+    gap: 10px;
+}
+
+.other-section-container.show {
+    display: flex;
+}
+
+.other-section-container input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.other-section-container button {
+    padding: 10px 20px;
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.other-section-container button:hover {
+    background: var(--primary-blue-hover);
 }
 
 @media (max-width: 600px) {
