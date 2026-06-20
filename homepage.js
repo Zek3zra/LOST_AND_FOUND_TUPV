@@ -3,10 +3,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- 1. AUTHENTICATION & UI SETUP ---
     const { data: { session } } = await window.supabase.auth.getSession();
     const guestMode = sessionStorage.getItem('userType') === 'guest';
+    const userId = sessionStorage.getItem('user_id');
     
     if (!session && !guestMode) {
         window.location.href = 'login.html';
         return;
+    }
+
+    // --- REAL-TIME BAN LISTENER ---
+    if (userId && !guestMode) {
+        window.supabase
+            .channel('homepage-ban-listener')
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'users', 
+                filter: `id=eq.${userId}` 
+            }, async (payload) => {
+                if (payload.new.role === 'banned') {
+                    alert('🚨 SECURITY ALERT: Your account has been suspended by the Administrator. You are being logged out immediately.');
+                    await window.supabase.auth.signOut();
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                }
+            })
+            .subscribe();
     }
 
     if (sessionStorage.getItem('role') === 'admin') {
@@ -166,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusBadge.style.backgroundColor = 'var(--primary-blue)';
             document.getElementById('modal-location-label').textContent = 'Found At';
             document.getElementById('modal-date-label').textContent = 'Found On';
-            footerMessage.innerHTML = '<strong>Is this your item?</strong> Please contact the TUPV Administration Office to claim it.';
+            footerMessage.innerHTML = '<strong>Is this your item?</strong> Please contact the TUPV Library to claim it.';
         }
 
         document.getElementById('modal-item-name').textContent = item.item_name_specific;

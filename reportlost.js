@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 1. Strict Security Check ---
     const guestMode = sessionStorage.getItem('userType') === 'guest';
+    const userId = sessionStorage.getItem('user_id');
     
     // KICK GUESTS OUT IMMEDIATELY
     if (guestMode) {
@@ -10,9 +11,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // REDIRECT UNAUTHENTICATED USERS TO LOGIN
-    if (!sessionStorage.getItem('user_id')) {
+    if (!userId) {
         window.location.href = 'login.html';
         return;
+    }
+
+    // --- REAL-TIME BAN LISTENER ---
+    if (userId && !guestMode) {
+        window.supabase
+            .channel('reportlost-ban-listener')
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'users', 
+                filter: `id=eq.${userId}` 
+            }, async (payload) => {
+                if (payload.new.role === 'banned') {
+                    alert('🚨 SECURITY ALERT: Your account has been suspended by the Administrator. You are being logged out immediately.');
+                    await window.supabase.auth.signOut();
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                }
+            })
+            .subscribe();
     }
 
     // --- 2. Basic UI & Global Modals ---

@@ -1,11 +1,32 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
     const guestMode = sessionStorage.getItem('userType') === 'guest';
-    if (!sessionStorage.getItem('user_id') && !guestMode) {
+    const userId = sessionStorage.getItem('user_id');
+
+    if (!userId && !guestMode) {
         window.location.href = 'login.html';
         return;
     }
-    const userId = sessionStorage.getItem('user_id');
+
+    // --- REAL-TIME BAN LISTENER ---
+    if (userId && !guestMode) {
+        window.supabase
+            .channel('profile-ban-listener')
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'users', 
+                filter: `id=eq.${userId}` 
+            }, async (payload) => {
+                if (payload.new.role === 'banned') {
+                    alert('🚨 SECURITY ALERT: Your account has been suspended by the Administrator. You are being logged out immediately.');
+                    await window.supabase.auth.signOut();
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                }
+            })
+            .subscribe();
+    }
 
     let currentUserData = {}; 
 

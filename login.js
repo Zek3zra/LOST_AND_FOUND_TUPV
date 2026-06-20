@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (err.message === "BANNED_ACCOUNT") {
                 modalTitle.textContent = 'Account Suspended';
                 modalTitle.style.color = '#f97316'; // Orange warning color
-                modalMessage.innerHTML = 'Your account has been banned due to violations of campus guidelines.<br><br>If you believe this is a mistake, please proceed to the <strong>TUPV Administration Office</strong> to appeal your status.';
+                modalMessage.innerHTML = 'Your account has been banned due to violations of campus guidelines.<br><br>If you believe this is a mistake, please proceed to the <strong>TUPV Library</strong> to appeal your status.';
             } else if (err.message === "Email not confirmed") {
                 modalMessage.textContent = "Please verify your email address before logging in. Check your inbox for the link!";
             } else {
