@@ -154,11 +154,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         name: `${msg.users.first_name} ${msg.users.last_name}`,
                         avatar: msg.users.profile_picture_path || DEFAULT_AVATAR,
                         latestMessage: latestPreview,
-                        timestamp: new Date(msg.created_at) 
+                        timestamp: new Date(msg.created_at),
+                        lastSender: msg.sender,     // Added for Unread Logic
+                        lastMsgId: msg.msg_id       // Added for Unread Logic
                     });
                 }
             }
         }
+
+        // Auto-read the currently active chat (prevents false "NEW" badges when actively chatting)
+        if (currentActiveUserId && contactMap.has(currentActiveUserId)) {
+            const activeContact = contactMap.get(currentActiveUserId);
+            localStorage.setItem(`admin_read_${currentActiveUserId}`, activeContact.lastMsgId);
+        }
+
         renderContactsUI();
     }
 
@@ -176,12 +185,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         contactsListEl.innerHTML = filteredContacts.map(contact => {
             const timeStr = !isNaN(contact.timestamp) ? contact.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
             const isActive = contact.user_id === currentActiveUserId ? 'active' : '';
+            
+            // --- UNREAD LOGIC IMPLEMENTATION ---
+            const lastReadMsgId = localStorage.getItem(`admin_read_${contact.user_id}`);
+            const isUnread = (contact.lastSender === 'user' && String(lastReadMsgId) !== String(contact.lastMsgId));
+            
+            const unreadClass = isUnread ? 'unread-chat' : '';
+            const unreadBadge = isUnread ? `<span class="unread-indicator">NEW</span>` : '';
+
             return `
-                <div class="contact-item ${isActive}" onclick="openChat('${contact.user_id}')">
+                <div class="contact-item ${isActive} ${unreadClass}" onclick="openChat('${contact.user_id}')">
                     <img src="${contact.avatar}" class="contact-avatar" alt="Avatar">
                     <div class="contact-info">
                         <div class="contact-header">
-                            <div class="contact-name">${contact.name}</div>
+                            <div class="contact-name">${contact.name} ${unreadBadge}</div>
                             <div class="contact-time">${timeStr}</div>
                         </div>
                         <div class="contact-preview">${contact.latestMessage}</div>
@@ -196,10 +213,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearTimeout(searchDebounceTimer);
         const val = e.target.value.trim();
         
-        // Always filter the existing contact list locally
         renderContactsUI(val); 
 
-        // If typing is sufficient, search database for all users
         if (val.length < 2) {
             newChatSuggestions.style.display = 'none';
             return;
@@ -244,14 +259,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const strId = String(id);
         
-        // Add user to local view instantly if they aren't there
         if (!contactMap.has(strId)) {
             contactMap.set(strId, {
                 user_id: strId,
                 name: `${firstName} ${lastName}`,
                 avatar: avatar || DEFAULT_AVATAR,
                 latestMessage: "Start a new conversation...",
-                timestamp: new Date() // Forces it to the very top
+                timestamp: new Date() 
             });
         }
         
@@ -270,6 +284,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Marks chat as Read instantly upon opening
+        if (contactData.lastMsgId) {
+            localStorage.setItem(`admin_read_${currentActiveUserId}`, contactData.lastMsgId);
+        }
+
         document.getElementById('emptyChatState').style.display = 'none';
         document.getElementById('activeChatContainer').style.display = 'flex';
         document.getElementById('activeChatName').textContent = contactData.name;
@@ -280,7 +299,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderContactsUI(contactSearch.value);
         renderChatHistory(currentActiveUserId);
 
-        // Slide the chat window into view on mobile devices
         document.getElementById('messengerWrapper').classList.add('show-chat');
     };
 
@@ -391,15 +409,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ==========================================
     // ADMIN REAL-TIME LISTENER 
-    // Constantly listens to ALL chat_messages changes 
     // ==========================================
     window.supabase.channel('admin-global-chat-listener')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
-            // A new message was added (by user or admin), instantly reload UI silently
             loadChatData(true);
         })
         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages' }, payload => {
-            // A conversation was cleared/resolved, silently reload UI
             loadChatData(true);
         })
         .subscribe();
