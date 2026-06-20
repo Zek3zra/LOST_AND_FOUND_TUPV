@@ -1,18 +1,25 @@
 document.addEventListener('DOMContentLoaded', async () => {
     
     // --- DATABASE / AUTH LOGIC ---
-    // Check if the user is already logged in to Supabase.
-    // If they are, skip the landing page and redirect them straight to their dashboard.
-    const { data: { session }, error } = await supabase.auth.getSession();
+    // Check if the user is logged in to Supabase's background system
+    const { data: { session }, error } = await window.supabase.auth.getSession();
     
-    if (session) {
-        // User is logged in. Check sessionStorage to see if they are an admin.
+    // Check if the user has ACTUALLY logged in via your form (local session)
+    const hasLocalSession = sessionStorage.getItem('user_id');
+    
+    if (session && hasLocalSession) {
+        // Fully authenticated user. Redirect them to their dashboard.
         const role = sessionStorage.getItem('role');
         if (role === 'admin') {
             window.location.href = 'admin_side/overview.html';
         } else {
             window.location.href = 'homepage.html';
         }
+    } else if (session && !hasLocalSession) {
+        // Dangling session from email verification! 
+        // Sign them out in the background so they are forced to log in properly
+        // and aren't forcefully redirected away from the landing page.
+        await window.supabase.auth.signOut();
     }
 
     // --- UI LOGIC (Modals) ---
