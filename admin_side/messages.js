@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isUnread = (contact.lastSender === 'user' && String(lastReadMsgId) !== String(contact.lastMsgId));
             
             const unreadClass = isUnread ? 'unread-chat' : '';
-            const unreadBadge = isUnread ? `<span class="unread-indicator">NEW</span>` : '';
+            const unreadBadge = isUnread ? `<span class="unread-indicator">Unread</span>` : '';
 
             return `
                 <div class="contact-item ${isActive} ${unreadClass}" onclick="openChat('${contact.user_id}')">
