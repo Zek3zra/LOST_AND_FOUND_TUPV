@@ -8,29 +8,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // --- REAL-TIME BAN LISTENER ---
+    // --- 1. BAN LISTENER (High Priority) ---
     if (userId && !guestMode) {
-        window.supabase
-            .channel('profile-ban-listener')
-            .on('postgres_changes', { 
-                event: 'UPDATE', 
-                schema: 'public', 
-                table: 'users', 
-                filter: `id=eq.${userId}` 
-            }, async (payload) => {
+        window.supabase.channel('profile-ban-listener')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, async (payload) => {
                 if (payload.new.role === 'banned') {
                     alert('🚨 SECURITY ALERT: Your account has been suspended by the Administrator. You are being logged out immediately.');
                     await window.supabase.auth.signOut();
                     sessionStorage.clear();
                     window.location.href = 'login.html';
                 }
-            })
-            .subscribe();
+            }).subscribe();
     }
 
     let currentUserData = {}; 
 
-    // --- DYNAMIC SYSTEM ALERTS (REPLACES DEFAULT ALERTS) ---
+    // --- DYNAMIC SYSTEM ALERTS ---
     function showAlert(title, message, type = "success") {
         const modal = document.getElementById('systemAlertModal');
         const icon = document.getElementById('alert-icon');
@@ -147,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return; 
     }
 
-    // --- SMART NOTIFICATION DOT CHECKER ---
+    // --- INITIAL DATA PULL ---
     async function checkUnreadMessages() {
         const { data: chats } = await window.supabase.from('chat_messages').select('msg_id, sender').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
         if (chats && chats.length > 0 && chats[0].sender === 'admin') {
@@ -165,11 +158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     }
-    
-    checkUnreadMessages();
-    setInterval(checkUnreadMessages, 10000);
 
-    // --- PROFILE DATA FETCHING ---
     async function loadUserProfile() {
         const { data, error } = await window.supabase.from('users').select('*').eq('id', userId).single();
         if (error) return;
@@ -188,6 +177,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('profile-picture-img').src = data.profile_picture_path;
         }
     }
+    
+    checkUnreadMessages();
     loadUserProfile();
 
     // --- IMAGE UPLOAD ---
@@ -227,13 +218,133 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // --- PROFILE EDITS ---
+    // ==========================================
+    // PROGRAM AND SECTION EDIT LOGIC 
+    // ==========================================
+    const editProgramInput = document.getElementById('edit-program');
+    const editSectionInput = document.getElementById('edit-section'); 
+    const programModal = document.getElementById('program-modal');
+    const sectionModal = document.getElementById('section-modal');
+    const sectionModalBody = document.getElementById('section-modal-body');
+
+    const programSections = {
+        'BS Mechanical Engineering': ['BSME 1 - A', 'BSME 1 - B', 'BSME 1 - C', 'BSME 1 - D', 'BSME 1 - E', 'BSME 2 - A', 'BSME 2 - B', 'BSME 2 - C', 'BSME 2 - D', 'BSME 2 - E', 'BSME 3 - A', 'BSME 3 - B', 'BSME 3 - C', 'BSME 3 - D', 'BSME 3 - E', 'BSME 3 - F', 'BSME 4 - A', 'BSME 4 - B', 'BSME 4 - C', 'BSME 4 - D', 'BSME 4 - E'],
+        'BS Electrical Engineering': ['BSEE 1 - A', 'BSEE 2 - A', 'BSEE 3 - A', 'BSEE 4 - A'],
+        'BS Electronics Engineering': ['BSECE 1 - A', 'BSECE 1 - B', 'BSECE 1 - C', 'BSECE 2 - A', 'BSECE 2 - B', 'BSECE 2 - C', 'BSECE 3 - A', 'BSECE 3 - B', 'BSECE 3 - C', 'BSECE 4 - A', 'BSECE 4 - B', 'BSECE 4 - C'],
+        'BS Computer Engineering': ['BSCPE 1 - A', 'BSCPE 2 - A', 'BSCPE 3 - A', 'BSCPE 4 - A'],
+        'BET (First Year)': ['BET 1 - A', 'BET 1 - B', 'BET 1 - C', 'BET 1 - D', 'BET 1 - E', 'BET 1 - F', 'BET 1 - G', 'BET 1 - H', 'BET 1 - I', 'BET 1 - J', 'BET 1 - K', 'BET 1 - L', 'BET 1 - M', 'BET 1 - N', 'BET 1 - O'],
+        'BET major in Electrical Engineering Technology': ['SO4 - A', 'SO4 - B', 'TO4 - A', 'TO4 - B', 'FO4 - A', 'FO4 - B'],
+        'BET major in Electronics Engineering Technology': ['SO5 - A', 'SO5 - B', 'SO5 - C', 'TO5 - A', 'TO5 - B', 'FO5 - A', 'FO5 - B'],
+        'BET major in Chemical Engineering Technology': ['S02 - A', 'S02 - B', 'T02 - A', 'T02 - B', 'F02 - A', 'F02 - B'],
+        'BET major in Computer Engineering Technology': ['S09 - A', 'T09 - A', 'F09 - A'],
+        'BET major in Manufacturing Engineering Technology': ['S06 - A', 'S06 - B', 'T06 - A', 'T06 - B', 'F06 - A', 'F06 - B'],
+        'BET major in Automotive Engineering Technology': ['S01 - A', 'T01 - A', 'F01 - A'],
+        'BET major in Electromechanical Engineering Technology': ['S08 - A', 'T08 - A', 'F08 - A'],
+        'BET major in Heating, Ventilation, Air-Conditioning & Refrigeration Engineering Technology': ['S07 - A', 'T07 - A', 'F07 - A'],
+        'BS Chemistry': ['BSCHEM - 1A', 'BSCHEM - 1B', 'BSCHEM - 2A', 'BSCHEM - 2B', 'BSCHEM - 3A', 'BSCHEM - 3B', 'BSCHEM - 4A', 'BSCHEM - 4B'],
+        'BS Instrumentation and Control Engineering': ['ICE - 1A', 'ICE - 2A', 'ICE - 3A', 'ICE - 4A'],
+        'BS Mechatronics Engineering': ['MXE - 1A', 'MXE - 2A', 'MXE - 3A', 'MXE - 4A'],
+        'BET major in Mechatronics Engineering Technology': ['MXT - 1A', 'MXT - 1B', 'MXT - 2A', 'MXT - 2B', 'MXT - 3A', 'MXT - 3B', 'MXT - 4A', 'MXT - 4B']
+    };
+
+    editProgramInput.addEventListener('click', () => programModal.classList.add('show'));
+    editSectionInput.addEventListener('click', () => { if (!editSectionInput.disabled) sectionModal.classList.add('show'); });
+
+    document.querySelectorAll('#program-modal .program-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const val = e.target.getAttribute('data-value');
+            if (val === 'other') {
+                document.getElementById('other-program-container').classList.add('show');
+                document.getElementById('custom-program').focus();
+            } else {
+                editProgramInput.value = val;
+                editSectionInput.disabled = false;
+                editSectionInput.placeholder = "Click to select your section...";
+                editSectionInput.value = "";
+                populateSectionModal(val);
+                programModal.classList.remove('show');
+            }
+        });
+    });
+
+    document.getElementById('confirm-custom-program')?.addEventListener('click', () => {
+        const val = document.getElementById('custom-program').value.trim();
+        if (val) {
+            editProgramInput.value = val;
+            editSectionInput.disabled = false;
+            editSectionInput.placeholder = "Click to select your section...";
+            editSectionInput.value = "";
+            populateSectionModal("custom_unlisted_program");
+            programModal.classList.remove('show');
+        }
+    });
+
+    function populateSectionModal(programName) {
+        const sections = programSections[programName] || [];
+        let buttonsHTML = '<div class="section-grid">';
+        
+        sections.forEach(sec => {
+            buttonsHTML += `<button type="button" class="section-btn" data-value="${sec}">${sec}</button>`;
+        });
+        
+        buttonsHTML += `<button type="button" class="section-btn btn-other" data-value="other">Manual Input</button>`;
+        buttonsHTML += '</div>';
+
+        buttonsHTML += `
+            <div class="other-section-container" id="other-section-container">
+                <input type="text" id="custom-section" placeholder="e.g., BSME 5 - A">
+                <button type="button" id="confirm-custom-section">Confirm</button>
+            </div>
+        `;
+        
+        sectionModalBody.innerHTML = buttonsHTML;
+        
+        document.querySelectorAll('#section-modal-body .section-btn').forEach(btn => {
+            btn.addEventListener('click', (ev) => {
+                const val = ev.target.getAttribute('data-value');
+                if (val === 'other') {
+                    document.getElementById('other-section-container').classList.add('show');
+                    document.getElementById('custom-section').focus();
+                } else {
+                    editSectionInput.value = val;
+                    sectionModal.classList.remove('show');
+                }
+            });
+        });
+
+        document.getElementById('confirm-custom-section')?.addEventListener('click', () => {
+            const val = document.getElementById('custom-section').value.trim();
+            if (val) {
+                editSectionInput.value = val.toUpperCase();
+                sectionModal.classList.remove('show');
+            }
+        });
+    }
+
     document.getElementById('edit-profile-btn').addEventListener('click', () => {
         document.getElementById('edit-firstname').value = currentUserData.first_name || '';
         document.getElementById('edit-lastname').value = currentUserData.last_name || '';
-        document.getElementById('edit-course').value = currentUserData.course_section || '';
         document.getElementById('edit-address').value = currentUserData.address || '';
         document.getElementById('edit-contact').value = currentUserData.contact_number || '';
+        
+        const courseSec = currentUserData.course_section || '';
+        const splitIdx = courseSec.indexOf(' - ');
+        
+        if (splitIdx !== -1) {
+            const prog = courseSec.substring(0, splitIdx).trim();
+            const sec = courseSec.substring(splitIdx + 3).trim();
+            editProgramInput.value = prog;
+            editSectionInput.value = sec;
+            editSectionInput.disabled = false;
+            populateSectionModal(prog);
+        } else {
+            editProgramInput.value = courseSec;
+            editSectionInput.value = '';
+            editSectionInput.disabled = courseSec === '';
+            if (courseSec !== '') populateSectionModal(courseSec);
+        }
+
         document.getElementById('edit-profile-modal').classList.add('show');
     });
 
@@ -243,11 +354,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
         btn.disabled = true;
 
+        const program = editProgramInput.value.trim();
+        const section = editSectionInput.value.trim();
+        const finalCourseSection = section ? `${program} - ${section}` : program;
+
         const updates = {
             first_name: document.getElementById('edit-firstname').value,
             last_name: document.getElementById('edit-lastname').value,
             contact_number: document.getElementById('edit-contact').value,
-            course_section: document.getElementById('edit-course').value,
+            course_section: finalCourseSection,
             address: document.getElementById('edit-address').value,
         };
 
@@ -284,7 +399,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
         btn.disabled = true;
 
-        // Verify the Current Password first
         const { error: signInError } = await window.supabase.auth.signInWithPassword({ 
             email: currentUserData.email, 
             password: currentPwd 
@@ -297,7 +411,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Proceed to update password
         const { error } = await window.supabase.auth.updateUser({ password: newPwd });
         if (!error) {
             document.getElementById('change-pwd-modal').classList.remove('show');
@@ -428,15 +541,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (report.report_status === 'archived') statusClass = 'status-archived';
 
                 return `
-                    <tr>
+                    <tr class="clickable-row" onclick="viewHistoryDetails('${report.report_id}')">
                         <td>
                             <div><strong style="font-size:1rem; color:#0f172a;">${report.item_name_specific}</strong></div>
                             <div style="font-size:0.8rem; color:#475569; text-transform:capitalize;">${report.report_type} Item &bull; ${report.item_category}</div>
                         </td>
                         <td>${rDate}</td>
                         <td><span class="badge ${statusClass}" style="color: white;">${report.report_status}</span></td>
-                        <td style="text-align: right;">
-                            <button class="badge-btn" onclick="viewHistoryDetails('${report.report_id}')"><i class="fa-solid fa-eye"></i> View</button>
+                        <td class="action-col" style="text-align: right;">
+                            <button class="badge-btn" onclick="event.stopPropagation(); viewHistoryDetails('${report.report_id}')"><i class="fa-solid fa-eye"></i> View</button>
                         </td>
                     </tr>
                 `;
@@ -447,7 +560,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // MATCHED HOMEPAGE MODAL FUNCTION WITH REJECT REASON
     window.viewHistoryDetails = async function(reportId) {
         const report = userHistoryData.find(r => String(r.report_id) === String(reportId));
         if (!report) return;
@@ -467,7 +579,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             : report.item_description;
         document.getElementById('hist-modal-description').textContent = actualDescription || 'No description provided.';
         
-        // Match Block
         const matchBlock = document.getElementById('hist-match-details');
         if (report.report_status === 'matched') {
             const label = report.report_type === 'lost' ? 'Found and Returned By:' : 'Claimed By True Owner:';
@@ -480,12 +591,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             matchBlock.style.display = 'none';
         }
 
-        // --- REJECT REASON BLOCK ---
         const rejectBlock = document.getElementById('hist-reject-details');
         if (report.report_status === 'rejected') {
             let reasonText = "Declined by Administrator. Please check notifications for more details.";
             
-            // Attempt to fetch the rejection reason from the latest notification if it exists in the system
             try {
                 const { data: notifData } = await window.supabase
                     .from('notifications')
@@ -510,7 +619,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             rejectBlock.style.display = 'none';
         }
 
-        // Status Badge
         const statusBadge = document.getElementById('hist-modal-status');
         statusBadge.textContent = report.report_status;
         statusBadge.className = 'badge'; 
@@ -520,7 +628,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         else if (report.report_status === 'archived') statusBadge.classList.add('status-archived');
         else statusBadge.classList.add('status-pending');
 
-        // Image Handling
         const imgEl = document.getElementById('hist-modal-image');
         const noImgEl = document.getElementById('hist-no-image');
 
@@ -580,17 +687,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadMessenger(true);
     };
 
+    // INSTANT UI RESPONSE ADDED HERE
     window.confirmResolution = async function() {
         const btn = document.querySelector('.confirm-resolve-btn');
         if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Clearing...';
+        if (btn) btn.disabled = true;
 
         const { error } = await window.supabase.from('chat_messages').delete().eq('user_id', userId);
         
         if (error) {
             showAlert("Error", "Failed to clear chat: " + error.message, "danger");
-            if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Yes, resolved';
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Yes, resolved';
+                btn.disabled = false;
+            }
         } else {
-            await loadMessenger(true);
+            // Instantly close modal and show success alert so it doesn't feel slow!
+            document.getElementById('messenger-modal').classList.remove('show');
+            showAlert("Ticket Resolved", "Your support chat has been cleared and resolved successfully.", "success");
+            await loadMessenger(true); 
         }
     };
 
@@ -652,7 +767,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (err) {
             console.error("Messenger Rendering Error: ", err);
-            chatHistory.innerHTML = '<div style="text-align:center; padding: 20px; color: #b91c1c;">Could not load chat history at this time.</div>';
+            if (!isSilent) chatHistory.innerHTML = '<div style="text-align:center; padding: 20px; color: #b91c1c;">Could not load chat history at this time.</div>';
         }
     }
 
@@ -697,7 +812,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             userChatImageInput.value = '';
             userPreviewContainer.style.display = 'none';
             userPreviewImg.src = '';
-
+            
             await loadMessenger(true); 
 
         } catch (err) {
@@ -713,4 +828,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     sendChatBtn.addEventListener('click', sendMessage);
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    // ==========================================
+    // REAL-TIME LISTENERS (CHAT & NOTIFICATIONS)
+    // Placed at the bottom to ensure all functions are loaded
+    // ==========================================
+    if (userId && !guestMode) {
+        
+        // 1. Chat Real-time Listener
+        window.supabase.channel('profile-chat-listener')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `user_id=eq.${userId}` }, payload => {
+                
+                // If Admin sends a message, manage the notification dot
+                if (payload.new.sender === 'admin') {
+                    if (!document.getElementById('messenger-modal').classList.contains('show')) {
+                        const lastReadId = sessionStorage.getItem('lastReadMsgId');
+                        if (String(lastReadId) !== String(payload.new.msg_id)) {
+                            document.getElementById('support-notif-dot').style.display = 'block';
+                        }
+                    }
+                }
+                
+                // CRITICAL FIX: If the modal is open, refresh it no matter who sent the message
+                if (document.getElementById('messenger-modal').classList.contains('show')) {
+                    loadMessenger(true); 
+                }
+            })
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages', filter: `user_id=eq.${userId}` }, payload => {
+                if (document.getElementById('messenger-modal').classList.contains('show')) {
+                    loadMessenger(true);
+                }
+            }).subscribe();
+
+        // 2. Notification Real-time Listener
+        window.supabase.channel('profile-notif-listener')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, payload => {
+                const lastReadTime = sessionStorage.getItem('lastReadNotifTime');
+                if (!lastReadTime || new Date(payload.new.created_at).getTime() > new Date(lastReadTime).getTime()) {
+                    document.getElementById('general-notif-dot').style.display = 'block';
+                }
+                if (document.getElementById('notifications-modal').classList.contains('show')) {
+                    loadNotifications();
+                }
+            }).subscribe();
+    }
 });

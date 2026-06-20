@@ -388,4 +388,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendReply(); });
 
     loadChatData();
+
+    // ==========================================
+    // ADMIN REAL-TIME LISTENER 
+    // Constantly listens to ALL chat_messages changes 
+    // ==========================================
+    window.supabase.channel('admin-global-chat-listener')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+            // A new message was added (by user or admin), instantly reload UI silently
+            loadChatData(true);
+        })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages' }, payload => {
+            // A conversation was cleared/resolved, silently reload UI
+            loadChatData(true);
+        })
+        .subscribe();
 });

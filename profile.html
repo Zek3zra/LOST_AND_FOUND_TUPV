@@ -136,7 +136,7 @@
                                     <div class="detail-value" id="display-fullname">-</div>
                                 </div>
                                 <div class="detail-item">
-                                    <label>Course & Section</label>
+                                    <label>Program & Section</label>
                                     <div class="detail-value" id="display-course">-</div>
                                 </div>
                                 <div class="detail-item">
@@ -210,10 +210,16 @@
                             <input type="text" id="edit-lastname" class="form-input" required>
                         </div>
                     </div>
+                    
                     <div class="form-group">
-                        <label>Course & Section</label>
-                        <input type="text" id="edit-course" class="form-input" placeholder="e.g., BSCS-3A" required>
+                        <label>Program</label>
+                        <input type="text" id="edit-program" class="form-input clickable-input" placeholder="Click to select program..." readonly required>
                     </div>
+                    <div class="form-group">
+                        <label>Section</label>
+                        <input type="text" id="edit-section" class="form-input clickable-input" placeholder="Select program first..." readonly disabled required>
+                    </div>
+
                     <div class="form-group">
                         <label>Home Address</label>
                         <input type="text" id="edit-address" class="form-input" placeholder="e.g., La Carlota City" required>
@@ -271,7 +277,7 @@
             </div>
             <div class="modal-body" style="padding: 0;">
                 <div style="padding: 16px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
-                    <p style="color: #475569; font-size: 0.9rem; margin: 0;">A complete log of the items you have reported.</p>
+                    <p style="color: #475569; font-size: 0.9rem; margin: 0;">A complete log of the items you have reported. Click anywhere on an item's row to view its details.</p>
                 </div>
                 <div style="overflow-x: auto;">
                     <table class="profile-table">
@@ -280,7 +286,7 @@
                                 <th>Item Details</th>
                                 <th>Date Reported</th>
                                 <th>Status</th>
-                                <th style="text-align: right;">Action</th>
+                                <th class="action-col" style="text-align: right;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="history-list"></tbody>
@@ -415,6 +421,67 @@
                     <button class="modal-btn confirm-btn" style="padding: 12px 20px; flex-shrink: 0;" id="send-chat-btn"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="program-modal" class="modal-overlay" style="z-index: 1050;">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-graduation-cap" style="color: #1E3A8A;"></i> Select Program</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="program-group">
+                    <h3>College of Engineering (COE)</h3>
+                    <button type="button" class="program-btn" data-value="BS Computer Engineering">BS Computer Engineering</button>
+                    <button type="button" class="program-btn" data-value="BS Electrical Engineering">BS Electrical Engineering</button>
+                    <button type="button" class="program-btn" data-value="BS Electronics Engineering">BS Electronics Engineering</button>
+                    <button type="button" class="program-btn" data-value="BS Mechanical Engineering">BS Mechanical Engineering</button>
+                </div>
+
+                <div class="program-group">
+                    <h3>College of Engineering Technology (COET)</h3>
+                    <button type="button" class="program-btn" data-value="BS Engineering Technology">BS Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BS Chemistry">BS Chemistry</button>
+                    <button type="button" class="program-btn" data-value="BET major in Automotive Engineering Technology">BET major in Automotive Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BET major in Computer Engineering Technology">BET major in Computer Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BET major in Chemical Engineering Technology">BET major in Chemical Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BET major in Electrical Engineering Technology">BET major in Electrical Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BET major in Electromechanical Engineering Technology">BET major in Electromechanical Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BET major in Heating, Ventilation, Air-Conditioning & Refrigeration Engineering Technology">BET major in HVAC & R Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BET major in Manufacturing Engineering Technology">BET major in Manufacturing Engineering Technology</button>
+                    <button type="button" class="program-btn" data-value="BET major in Electronics Engineering Technology">BET major in Electronics Engineering Technology</button>
+                </div>
+
+                <div class="program-group">
+                    <h3>College of Automation and Control (COAC)</h3>
+                    <button type="button" class="program-btn" data-value="BS Instrumentation and Control Engineering">BS Instrumentation and Control Engineering</button>
+                    <button type="button" class="program-btn" data-value="BS Mechatronics Engineering">BS Mechatronics Engineering</button>
+                    <button type="button" class="program-btn" data-value="BET major in Mechatronics Engineering Technology">BET major in Mechatronics Engineering Technology</button>
+                </div>
+
+                <div class="program-group">
+                    <h3>Other Programs</h3>
+                    <button type="button" class="program-btn btn-other" data-value="other" style="border-style: dashed; text-align: center; font-weight: 600; color: #475569;">Manual Input</button>
+                    <div class="other-section-container" id="other-program-container">
+                        <input type="text" id="custom-program" placeholder="Enter your full program name">
+                        <button type="button" id="confirm-custom-program">Confirm</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="section-modal" class="modal-overlay" style="z-index: 1055;">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-users-rectangle" style="color: #1E3A8A;"></i> Select Section</h2>
+                <button class="close-modal" data-close>&times;</button>
+            </div>
+            <div class="modal-body" id="section-modal-body">
+                </div>
         </div>
     </div>
 
