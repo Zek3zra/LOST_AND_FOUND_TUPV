@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const reporterName = report.users ? `${report.users.first_name} ${report.users.last_name}` : 'Unknown User';
             const avatarUrl = report.users?.profile_picture_path || '../images/default-avatar.png';
             
-            const reportJSON = encodeURIComponent(JSON.stringify(report));
+            const reportJSON = encodeURIComponent(JSON.stringify(report)).replace(/'/g, "%27");
 
             return `
                 <tr id="row-${report.report_id}">
