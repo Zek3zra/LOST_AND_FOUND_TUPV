@@ -216,7 +216,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('reviewReportType').value = report.report_type; 
         
         document.getElementById('reviewItemName').value = report.item_name_specific || report.item_category;
-        document.getElementById('reviewCategory').value = report.item_category;
+        const categorySelect = document.getElementById('reviewCategory');
+const dbCategory = report.item_category || 'Other'; 
+
+// 1. Try setting it directly
+categorySelect.value = dbCategory;
+
+// 2. If it didn't match (due to case sensitivity or exact spelling), force a loose match
+if (categorySelect.value !== dbCategory) {
+    let matchFound = false;
+    Array.from(categorySelect.options).forEach(option => {
+        // Compare lowercase versions (e.g., "electronics" == "Electronics")
+        if (option.value.toLowerCase() === dbCategory.toLowerCase()) {
+            categorySelect.value = option.value;
+            matchFound = true;
+        }
+    });
+
+    // 3. If it's a completely new category from the database not in your HTML, add it dynamically
+    if (!matchFound) {
+        const newOption = new Option(dbCategory, dbCategory);
+        categorySelect.add(newOption);
+        categorySelect.value = dbCategory;
+    }
+}
         document.getElementById('reviewLocation').value = report.item_location;
         
         const isFound = report.report_type === 'found';
