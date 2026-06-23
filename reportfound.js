@@ -1,7 +1,61 @@
 document.addEventListener('DOMContentLoaded', () => {
 
    // --- 1. Strict Security Check ---
+    // --- 1. Strict Security Check ---
     const guestMode = sessionStorage.getItem('userType') === 'guest';
+    const userId = sessionStorage.getItem('user_id'); // Added to define userId globally
+    
+    // KICK GUESTS OUT IMMEDIATELY
+    if (guestMode) {
+        window.location.href = 'guestprofile.html';
+        return;
+    }
+    
+    // REDIRECT UNAUTHENTICATED USERS TO LOGIN
+    if (!userId) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // --- REAL-TIME ACCOUNT STATUS LISTENER ---
+    if (userId && !guestMode) {
+        window.supabase.channel('reportfound-status-listener')
+            // 1. Listen for Role Changes and Bans (UPDATE)
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'users', 
+                filter: `id=eq.${userId}` 
+            }, async (payload) => {
+                const newRole = payload.new.role;
+                const currentRole = sessionStorage.getItem('role');
+
+                // Handle Ban
+                if (newRole === 'banned') {
+                    await window.supabase.auth.signOut();
+                    sessionStorage.clear();
+                    window.location.replace('login.html');
+                } 
+                // Handle Role Change (e.g., User to Admin)
+                else if (newRole && currentRole && newRole !== currentRole) {
+                    await window.supabase.auth.signOut();
+                    sessionStorage.clear();
+                    window.location.replace('login.html');
+                }
+            })
+            // 2. Listen for Account Deletion (DELETE)
+            .on('postgres_changes', { 
+                event: 'DELETE', 
+                schema: 'public', 
+                table: 'users', 
+                filter: `id=eq.${userId}` 
+            }, async () => {
+                await window.supabase.auth.signOut();
+                sessionStorage.clear();
+                window.location.replace('login.html');
+            })
+            .subscribe();
+    }
     
     // KICK GUESTS OUT IMMEDIATELY
     if (guestMode) {

@@ -9,16 +9,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- 1. BAN LISTENER (High Priority) ---
+    // --- REAL-TIME ACCOUNT STATUS LISTENER ---
     if (userId && !guestMode) {
-        window.supabase.channel('profile-ban-listener')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, async (payload) => {
-                if (payload.new.role === 'banned') {
-                    alert('🚨 SECURITY ALERT: Your account has been suspended by the Administrator. You are being logged out immediately.');
+        window.supabase.channel('user-status-listener')
+            // 1. Listen for Role Changes and Bans (UPDATE)
+            .on('postgres_changes', { 
+                event: 'UPDATE', 
+                schema: 'public', 
+                table: 'users', 
+                filter: `id=eq.${userId}` 
+            }, async (payload) => {
+                const newRole = payload.new.role;
+                const currentRole = sessionStorage.getItem('role');
+
+                // Handle Ban
+                if (newRole === 'banned') {
                     await window.supabase.auth.signOut();
                     sessionStorage.clear();
-                    window.location.href = 'login.html';
+                    window.location.replace('login.html');
+                } 
+                // Handle Role Change (e.g., User to Admin)
+                else if (newRole && currentRole && newRole !== currentRole) {
+                    await window.supabase.auth.signOut();
+                    sessionStorage.clear();
+                    window.location.replace('login.html');
                 }
-            }).subscribe();
+            })
+            // 2. Listen for Account Deletion (DELETE)
+            .on('postgres_changes', { 
+                event: 'DELETE', 
+                schema: 'public', 
+                table: 'users', 
+                filter: `id=eq.${userId}` 
+            }, async () => {
+                await window.supabase.auth.signOut();
+                sessionStorage.clear();
+                window.location.replace('login.html');
+            })
+            .subscribe();
     }
 
     let currentUserData = {}; 
